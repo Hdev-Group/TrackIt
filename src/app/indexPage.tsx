@@ -37,7 +37,7 @@ export default function Home() {
         <div className="flex flex-col items-start justify-start gap-72 w-full h-full">
         <section className="container mx-auto h-auto relative flex flex-col items-center justify-start">
           <div className="relative flex flex-col items-center justify-center">
-            <div className="text-6xl leading-normal flex flex-row font-semibold text-transparent pt-80 z-20 bg-clip-text textgradientmovetransition">
+            <div className="text-6xl leading-normal flex flex-row font-semibold text-transparent pt-72 z-20 bg-clip-text textgradientmovetransition">
             Making Ticketing Simpler With TrackIt
             </div>
             <p className="mt-4 text-xl text-gray-400  z-20 ">
@@ -45,14 +45,23 @@ export default function Home() {
             </p>
             <div className="flex mt-8 justify-between z-20 gap-5 w-full">
                 <Button variant="slide-fill" className="w-full flex items-center justify-center" type="button" href="/auth/signin">
-                    TRY TEAMMATE FOR FREE
+                    TRY TRACKIT FOR FREE
                 </Button>
                 <Button variant='ghost-side-fill' className="w-1/3 flex items-center justify-center" href="/features">
                     Learn More
                 </Button>
             </div>
-            <div className="absolute top-0 flex rounded-xl items-center justify-center -left-28 -rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" />
-            <div className="absolute top-0 flex rounded-xl items-center justify-center -right-28 rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" />
+            <motion.div 
+            className="absolute top-0 flex rounded-xl items-center justify-center -left-28 -rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
+            initial={{height: "0rem", top: "0rem"}}
+            animate={{height: "40rem", top: "0rem"}}
+            transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
+            />
+            <motion.div className="absolute top-0 flex rounded-xl items-center justify-center -right-28 rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
+              initial={{height: "0rem", top: "0rem"}}
+              animate={{height: "40rem", top: "0rem"}}
+              transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
+            />
           </div>
         </section>
         <section className="container mx-auto h-auto relative flex flex-col items-center justify-start">

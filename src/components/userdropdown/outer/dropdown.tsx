@@ -68,15 +68,15 @@ export default function UserDropdown({headerOpen}: {headerOpen: boolean}) {
                     </div>
                     <CommandList>
                         <CommandGroup>
-                            <CommandItem onSelect={() => router.push('/profile')}>
+                            <CommandItem className="cursor-pointer" onSelect={() => router.push('/profile')}>
                                 <User className="mr-2 h-4 w-4" />
                                 Profile
                             </CommandItem>
-                            <CommandItem onSelect={() => router.push('/settings')}>
+                            <CommandItem className="cursor-pointer" onSelect={() => router.push('/settings')}>
                                 <Settings className="mr-2 h-4 w-4" />
                                 Settings
                             </CommandItem>
-                            <CommandItem onSelect={() => router.push('/help')}>
+                            <CommandItem className="cursor-pointer" onSelect={() => router.push('/help')}>
                                 <HelpCircle className="mr-2 h-4 w-4" />
                                 Help
                             </CommandItem>
@@ -99,7 +99,7 @@ export default function UserDropdown({headerOpen}: {headerOpen: boolean}) {
                                     />
                                 </div>
                             </CommandItem>
-                            <CommandItem onSelect={handleSignOut} disabled={isLoading}>
+                            <CommandItem className="cursor-pointer" onSelect={handleSignOut} disabled={isLoading}>
                                 <LogOut className="mr-2 h-4 w-4" />
                                 {isLoading ? 'Signing out...' : 'Sign out'}
                             </CommandItem>

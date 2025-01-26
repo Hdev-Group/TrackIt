@@ -6,9 +6,16 @@ import Button from '../button/button'
 import { getAuth } from 'firebase/auth'
 import UserDropdown from '../userdropdown/outer/dropdown'
 import {auth} from '@/app/firebase/firebase'
+import { onAuthStateChanged } from 'firebase/auth';
 
+interface User {
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+}
 
 export default function Header() {
+  const [user, setUser] = useState<User | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [mainlocation, setMainLocation] = useState({left: 0, width: 0})
   const [hasScrolled, setHasScrolled] = useState(false)
@@ -16,7 +23,17 @@ export default function Header() {
   const [activeNav, setActiveNav] = useState<string | null>(null)
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
-  const user = auth.currentUser
+
+  
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []); 
 
   useEffect(() => {
     const handleScroll = () => {
@@ -122,9 +139,9 @@ export default function Header() {
 
           <div className="hidden lg:flex items-center justify-end flex-1 lg:w-0 space-x-4">
             {
-                user ? (
-                    <UserDropdown headerOpen={isHeaderVisible}/>
-                ) : (
+              user ? (
+                <UserDropdown headerOpen={true}/>
+              ) : (
                     <Button variant="ghost" href="/login">
                         Sign in
                     </Button>
