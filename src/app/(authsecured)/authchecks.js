@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import { auth } from "../firebase";
+import { auth } from "../firebase/firebase";
 import { useEffect, useState } from "react";
 
 const AuthWrapper = ({ children }) => {
