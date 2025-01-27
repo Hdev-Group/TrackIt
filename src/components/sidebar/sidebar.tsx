@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, ChevronDown, ChevronLeft, Home, Search, Settings } from "lucide-react";
+import { Bell, ChevronDown, ChevronLeft, Home, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { User } from "firebase/auth";
 
@@ -10,7 +10,7 @@ export default function LockedSidebar({user}: {user: User | null}) {
     const [hoveredSidebar, setHoveredSidebar] = useState(localStorage.getItem('hoveredSidebar') ? parseInt(localStorage.getItem('hoveredSidebar')!) : 1);
     const [hidden, setHidden] = useState(localStorage.getItem('hidden') === 'true' || false);
     const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+    const [openedProfile, setOpenedProfile] = useState(false);
 
     const handleMouseEnter = () => {
         if (timeoutIdRef.current) {
@@ -70,6 +70,22 @@ export default function LockedSidebar({user}: {user: User | null}) {
         document.addEventListener("mouseup", onMouseUp);
     }
 
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            function mouseClickOutSideProfile(e: MouseEvent) {
+                const profilePopup = document.querySelector('#profilepopup');
+                if (profilePopup && !profilePopup.contains(e.target as Node)) {
+                    setOpenedProfile(false);
+                }
+            }
+
+            document.addEventListener('mousedown', mouseClickOutSideProfile);
+            return () => {
+                document.removeEventListener('mousedown', mouseClickOutSideProfile);
+            };
+        }
+    }, []);
+
     return (
         <div
         className={`${hidden ? "absolute" : "relative"} h-full flex items-center justify-start`}
@@ -99,12 +115,12 @@ export default function LockedSidebar({user}: {user: User | null}) {
                             </div>
                             <div className="w-full flex flex-col mt-2">
                                 <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center">
-                                    <Search className="w-[17px] h-[17px] text-muted-foreground" />
-                                    <p className="text-foreground/40 text-[14px] font-semibold ml-2">Search</p>
-                                </div>
-                                <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center">
                                     <Home className="w-[17px] h-[17px] text-muted-foreground" />
                                     <p className="text-foreground/40 text-[14px] font-semibold ml-2">Home</p>
+                                </div>
+                                <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center">
+                                    <Ticket className="w-[17px] h-[17px] text-muted-foreground" />
+                                    <p className="text-foreground/40 text-[14px] font-semibold ml-2">Tickets</p>
                                 </div>
                                 <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center just">
                                     <Bell className="w-[17px] h-[17px] text-muted-foreground" />
@@ -143,13 +159,13 @@ export default function LockedSidebar({user}: {user: User | null}) {
                             </div>
                         </div>
                         <div className="border-t select-none border-foreground/10 w-full mt-2 py-2 px-1.5 flex flex-col items-start">
-                            <div className="flex flex-row w-full justify-between group items-center mt-2">
+                            <div className="flex flex-row w-full justify-between group items-center mt-2" onClick={() => setOpenedProfile(true)}>
                             <div className="flex flex-row relative items-center">
                                 <Avatar className="w-6 h-6">
                                     <AvatarImage src={`${user?.photoURL}`}alt="Your Profile" />
                                     <AvatarFallback className="w-6 h-6  text-xl font-semibold">{user?.displayName?.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <Status type="icon" status="Online" />
+                                <Status type="icon" status="Online" profile={true} />
                                 <div className="flex flex-col">
                                     <p className="text-foreground/40 text-[14px] -mb-2 mt-1 font-semibold ml-2">{user?.displayName}</p>
                                     <div className="overflow-hidden h-[20px]">
@@ -164,19 +180,70 @@ export default function LockedSidebar({user}: {user: User | null}) {
                             </div>
                         </div>
                     </div>
-                    
                 </div>
-                <div className="absolute bg-black rounded-lg mx-3 bottom-12 h-[30rem] w-full p-4  flex flex-col items-start">
-                    <div className="flex relative">
-                    <Avatar className="w-12 h-12">
-                        <AvatarImage src={`${user?.photoURL}`}alt="Your Profile" />
-                        <AvatarFallback className="w-6 h-6  text-xl font-semibold">{user?.displayName?.charAt(0)}</AvatarFallback>
-                    </Avatar>    
-                    <Status type="icon"  status="Online" />
-                    </div>   
-                    <h1 className="text-white text-xl font-semibold mt-2">{user?.displayName}</h1>
+                <div id="profilepopup" className={`${openedProfile ? "absolute" : "hidden"} transition-all bg-[#000000cc] backdrop-blur-lg border rounded-lg ${hidden ? " bottom-0 mx-0 rounded-b-none h-auto" : "bottom-12 h-[30rem] mx-3"}  w-full p-4 flex flex-col items-start`}>
+                    <div className="flex flex-col items-start gap-2">
+                        <div className="flex flex-row relative">
+                            <Avatar className="w-12 h-12">
+                            <AvatarImage src={`${user?.photoURL}`} alt="Your Profile" />
+                            <AvatarFallback className="w-6 h-6 text-xl font-semibold">
+                                {user?.displayName?.charAt(0)}
+                            </AvatarFallback>
+                            </Avatar>
+                            <Status
+                            type="icon"
+                            status="Online"
+                            size="md"
+                            profile={true}
+                            position={{ left: "left-9", bottom: "bottom-0" }}
+                            />
+                        </div>
+                        <div className="">
+                        <h1 className="text-white text-xl font-semibold">{user?.displayName}</h1>
+                        <p className="text-muted-foreground text-xs font-normal">Lead Software Engineer</p>
+                        </div>
+                    </div>
+                    <div className="flex w-full flex-col gap-4 mt-3 border-t pt-3 h-full">
+                        <div className="flex flex-col w-full gap-4 h-full justify-between">
+                            <div className="flex flex-col gap-4">
+                                    <div className="bg-muted-foreground/20 w-full rounded-lg px-3 py-3 flex flex-col gap-2">
+                                <p className="text-xs font-semibold text-muted-foreground">On Shift</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center justify-center h-10 w-10 bg-green-500 rounded-md">
+                                    <TicketCheck className="w-7 h-7 text-white" />
+                                    </div>
+                                    <div>
+                                    <p className="text-white text-sm font-semibold">Ticket #1234</p>
+                                    <p className="text-white text-xs font-normal">Working</p>
+                                    <p className="text-xs text-muted-foreground">Until 19:00</p>
+                                    </div>
+                                </div>
+                                </div>
+                                <div className="bg-muted-foreground/20 w-full rounded-lg px-3 py-3 flex flex-col gap-2">
+                                <p className="text-xs font-semibold text-muted-foreground">Work Hours</p>
+                                <div className="flex flex-col gap-1">
+                                    <p className="text-white text-sm font-semibold">Monday - Friday</p>
+                                    <p className="text-white text-xs font-normal">09:00 - 18:00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <div className="bg-muted-foreground/20 w-full rounded-lg justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-2 flex flex-row ">
+                                <p className="text-xs font-semibold text-muted-foreground">Settings</p>
+                                <Settings className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                            <div className="bg-muted-foreground/20 w-full rounded-lg justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-1.5 flex flex-row ">
+                                <div className="flex flex-row items-center gap-2">
+                                    <div className="flex items-center justify-center h-3 w-3 mb-[1px] bg-green-500 rounded-full"/>
+                                    <Status type="text" status="Online" />
+                                </div>
+                                <ChevronDown className="w-4 h-4 text-muted-foreground ml-2" />
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    </div>
 
-                </div>
                 <div
                     className={`w-1 h-full bg-muted hover:bg-neutral-300/30 transition-all cursor-col-resize`}
                     onMouseDown={resizeSidebar}
@@ -186,7 +253,7 @@ export default function LockedSidebar({user}: {user: User | null}) {
     );
 }
 
-function Status({ type, status, size = "sm" }: { type: string, status: "Online" | "Away" | "Busy" | "Offline", size?: "sm" | "md" | "lg" }) {
+function Status({ type, status, size = "sm", profile, position = { left: "left-4", bottom: "bottom-1.5" } }: { type: string, status: "Online" | "Away" | "Busy" | "Offline", size?: "sm" | "md" | "lg", position?: { left: string, bottom: string }, profile?: boolean }) {
     const activityTypes = {
         Online: "bg-green-400",
         Away: "bg-yellow-400",
@@ -206,12 +273,12 @@ function Status({ type, status, size = "sm" }: { type: string, status: "Online" 
     if (type === "text") {
         return (
             <div className="flex flex-row items-center">
-                <p className="text-foreground/40 text-[14px] font-semibold ml-2">{status}</p>
+                <p className="text-foreground/40 text-[13px] font-semibold ml-2">{status}</p>
             </div>
         );
     } else if (type === "icon") {
         return (
-            <div className="flex flex-row items-center absolute left-4 bottom-1.5 border-black border rounded-full">
+            <div className={`flex flex-row items-center ${profile ? "absolute" : "relative"} ${position.left} ${position.bottom} border-black border rounded-full`}>
                 <div className={`${sizeClass} ${statusColor} rounded-full`}></div>
             </div>
         );

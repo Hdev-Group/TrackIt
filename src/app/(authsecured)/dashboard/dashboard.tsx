@@ -4,7 +4,7 @@ import LockedSidebar from '@/components/sidebar/sidebar';
 import AuthChecks from '../authchecks';
 import { AlertCircle, CheckCircle, Clock, MoreHorizontal, Ticket } from 'lucide-react';
 import { getAuth, User } from 'firebase/auth';
-import { act, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
@@ -53,7 +53,6 @@ export default function Dashboard() {
                                     <AssignedTickets/>
                                     <TicketStats/>
                                     <RecentActivities/>
-                                    <HierarchyChart/>
                                 </div>
                             </div>
                         </div>
@@ -100,18 +99,12 @@ function AssignedTickets(){
 
 function TicketStats() {
     // Dummy data for demonstration purposes
-    const [stats, setStats] = useState({
+    const stats = {
         totalTickets: 10,
         averageResponseTime: "2 hours",
         resolvedTickets: 7,
         pendingTickets: 3,
-      })
-    
-      const chartData = [
-        { name: "Total", value: stats.totalTickets },
-        { name: "Resolved", value: stats.resolvedTickets },
-        { name: "Pending", value: stats.pendingTickets },
-      ]
+      }
     
 
     return (
@@ -169,67 +162,6 @@ function TicketStats() {
     );
 }
 
-import { Tree, TreeNode as OrgTreeNode } from 'react-organizational-chart';
-
-function HierarchyChart() {
-    const data = {
-        name: "CEO",
-        children: [
-            {
-                name: "Manager 1",
-                children: [
-                    { name: "Employee 1" },
-                    { name: "Employee 2" }
-                ]
-            },
-            {
-                name: "Manager 2",
-                children: [
-                    { name: "Employee 3" },
-                    { name: "Employee 4" }
-                ]
-            }
-        ]
-    };
-
-    interface TreeNode {
-        name: string;
-        children?: TreeNode[];
-    }
-
-    const renderTree = (node: TreeNode, index: number) => (
-        <OrgTreeNode key={index} label={<div className="text-muted-foreground">{node.name}</div>}>
-            {node.children && node.children.map((child, childIndex) => renderTree(child, childIndex))}
-        </OrgTreeNode>
-    );
-
-    return (
-        <div className='flex flex-col group gap-4 w-full h-full'>
-            <div className='flex flex-row justify-start items-center w-full'>
-                <div className='flex flex-row justify-between w-full'>
-                    <div className='flex flex-row'>
-                        <div className="relative">
-                        </div>
-                        <h2 className='text-muted-foreground font-medium text-[13px] ml-2'>Hierarchy Chart</h2>
-                    </div>
-                    <div className='group-hover:opacity-100 opacity-0 transition-all items-center'>
-                        <MoreHorizontal size={22} className='text-muted-foreground cursor-pointer' />
-                    </div>
-                </div>
-            </div>
-            <div className='flex flex-col bg-muted-foreground/10 pt-10 justify-between items-center w-full rounded-lg'>
-                <Tree
-                    lineWidth={'2px'}
-                    lineColor={'#ccc'}
-                    lineBorderRadius={'10px'}
-                    label={<div className="text-muted-foreground">{data.name}</div>}
-                >
-                    {data.children.map((child, index) => renderTree(child, index))}
-                </Tree>
-            </div>
-        </div>
-    );
-}
 
 function RecentActivities() {
     interface ActivityItem {
