@@ -1,17 +1,16 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, Calendar, ChevronDown, ChevronLeft, Home, LifeBuoy, Search, Settings, Trash2 } from "lucide-react";
+import { Bell, ChevronDown, ChevronLeft, Home, Search, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { getAuth } from "firebase/auth";
+import { User } from "firebase/auth";
 
-export default function LockedSidebar() {
-    const auth = getAuth();
-    const user = auth.currentUser
-    if (!user) return null;
+export default function LockedSidebar({user}: {user: User | null}) {
+    console.log(user?.photoURL ?? undefined);
     const [sidebarWidth, setSidebarWidth] = useState(256); 
     const [hoveredSidebar, setHoveredSidebar] = useState(localStorage.getItem('hoveredSidebar') ? parseInt(localStorage.getItem('hoveredSidebar')!) : 1);
     const [hidden, setHidden] = useState(localStorage.getItem('hidden') === 'true' || false);
     const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 
     const handleMouseEnter = () => {
         if (timeoutIdRef.current) {
@@ -20,6 +19,8 @@ export default function LockedSidebar() {
         }
         setHoveredSidebar(sidebarWidth);
     };
+
+
 
     const handleMouseLeave = () => {
         timeoutIdRef.current = setTimeout(() => {
@@ -142,14 +143,20 @@ export default function LockedSidebar() {
                             </div>
                         </div>
                         <div className="border-t select-none border-foreground/10 w-full mt-2 py-2 px-1.5 flex flex-col items-start">
-                            <div className="flex flex-row w-full justify-between items-center mt-2">
-                            <div className="flex flex-row relative  items-center">
+                            <div className="flex flex-row w-full justify-between group items-center mt-2">
+                            <div className="flex flex-row relative items-center">
                                 <Avatar className="w-6 h-6">
-                                    <AvatarImage src={user?.photoURL ?? undefined} alt="Your Profile" />
-                                    <AvatarFallback className="w-6 h-6  text-xl font-semibold">{user.displayName?.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={`${user?.photoURL}`}alt="Your Profile" />
+                                    <AvatarFallback className="w-6 h-6  text-xl font-semibold">{user?.displayName?.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <ActivityStatus />
-                                <p className="text-foreground/40 text-[14px] font-semibold ml-2">{user?.displayName}</p>
+                                <Status type="icon" status="Online" />
+                                <div className="flex flex-col">
+                                    <p className="text-foreground/40 text-[14px] -mb-2 mt-1 font-semibold ml-2">{user?.displayName}</p>
+                                    <div className="overflow-hidden h-[20px]">
+                                        <p className="text-foreground/30 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Online</p>
+                                        <p className="text-foreground/30 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
+                                    </div>
+                                </div>
                             </div>
                             <div className="w-6 h-6 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center ml-2">
                                 <Settings className="w-4 h-4 text-muted-foreground" />
@@ -157,6 +164,18 @@ export default function LockedSidebar() {
                             </div>
                         </div>
                     </div>
+                    
+                </div>
+                <div className="absolute bg-black rounded-lg mx-3 bottom-12 h-[30rem] w-full p-4  flex flex-col items-start">
+                    <div className="flex relative">
+                    <Avatar className="w-12 h-12">
+                        <AvatarImage src={`${user?.photoURL}`}alt="Your Profile" />
+                        <AvatarFallback className="w-6 h-6  text-xl font-semibold">{user?.displayName?.charAt(0)}</AvatarFallback>
+                    </Avatar>    
+                    <Status type="icon"  status="Online" />
+                    </div>   
+                    <h1 className="text-white text-xl font-semibold mt-2">{user?.displayName}</h1>
+
                 </div>
                 <div
                     className={`w-1 h-full bg-muted hover:bg-neutral-300/30 transition-all cursor-col-resize`}
@@ -167,22 +186,35 @@ export default function LockedSidebar() {
     );
 }
 
-function ActivityStatus(){
-    const activityTypes = [
-        { name: "Online", color: "bg-green-400" },
-        { name: "Away", color: "bg-yellow-400" },
-        { name: "Busy", color: "bg-red-400" },
-        { name: "Offline", color: "bg-gray-400" },
-    ];
+function Status({ type, status, size = "sm" }: { type: string, status: "Online" | "Away" | "Busy" | "Offline", size?: "sm" | "md" | "lg" }) {
+    const activityTypes = {
+        Online: "bg-green-400",
+        Away: "bg-yellow-400",
+        Busy: "bg-red-400",
+        Offline: "bg-gray-400",
+    };
 
-    return (
-        <div className="flex flex-row gap-1 absolute left-4 bottom-0 items-center">
-            {activityTypes
-                .sort(() => Math.random() - 0.5)
-                .slice(0, 1)
-                .map((activityType) => (
-                    <div key={activityType.name} className={`w-2 h-2 rounded-full ${activityType.color}`} title={activityType.name}></div>
-                ))}
-        </div>
-    );
+    const sizes = {
+        sm: "h-2 w-2",
+        md: "h-3 w-3",
+        lg: "h-4 w-4",
+    };
+
+    const statusColor = activityTypes[status] || "bg-gray-400";
+    const sizeClass = sizes[size] || sizes.sm;
+
+    if (type === "text") {
+        return (
+            <div className="flex flex-row items-center">
+                <p className="text-foreground/40 text-[14px] font-semibold ml-2">{status}</p>
+            </div>
+        );
+    } else if (type === "icon") {
+        return (
+            <div className="flex flex-row items-center absolute left-4 bottom-1.5 border-black border rounded-full">
+                <div className={`${sizeClass} ${statusColor} rounded-full`}></div>
+            </div>
+        );
+    }
+    return null;
 }

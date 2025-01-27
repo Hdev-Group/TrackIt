@@ -2,17 +2,16 @@
 
 import LockedSidebar from '@/components/sidebar/sidebar';
 import AuthChecks from '../authchecks';
-import { AlertCircle, Calendar, CheckCircle, Clock, MoreHorizontal, Search, Ticket } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, MoreHorizontal, Ticket } from 'lucide-react';
 import { getAuth, User } from 'firebase/auth';
 import { act, useEffect, useState } from 'react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
 export default function Dashboard() {
-    const [user, setuser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const auth = getAuth();
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
-            setuser(user);
+            setUser(user);
         });
 
         return () => unsubscribe();
@@ -34,7 +33,7 @@ export default function Dashboard() {
         <AuthChecks>
             <main className="bg-[#101218] w-full min-h-screen h-full overflow-hidden">
                 <div className="flex flex-row justify-between items-baseline h-screen">
-                    <LockedSidebar />
+                    <LockedSidebar user={user} />
                     <div className='bg-[#101218] w-full h-full overflow-y-scroll '>
                         <div className="flex flex-col items-start justify-start w-full h-full">
                             <div className="h-12 flex items-center justify-end px-3 w-full">
