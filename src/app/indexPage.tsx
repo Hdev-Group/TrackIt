@@ -2,6 +2,7 @@
 import { motion } from "framer-motion"
 import Header from "@/components/header/header";
 import Button from "@/components/button/button";
+import { Loader2, Lock, RotateCw } from "lucide-react";
 
 export default function Home() {
         
@@ -68,21 +69,22 @@ export default function Home() {
           <div className="flex flex-col items-center justify-center w-full">
             <div className="bg-gradient-to-r movegradient w-full h-4 z-0 flex items-center justify-center backdrop-blur-md blur-[3rem]"/>
             <div className="w-full h-auto bg-background rounded-2xl z-10 flex flex-col items-start justify-start">
-              <div className="w-full items-center justify-between flex px-3 flex-row pt-1">
+              <div className="w-full items-center h-14 justify-between flex px-3 flex-row pt-1">
                 <div className=" h-10 justify-start gap-1 flex items-center">
                   <div className="w-3 h-3 bg-red-500 hover:bg-red-600 transition-all rounded-full" />
                   <div className="w-3 h-3 bg-yellow-500 hover:bg-yellow-600 transition-all rounded-full" />
                   <div className="w-3 h-3 bg-green-500 hover:bg-green-600 transition-all rounded-full" />
                 </div>
                 <div className="flex flex-row items-center w-full justify-center">
-                  <div className="px-4 text-muted-foreground text-sm z-50 bg-white/5 flex items-center justify-center rounded-lg">
-                    <p className="">https://trackit.hdev.uk</p>
+                  <div className="px-4 gap-2 w-1/2 text-muted-foreground justify-between text-md z-50 py-1 bg-white/20 flex items-center rounded-lg">
+                    <Lock className="w-4" />
+                    <p className="">trackit.hdev.uk</p>
+                    <RotateCw className="w-4" />
                   </div>
                 </div>
                 <div className=""></div>
               </div>
               <div className="w-full border-hidden">
-                <img src="https://i.pinimg.com/originals/dd/5a/6b/dd5a6bebdb5854f9d988abd62ec8e121.jpg" alt="img" className="w-full rounded-b-lg border-hidden h-auto" />
               </div>
             </div>
           </div>

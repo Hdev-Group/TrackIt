@@ -54,7 +54,7 @@ export default function Page() {
       <div className='mx-auto md:px-10 h-screen flex flex-col w-full'>
         <div className='w-full h-20 md:px-0 px-3 py-3 flex items-center justify-between'>
             <a href='/'>
-              <img src="/wordmarks/light-removebg-preview.png" className='w-auto h-10'></img>
+              <img src="/trackitlogo/light/wordmark.png" className='w-auto h-10'></img>
             </a>            
             <div className='flex flex-row gap-4 items-center'>
               <p className='text-muted-foreground text-sm'>Already have an account?</p>

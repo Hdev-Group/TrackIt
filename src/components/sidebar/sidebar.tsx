@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, ChevronDown, ChevronLeft, Home, Settings, Ticket, TicketCheck } from "lucide-react";
+import { Bell, Calendar, ChevronDown, ChevronLeft, Clock, Home, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { User } from "firebase/auth";
 
@@ -122,6 +122,10 @@ export default function LockedSidebar({user}: {user: User | null}) {
                                     <Ticket className="w-[17px] h-[17px] text-muted-foreground" />
                                     <p className="text-foreground/40 text-[14px] font-semibold ml-2">Tickets</p>
                                 </div>
+                                <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center">
+                                    <Clock className="w-[17px] h-[17px] text-muted-foreground" />
+                                    <p className="text-foreground/40 text-[14px] font-semibold ml-2">Shifts</p>
+                                </div>
                                 <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center just">
                                     <Bell className="w-[17px] h-[17px] text-muted-foreground" />
                                     <p className="text-foreground/40 text-[14px] font-semibold ml-2">Notifications</p>
@@ -158,6 +162,8 @@ export default function LockedSidebar({user}: {user: User | null}) {
                                 </div>
                             </div>
                         </div>
+                        <div>
+                        <ShiftIndicator />
                         <div className="border-t select-none border-foreground/10 w-full mt-2 py-2 px-1.5 flex flex-col items-start">
                             <div className="flex flex-row w-full justify-between group items-center mt-2" onClick={() => setOpenedProfile(true)}>
                             <div className="flex flex-row relative items-center">
@@ -178,6 +184,7 @@ export default function LockedSidebar({user}: {user: User | null}) {
                                 <Settings className="w-4 h-4 text-muted-foreground" />
                             </div>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -251,6 +258,44 @@ export default function LockedSidebar({user}: {user: User | null}) {
             </div>
         </div>
     );
+}
+
+function ShiftIndicator() {
+    const [progress, setProgress] = useState(0)
+  
+    useEffect(() => {
+      const updateProgress = () => {
+        const now = new Date()
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0) // 9:00 AM
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0) // 6:00 PM
+        const total = end.getTime() - start.getTime()
+        const elapsed = now.getTime() - start.getTime()
+        setProgress(Math.min(Math.max((elapsed / total) * 100, 0), 100))
+      }
+  
+      updateProgress()
+      const interval = setInterval(updateProgress, 60000) 
+  
+      return () => clearInterval(interval)
+    }, [])
+  
+    return (
+      <div className="bg-muted cursor-pointer hover:bg-muted-foreground/20 transition-all rounded-md flex-col shadow-sm px-2 py-2 max-w-sm w-full h-20 ml-1">
+        <div className="flex flex-row items-end w- h-full gap-2">
+            <div className="bg-muted-foreground/15 h-full w-2 rounded-lg">
+                <div
+                    className="bg-blue-600 w-2 rounded-full transition-all duration-1000 ease-in-out"
+                    style={{ height: `${progress}` }}
+                />
+            </div>
+          <div className="flex flex-col items-start w-full justify-center">
+            <h1 className="text-white text-sm font-semibold mt-3">Your on shift</h1>
+            <p className="text-white text-xs font-normal flex flex-row gap-1 items-center"><Clock className="w-4" /> Until 18:00</p>
+            <p className="text-white text-xs font-normal flex flex-row gap-1 items-center"><Calendar className="w-4" /> {new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+      </div>
+    )
 }
 
 function Status({ type, status, size = "sm", profile, position = { left: "left-4", bottom: "bottom-1.5" } }: { type: string, status: "Online" | "Away" | "Busy" | "Offline", size?: "sm" | "md" | "lg", position?: { left: string, bottom: string }, profile?: boolean }) {
