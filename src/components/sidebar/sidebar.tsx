@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, Calendar, ChevronDown, ChevronLeft, Clock, Home, Settings, Ticket, TicketCheck } from "lucide-react";
+import { Bell, Calendar, ChevronDown, Clock, Home, Maximize2, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { User } from "firebase/auth";
 
@@ -93,26 +93,11 @@ export default function LockedSidebar({user}: {user: User | null}) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
     >
-        <div className={`${!hidden ? "h-full relative bg-white/5" : "h-[70vh] overflow-y-auto absolute rounded-r-xl overflow-hidden bg-muted z-50"} flex-row flex  justify-between transition-all duration-300`} style={!hidden ? { width: sidebarWidth } : { width: hoveredSidebar }}>
+        <div className={`${!hidden ? "h-full relative bg-white/5" : "h-[70vh] overflow-y-auto absolute rounded-r-xl overflow-hidden bg-muted/50 border-4 border-x-0 z-50"} flex-row flex  justify-between transition-all duration-300`} style={!hidden ? { width: sidebarWidth } : { width: hoveredSidebar }}>
                 <div className="flex flex-col items-start mx-2 w-full h-full mr-4">
                     <div className="flex flex-col justify-between h-full w-full">
                         <div className="flex flex-col w-full select-none ">
-                            <div className="w-full h-9 mx-1.5 mt-2 py-0.5 px-1.5 cursor-pointer flex hover:bg-neutral-300/10 rounded-md items-center justify-between">
-                                <div className="flex flex-row gap-0.5 justify-between w-full items-center">
-                                    <div className="flex flex-row justify-between w-full items-center">
-                                        <div className="flex flex-row gap-0.5 justify-center items-center">
-                                            <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-xl text-muted-foreground font-semibold">
-                                                <p>H</p>
-                                            </div>
-                                            <p className="text-foreground/80 text-md font-semibold ml-2">Hdev Group</p>
-                                            <ChevronDown className="w-5 h-4 text-muted-foreground ml-1" />
-                                        </div>
-                                        <div className="w-8 h-8 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center z-50" onClick={() => setHidden(!hidden)}>
-                                            <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <OrgPicker ishidden={hidden} sethidden={setHidden} />
                             <div className="w-full flex flex-col mt-2">
                                 <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center">
                                     <Home className="w-[17px] h-[17px] text-muted-foreground" />
@@ -173,10 +158,10 @@ export default function LockedSidebar({user}: {user: User | null}) {
                                 </Avatar>
                                 <Status type="icon" status="Online" profile={true} />
                                 <div className="flex flex-col">
-                                    <p className="text-foreground/40 text-[14px] -mb-2 mt-1 font-semibold ml-2">{user?.displayName}</p>
+                                    <p className="text-foreground text-[14px] -mb-2 mt-1 font-semibold ml-2 flex-nowrap text-nowrap ">{user?.displayName}</p>
                                     <div className="overflow-hidden h-[20px]">
-                                        <p className="text-foreground/30 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Online</p>
-                                        <p className="text-foreground/30 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
+                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Online</p>
+                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
                                     </div>
                                 </div>
                             </div>
@@ -206,8 +191,8 @@ export default function LockedSidebar({user}: {user: User | null}) {
                             />
                         </div>
                         <div className="">
-                        <h1 className="text-white text-xl font-semibold">{user?.displayName}</h1>
-                        <p className="text-muted-foreground text-xs font-normal">Lead Software Engineer</p>
+                        <h1 className="text-white text-xl font-semibold flex-nowrap text-nowrap">{user?.displayName}</h1>
+                        <p className="text-muted-foreground text-xs font-normal flex-nowrap text-nowrap ">Lead Software Engineer</p>
                         </div>
                     </div>
                     <div className="flex w-full flex-col gap-4 mt-3 border-t pt-3 h-full">
@@ -260,8 +245,75 @@ export default function LockedSidebar({user}: {user: User | null}) {
     );
 }
 
+function OrgPicker({ishidden, sethidden}: {ishidden: boolean, sethidden: React.Dispatch<React.SetStateAction<boolean>>}) {
+    const [orgPicker, SetOrgPicker] = useState(false);
+
+    function OrgSelector({name}: {name: string}) {
+        return(
+            <div className="w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer justify-start rounded-md items-center">
+            <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-sm text-muted-foreground font-semibold">
+                <p>{name.split(' ').map(word => word.charAt(0)).join('')}</p>
+            </div>
+            <p className="text-foreground/70 text-sm font-semibold ml-2 flex-nowrap text-nowrap ">{name}</p>
+        </div>
+        )
+    }
+
+    const OrgList = [
+        {
+            name: "Hdev Group"
+        }, 
+        {
+            name: "Hdev Technologies"
+        },
+        {
+            name: "Hdev Solutions"
+        },
+        {
+            name: "Hdev Innovations"
+        }, 
+        {
+            name: "Hdev Labs"
+        },
+        {
+            name: "Hdev Systems"
+        },
+        {
+            name: "ABCorp"
+        }
+    ]
+
+    return(
+        <div className="w-full h-9 mx-1.5 mt-2 py-0.5 px-1.5 cursor-pointer flex hover:bg-neutral-300/10 rounded-md items-center justify-between">
+            <div className="flex flex-row gap-0.5 relative justify-between w-full items-center">
+                <div className="flex relative flex-row gap-0.5 justify-center items-center" onClick={() => SetOrgPicker(!orgPicker)}>
+                    <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-xl text-muted-foreground font-semibold">
+                        <p>H</p>
+                    </div>
+                    <p className="text-foreground/80 text-md font-semibold ml-2 flex-nowrap text-nowrap ">Hdev Group</p>
+                    <ChevronDown className={`w-5 h-4 text-muted-foreground ml-1 transition-all ${orgPicker ? "rotate-180" : "rotate-0"}`} />
+                    </div>
+                    <div className="w-8 h-8 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center z-50" onClick={() => sethidden(!ishidden)}>
+                    {
+                        ishidden ? <Maximize2 className="w-5 h-5 text-muted-foreground" /> : <Minimize2Icon className="w-5 h-5 text-muted-foreground transform rotate-180" />
+                    }
+                </div>
+                <div className={`${orgPicker ? "absolute" : "hidden"} bg-muted/50 backdrop-blur-lg w-full h-auto top-10 left-0 rounded-lg px-2 py-2 w z-50`}>
+                        <div className="flex w-full items-start justify-start flex-col gap-0.5">
+                            {
+                                orgPicker && OrgList.map((org, index) => (
+                                    <OrgSelector key={index} name={org.name} />
+                                ))
+                            }
+                        </div>
+                    </div>
+            </div>
+        </div>
+    )
+}
+
 function ShiftIndicator() {
-    const [progress, setProgress] = useState(0)
+    const [progress, setProgress] = useState(40)
   
     useEffect(() => {
       const updateProgress = () => {
@@ -280,12 +332,12 @@ function ShiftIndicator() {
     }, [])
   
     return (
-      <div className="bg-muted cursor-pointer hover:bg-muted-foreground/20 transition-all rounded-md flex-col shadow-sm px-2 py-2 max-w-sm w-full h-20 ml-1">
+      <div className="bg-muted cursor-pointer flex-nowrap text-nowrap hover:bg-muted-foreground/20 transition-all rounded-md flex-col shadow-sm px-2 py-2 max-w-sm w-full h-20 ml-1">
         <div className="flex flex-row items-end w- h-full gap-2">
-            <div className="bg-muted-foreground/15 h-full w-2 rounded-lg">
+            <div className="bg-muted-foreground/15 h-full justify-end items-end flex w-2 rounded-lg">
                 <div
                     className="bg-blue-600 w-2 rounded-full transition-all duration-1000 ease-in-out"
-                    style={{ height: `${progress}` }}
+                    style={{ height: `${progress}%` }}
                 />
             </div>
           <div className="flex flex-col items-start w-full justify-center">

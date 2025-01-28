@@ -2,9 +2,10 @@
 
 import LockedSidebar from '@/components/sidebar/sidebar';
 import AuthChecks from '../authchecks';
-import { AlertCircle, CheckCircle, Clock, MoreHorizontal, Ticket } from 'lucide-react';
+import { AlertCircle, Building2Icon, CheckCircle, Clock, Glasses, LucideTickets, MoreHorizontal, Ticket } from 'lucide-react';
 import { getAuth, User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
+import { m } from 'framer-motion';
 
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
@@ -35,7 +36,7 @@ export default function Dashboard() {
                 <div className="flex flex-row justify-between items-baseline h-screen">
                     <LockedSidebar user={user} />
                     <div className='bg-[#101218] w-full h-full overflow-y-scroll '>
-                        <div className="flex flex-col items-start justify-start w-full h-full">
+                        <div className="flex flex-col items-start  mb-[20vh]  justify-start w-full h-full">
                             <div className="h-12 flex items-center justify-end px-3 w-full">
                                 <MoreHorizontal size={24} className="text-muted-foreground" />
                             </div>
@@ -49,9 +50,10 @@ export default function Dashboard() {
                                         {user?.displayName?.split(' ')[0]}.
                                     </div>
                                 </div>
-                                <div className='flex flex-col w-full gap-4 mb-28'>
+                                <div className='flex flex-col w-full gap-4'>
                                     <AssignedTickets/>
                                     <TicketStats/>
+                                    <DepartmentsAssignedTo />
                                     <RecentActivities/>
                                 </div>
                             </div>
@@ -71,24 +73,29 @@ function AssignedTickets(){
                     <div className='flex flex-row'>
                         <div className="relative">
                         </div> 
-                        <h2 className='text-muted-foreground font-medium text-[13px] ml-2'>Assigned Tickets</h2>  
                     </div>
                     <div className='group-hover:opacity-100 opacity-0 transition-all items-center'>
                         <MoreHorizontal size={22} className='text-muted-foreground cursor-pointer' />
                     </div>
                 </div>                        
             </div>
-            <div className='flex flex-row bg-muted-foreground/10 justify-between items-center w-full rounded-lg'>
-                <div className='border-r flex items-center justify-center flex-col border-muted-foreground/20 py-10 h-full w-full'>
-                    <div className='flex items-start justify-start flex-col gap-2 px-10'>
-                        <p className='text-muted-foreground text-[14px] font-medium mt-0.5'>There are no tickets assigned to you, Yet..</p>
-                    </div>
+            <div className='flex flex-col bg-muted-foreground/10 justify-between items-center w-full  rounded-lg'>
+                <div className='flex items-center justify-start px-4 w-full h-10 gap-2'>
+                    <Ticket className='text-foreground' />
+                    <h2 className='text-foreground font-medium text-[13px] ml-2'>Assigned Tickets</h2>  
                 </div>
-                <div className='w-full p-5 flex h-full items-start justify-start flex-col gap-2'>
-                    <div className='flex items-start justify-start w-full flex-row gap-2'>
-                        <div className='flex flex-col justify-between w-1/2'>
-                            <h2 className='text-muted-foreground/60 font-medium text-[13px]'>My Tickets</h2>
-                            <p className='text-muted-foreground/50 text-[13px]'>Hmm, All empty here.</p>
+                <div className='flex flex-row w-full justify-between border-muted-foreground/20 border-t'>
+                    <div className='border-r flex items-center justify-center flex-col border-muted-foreground/20 py-10 h-full w-full'>
+                        <div className='flex items-start justify-start flex-col gap-2 px-10'>
+                            <p className='text-muted-foreground text-[14px] font-medium mt-0.5'>There are no tickets assigned to you, Yet..</p>
+                        </div>
+                    </div>
+                    <div className='w-full p-5 flex h-full items-start justify-start flex-col gap-2'>
+                        <div className='flex items-start justify-start w-full flex-row gap-2'>
+                            <div className='flex flex-col justify-between w-1/2'>
+                                <h2 className='text-muted-foreground/60 font-medium text-[13px]'>My Tickets</h2>
+                                <p className='text-muted-foreground/50 text-[13px]'>Hmm, All empty here.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -114,15 +121,19 @@ function TicketStats() {
                     <div className='flex flex-row'>
                         <div className="relative">
                         </div>
-                        <h2 className='text-muted-foreground font-medium text-[13px] ml-2'>Ticket Stats</h2>
                     </div>
                     <div className='group-hover:opacity-100 opacity-0 transition-all items-center'>
                         <MoreHorizontal size={22} className='text-muted-foreground cursor-pointer' />
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 py-10 justify-between items-center w-full rounded-lg'>
-            <div className="flex gap-4 flex-wrap w-full  px-10">
+            <div className='flex flex-col bg-muted-foreground/10 justify-between items-center w-full  rounded-lg'>
+                <div className='flex items-center justify-start px-4 w-full h-10 gap-2'>
+                    <LucideTickets className='text-foreground' />
+                    <h2 className='text-foreground font-medium text-[13px] ml-2'>Ticket Statistics</h2>  
+                </div>
+                <div className='flex flex-row w-full justify-between border-muted-foreground/20 py-4 border-t'>
+                <div className="flex gap-4 flex-wrap w-full px-10">
                 <div className='w-full flex flex-col gap-5 md:flex-row justify-between'>
                     <div className="flex flex-col space-y-2 ">
                         <p className="text-xs font-medium text-muted-foreground">Total Tickets</p>
@@ -156,7 +167,7 @@ function TicketStats() {
                     </div>
                 </div>
                 </div>
-
+            </div>
             </div>
         </div>
     );
@@ -225,15 +236,18 @@ function RecentActivities() {
                     <div className='flex flex-row'>
                         <div className="relative">
                         </div>
-                        <h2 className='text-muted-foreground font-medium text-[13px] ml-2'>Recent Activities</h2>
                     </div>
                     <div className='group-hover:opacity-100 opacity-0 transition-all items-center'>
                         <MoreHorizontal size={22} className='text-muted-foreground cursor-pointer' />
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 py-10 justify-between items-center w-full rounded-lg'>
-                <div className="flex flex-col gap-4 w-full px-10">
+            <div className='flex flex-col bg-muted-foreground/10 justify-between items-center w-full  rounded-lg'>
+                <div className='flex items-center justify-start px-4 w-full h-10 gap-2'>
+                    <Glasses className='text-foreground' />
+                    <h2 className='text-foreground font-medium text-[13px] ml-2'>Recent Activity</h2>  
+                </div>
+                <div className='flex flex-col gap-2 px-4 py-4 w-full justify-between border-muted-foreground/20 border-t'>
                     {recentActivities.map((activity) => (
                         <div key={activity.id} className="flex flex-row h-full justify-between items-center w-full">
                             <div className="flex flex-row h-full justify-center items-start gap-6">
@@ -251,4 +265,71 @@ function RecentActivities() {
             </div>
         </div>
     );
+}
+
+function DepartmentsAssignedTo(){
+
+    const departments = [
+        {
+            name: 'Engineering',
+            color: 'bg-red-500',
+        },
+        {
+            name: 'Design',
+            color: 'bg-blue-500',
+        },
+        {
+            name: 'Marketing',
+            color: 'bg-green-500',
+        },
+        {
+            name: 'Sales',
+            color: 'bg-yellow-500',
+        },
+        {
+            name: 'Support',
+            color: 'bg-purple-500',
+        }
+    ]
+
+
+    function Departments({ name, color }: { name: string, color: string }) {
+        return(
+            <div className={`flex items-start px-4 py-4 gap-4 justify-center flex-col w-1/2 h-full rounded-lg ${color} hover:bg-opacity-100 transition-all bg-opacity-25`}>
+                <div className={`bg-muted-foreground/20 font-semibold h-7 w-7 rounded-full flex items-center justify-center`}>
+                    {name.split('')[0]}
+                </div>
+                <h2 className='text-white font-semibold text-[13px]'>{name}</h2>
+            </div>
+        )
+    }
+
+    return(
+        <div className='flex flex-col group gap-4 w-full h-full'>
+        <div className='flex flex-row justify-start items-center w-full'>
+            <div className='flex flex-row justify-between w-full'>
+                <div className='flex flex-row'>
+                    <div className="relative">
+                    </div>
+                </div>
+                <div className='group-hover:opacity-100 opacity-0 transition-all items-center'>
+                    <MoreHorizontal size={22} className='text-muted-foreground cursor-pointer' />
+                </div>
+            </div>
+        </div>
+        <div className='flex flex-col bg-muted-foreground/10 justify-between items-center w-full  rounded-lg'>
+            <div className='flex items-center justify-start px-4 w-full h-10 gap-2'>
+                <Building2Icon className='text-foreground' />
+                <h2 className='text-foreground font-medium text-[13px] ml-2'>Departments</h2>  
+            </div>
+            <div className='flex flex-row gap-2 px-4 py-4 w-full border-muted-foreground/20 border-t'>
+                {
+                    departments.map((department, index) => (
+                        <Departments key={index} name={department.name} color={department.color}/>
+                    ))
+                }
+            </div>
+        </div>
+        </div>
+    )
 }
