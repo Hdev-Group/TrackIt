@@ -1,7 +1,7 @@
 "use client";
 
 import LockedSidebar from '@/components/sidebar/sidebar';
-import AuthChecks from '../authchecks';
+import AuthChecks from '../../authchecks';
 import { AlertCircle, Building2Icon, CheckCircle, Clock, Glasses, LucideTickets, MoreHorizontal, Ticket } from 'lucide-react';
 import { getAuth, User } from 'firebase/auth';
 import { useEffect, useState } from 'react';

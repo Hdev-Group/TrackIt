@@ -18,7 +18,6 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [mainlocation, setMainLocation] = useState({left: 0, width: 0})
-  const [hasScrolled, setHasScrolled] = useState(false)
   const [underlineStyle, setUnderlineStyle] = useState({ left: mainlocation.left, width: mainlocation.width })
   const [activeNav, setActiveNav] = useState<string | null>(null)
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
@@ -34,32 +33,6 @@ export default function Header() {
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []); 
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY
-
-      if (currentScrollY > 250 && currentScrollY > lastScrollY) {
-      setIsHeaderVisible(false)
-      } else {
-      setIsHeaderVisible(true)
-      }
-
-      setLastScrollY(currentScrollY)
-
-      if (currentScrollY > 1) {
-      setHasScrolled(true)
-      } else {
-      setHasScrolled(false)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
-  }, [lastScrollY])
 
   // auto set underline based on URL
   useEffect(() => {
@@ -98,7 +71,7 @@ export default function Header() {
     setUnderlineStyle({ width: mainlocation.width, left: mainlocation.left })
   }
   return (
-    <header className={`fixed w-full items-center justify-center px-4 top-0 z-50 rounded-b-lg bg-[#222831]/20 backdrop-blur-xl transition-transform duration-300 ${hasScrolled ? "" : ""} ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+    <header className={`fixed w-full items-center justify-center px-4 top-0 z-50 rounded-b-lg bg-[#222831]/20 backdrop-blur-xl transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="lg:container w-full lg:mx-auto">
         <div className="flex justify-between w-full items-center py-4 lg:justify-start md:space-x-10">
           <div className="flex justify-start items-center gap-5 lg:w-0 lg:flex-1">

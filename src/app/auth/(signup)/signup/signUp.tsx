@@ -61,7 +61,7 @@ export default function Page() {
               <Button
                 variant='ghost-side-fill'
                 className='border-muted'
-                onClick={() => router.push('/sign-in')}
+                onClick={() => router.push('/signin')}
                 >
                 Sign In
                 </Button>

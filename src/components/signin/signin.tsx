@@ -25,7 +25,7 @@ export default function SignIn() {
 
     useEffect(() => {
         if (auth.currentUser || getAuth().currentUser) {
-            router.push('/dashboard')
+            router.push('/1/dashboard')
         }
     }, [auth, router])
 

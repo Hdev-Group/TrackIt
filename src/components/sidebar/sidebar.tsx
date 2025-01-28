@@ -19,8 +19,7 @@ export default function LockedSidebar({user}: {user: User | null}) {
         }
         setHoveredSidebar(sidebarWidth);
     };
-
-
+    const currentURL = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
 
     const handleMouseLeave = () => {
         timeoutIdRef.current = setTimeout(() => {
@@ -99,19 +98,19 @@ export default function LockedSidebar({user}: {user: User | null}) {
                         <div className="flex flex-col w-full select-none ">
                             <OrgPicker ishidden={hidden} sethidden={setHidden} />
                             <div className="w-full flex flex-col mt-2">
-                                <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center">
+                                <div className={`w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentURL === 'dashboard' ? 'bg-neutral-200/5' : ''}`}>
                                     <Home className="w-[17px] h-[17px] text-muted-foreground" />
                                     <p className="text-foreground/40 text-[14px] font-semibold ml-2">Home</p>
                                 </div>
-                                <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center">
+                                <div className={`w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentURL === 'tickets' ? 'bg-neutral-200/5' : ''}`}>
                                     <Ticket className="w-[17px] h-[17px] text-muted-foreground" />
                                     <p className="text-foreground/40 text-[14px] font-semibold ml-2">Tickets</p>
                                 </div>
-                                <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center">
+                                <div className={`w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentURL === 'shifts' ? 'bg-neutral-200/5' : ''}`}>
                                     <Clock className="w-[17px] h-[17px] text-muted-foreground" />
                                     <p className="text-foreground/40 text-[14px] font-semibold ml-2">Shifts</p>
                                 </div>
-                                <div className="w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center just">
+                                <div className={`w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentURL === 'notifications' ? 'bg-neutral-200/5' : ''}`}>
                                     <Bell className="w-[17px] h-[17px] text-muted-foreground" />
                                     <p className="text-foreground/40 text-[14px] font-semibold ml-2">Notifications</p>
                                 </div>
