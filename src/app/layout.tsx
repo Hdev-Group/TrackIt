@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./firebase/AuthContext";
+import { StatusProvider } from "@/components/statusProvider/statusProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
+
+
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -26,6 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <AuthProvider>
+      <StatusProvider>
       <head >
       <link href="https://fonts.googleapis.com/css2?family=Funnel+Sans:ital,wght@0,300;1,300&family=Noto+Sans+JP:wght@100..900&family=Rubik:ital,wght@0,300..900;1,300..900&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet"></link>
       </head>
@@ -34,6 +38,7 @@ export default function RootLayout({
       >
         {children}
       </body>
+      </StatusProvider>
       </AuthProvider>
     </html>
   );

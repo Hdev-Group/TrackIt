@@ -4,6 +4,7 @@ import { Bell, Calendar, ChevronDown, Clock, Home, Maximize2, Minimize2Icon, Set
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
+import { useStatus } from "@/components/statusProvider/statusProvider";
 
 export default function LockedSidebar({user}: {user: User | null}) {
     console.log(user);
@@ -158,11 +159,11 @@ export default function LockedSidebar({user}: {user: User | null}) {
                                 <Avatar className="w-6 h-6">
                                     <AvatarImage src={user?.photoURL ?? undefined} alt="Your Profile" />
                                 </Avatar>
-                                <Status type="icon" status="Online" profile={true} />
+                                <Status type="icon"  profile={true} />
                                 <div className="flex flex-col">
                                     <p className="text-foreground text-[14px] -mb-2 mt-1 font-semibold ml-2 flex-nowrap text-nowrap ">{user?.displayName}</p>
                                     <div className="overflow-hidden h-[20px]">
-                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Online</p>
+                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1"><Status type="text" /></p>
                                         <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
                                     </div>
                                 </div>
@@ -242,42 +243,46 @@ export default function LockedSidebar({user}: {user: User | null}) {
 }
 const activityTypes = {
     Online: "bg-green-400",
-    Away: "bg-yellow-400",
+    Idle: "bg-yellow-400",
     Busy: "bg-red-400",
     Offline: "bg-gray-400",
 };
 function StatusPicker() {
     const [statusPickerShown, setStatusPickerShown] = useState(false);
-    const currentActivity = localStorage.getItem('status') || 'Online';
-
-    function setStatus(status: string) {
-        localStorage.setItem('status', status);
-    }
-
-    return(
-        <div className="flex flex-col relative">
-            <div className="absolute flex flex-col gap-1 bottom-8 bg-muted backdrop-blur-2xl px-2 border border-b-0 border-muted-foreground/50 py-2 w-full h-40 left-0 rounded-t-lg z-50" style={{display: statusPickerShown ? 'block' : 'none'}}>
-            {
-                activityTypes && Object.keys(activityTypes).map((status, index) => (
-                    <div key={index} onClick={() => {setStatus(status); setStatusPickerShown(false)}} className={`w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentActivity === status ? 'bg-neutral-200/5' : ''}`}>
-                        <div className="w-7 h-7  rounded-md items-center justify-center flex text-xl relative text-muted-foreground font-semibold">
-                            <Status type="icon" status={status as "Online" | "Away" | "Busy" | "Offline"} position={{left: "left-0", bottom: "bottom-[px]"}} profile={false} size="lg" />
-                        </div>
-                        <p className={`text-sm font-normal ml-1  flex-nowrap text-nowrap ${currentActivity === status ? "text-foreground" : "text-muted-foreground"}`}>{status}</p>
-                    </div>
-                ))
-            }
+    const { status, setStatus } = useStatus();
+  
+    return (
+      <div className="flex flex-col relative">
+        <div className="absolute flex flex-col gap-1 bottom-8 bg-muted backdrop-blur-2xl px-2 border border-b-0 border-muted-foreground/50 py-2 w-full h-40 left-0 rounded-t-lg z-50" style={{display: statusPickerShown ? 'block' : 'none'}}>
+          {["Online", "Idle", "Busy", "Offline"].map((statusOption, index) => (
+            <div
+              key={index}
+              onClick={() => { setStatus(statusOption); setStatusPickerShown(false); }}
+              className={`w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${status === statusOption ? 'bg-neutral-200/5' : ''}`}
+            >
+              <div className="w-7 h-7 rounded-md items-center justify-center flex text-xl relative text-muted-foreground font-semibold">
+                <Status type="icon" status={statusOption as "Online" | "Idle" | "Busy" | "Offline"} position={{ left: "left-0", bottom: "bottom-[0px]" }} profile={false} size="md" />
+              </div>
+              <p className={`text-sm font-normal ml-1 flex-nowrap text-nowrap ${status === statusOption ? "text-foreground" : "text-muted-foreground"}`}>{statusOption}</p>
             </div>
-            <div onClick={() => setStatusPickerShown(!statusPickerShown)} className={`${statusPickerShown ? "rounded-b-lg" : "rounded-lg"} bg-muted-foreground/20 w-full  justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-1.5 flex flex-row `}>
-                <div className="flex flex-row items-center gap-2">
-                    <div className="flex items-center justify-center h-3 w-3 mb-[1px] bg-green-500 rounded-full"/>
-                    <Status type="text" status="Online" />
-                </div>
-                <ChevronDown className="w-4 h-4 text-muted-foreground ml-2" />
-            </div>
+          ))}
         </div>
-    )
-}
+        <div onClick={() => setStatusPickerShown(!statusPickerShown)} className={`${statusPickerShown ? "rounded-b-lg" : "rounded-lg"} bg-muted-foreground/20 w-full justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-1.5 flex flex-row`}>
+          <div className="flex flex-row items-center gap-2">
+            {["Online", "Idle", "Busy", "Offline"].map((statusOption) => (
+              status === statusOption && (
+                <div key={statusOption} className="flex flex-row gap-2 items-center">
+                  <Status type="icon" position={{left: "left-0", bottom: "bottom-0"}} size="md" status={statusOption as any} />
+                  <Status type="text" status={statusOption as any} className="!text-[14px]" />
+                </div>
+              )
+            ))}
+          </div>
+          <ChevronDown className={`${statusPickerShown ? "rotate-180" : ""} transition-all w-4 h-4 text-muted-foreground ml-2`} />
+        </div>
+      </div>
+    );
+  }
 
 function OrgPicker({ishidden, sethidden}: {ishidden: boolean, sethidden: React.Dispatch<React.SetStateAction<boolean>>}) {
     const [orgPicker, SetOrgPicker] = useState(false);
@@ -384,29 +389,30 @@ function ShiftIndicator() {
     )
 }
 
-function Status({ type, status, size = "sm", profile, position = { left: "left-4", bottom: "bottom-1.5" } }: { type: string, status: "Online" | "Away" | "Busy" | "Offline", size?: "sm" | "md" | "lg", position?: { left: string, bottom: string }, profile?: boolean }) {
-
+function Status({ type, size = "sm", className, status, profile, position = { left: "left-4", bottom: "bottom-1.5" } }: { type: string, status?: "Online" | "Idle" | "Busy" | "Offline", size?: "sm" | "md" | "lg", position?: { left: string, bottom: string }, profile?: boolean, className?: string }) {
+    const { status: currentActivity } = useStatus();
+  
     const sizes = {
-        sm: "h-2 w-2",
-        md: "h-3 w-3",
-        lg: "h-4 w-4",
+      sm: "h-2 w-2",
+      md: "h-3 w-3",
+      lg: "h-4 w-4",
     };
-
-    const statusColor = activityTypes[status] || "bg-gray-400";
+  
+    const statusColor = activityTypes[currentActivity as keyof typeof activityTypes] || "bg-gray-400";
     const sizeClass = sizes[size] || sizes.sm;
-
+  
     if (type === "text") {
-        return (
-            <div className="flex flex-row items-center">
-                <p className="text-foreground/40 text-[13px] font-semibold ml-2">{status}</p>
-            </div>
-        );
+      return (
+        <div className="flex flex-row items-center">
+          <p className={`text-foreground/40 text-[11px] font-normal ${className}`}>{currentActivity}</p>
+        </div>
+      );
     } else if (type === "icon") {
-        return (
-            <div className={`flex flex-row items-center ${profile ? "absolute" : "relative"} ${position.left} ${position.bottom} border-black border rounded-full`}>
-                <div className={`${sizeClass} ${statusColor} rounded-full`}></div>
-            </div>
-        );
+      return (
+        <div className={`flex flex-row items-center ${profile ? "absolute" : "relative"} ${position.left} ${position.bottom} border-black border rounded-full`}>
+          <div className={`${sizeClass} ${status ? activityTypes[status] : statusColor} rounded-full`}></div>
+        </div>
+      );
     }
     return null;
-}
+  }
