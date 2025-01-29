@@ -1,11 +1,12 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Bell, Calendar, ChevronDown, Clock, Home, Maximize2, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 
 export default function LockedSidebar({user}: {user: User | null}) {
-    console.log(user?.photoURL ?? undefined);
+    console.log(user);
     const [sidebarWidth, setSidebarWidth] = useState(256); 
     const [hoveredSidebar, setHoveredSidebar] = useState(localStorage.getItem('hoveredSidebar') ? parseInt(localStorage.getItem('hoveredSidebar')!) : 1);
     const [hidden, setHidden] = useState(localStorage.getItem('hidden') === 'true' || false);
@@ -84,6 +85,9 @@ export default function LockedSidebar({user}: {user: User | null}) {
             };
         }
     }, []);
+    const isActive = useActive({userId: user?.uid});
+
+    console.log(isActive);
 
     return (
         <div
@@ -152,8 +156,7 @@ export default function LockedSidebar({user}: {user: User | null}) {
                             <div className="flex flex-row w-full justify-between group items-center mt-2" onClick={() => setOpenedProfile(true)}>
                             <div className="flex flex-row relative items-center">
                                 <Avatar className="w-6 h-6">
-                                    <AvatarImage src={`${user?.photoURL}`}alt="Your Profile" />
-                                    <AvatarFallback className="w-6 h-6  text-xl font-semibold">{user?.displayName?.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={user?.photoURL ?? undefined} alt="Your Profile" />
                                 </Avatar>
                                 <Status type="icon" status="Online" profile={true} />
                                 <div className="flex flex-col">
@@ -176,7 +179,7 @@ export default function LockedSidebar({user}: {user: User | null}) {
                     <div className="flex flex-col items-start gap-2">
                         <div className="flex flex-row relative">
                             <Avatar className="w-12 h-12">
-                            <AvatarImage src={`${user?.photoURL}`} alt="Your Profile" />
+                            <AvatarImage src={user?.photoURL ?? undefined} alt="Your Profile" />
                             <AvatarFallback className="w-6 h-6 text-xl font-semibold">
                                 {user?.displayName?.charAt(0)}
                             </AvatarFallback>
@@ -218,18 +221,12 @@ export default function LockedSidebar({user}: {user: User | null}) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col relative gap-2">
                             <div className="bg-muted-foreground/20 w-full rounded-lg justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-2 flex flex-row ">
                                 <p className="text-xs font-semibold text-muted-foreground">Settings</p>
                                 <Settings className="w-4 h-4 text-muted-foreground" />
                             </div>
-                            <div className="bg-muted-foreground/20 w-full rounded-lg justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-1.5 flex flex-row ">
-                                <div className="flex flex-row items-center gap-2">
-                                    <div className="flex items-center justify-center h-3 w-3 mb-[1px] bg-green-500 rounded-full"/>
-                                    <Status type="text" status="Online" />
-                                </div>
-                                <ChevronDown className="w-4 h-4 text-muted-foreground ml-2" />
-                            </div>
+                            <StatusPicker />
                         </div>
                     </div>
                     </div>
@@ -242,6 +239,44 @@ export default function LockedSidebar({user}: {user: User | null}) {
             </div>
         </div>
     );
+}
+const activityTypes = {
+    Online: "bg-green-400",
+    Away: "bg-yellow-400",
+    Busy: "bg-red-400",
+    Offline: "bg-gray-400",
+};
+function StatusPicker() {
+    const [statusPickerShown, setStatusPickerShown] = useState(false);
+    const currentActivity = localStorage.getItem('status') || 'Online';
+
+    function setStatus(status: string) {
+        localStorage.setItem('status', status);
+    }
+
+    return(
+        <div className="flex flex-col relative">
+            <div className="absolute flex flex-col gap-1 bottom-8 bg-muted backdrop-blur-2xl px-2 border border-b-0 border-muted-foreground/50 py-2 w-full h-40 left-0 rounded-t-lg z-50" style={{display: statusPickerShown ? 'block' : 'none'}}>
+            {
+                activityTypes && Object.keys(activityTypes).map((status, index) => (
+                    <div key={index} onClick={() => {setStatus(status); setStatusPickerShown(false)}} className={`w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentActivity === status ? 'bg-neutral-200/5' : ''}`}>
+                        <div className="w-7 h-7  rounded-md items-center justify-center flex text-xl relative text-muted-foreground font-semibold">
+                            <Status type="icon" status={status as "Online" | "Away" | "Busy" | "Offline"} position={{left: "left-0", bottom: "bottom-[px]"}} profile={false} size="lg" />
+                        </div>
+                        <p className={`text-sm font-normal ml-1  flex-nowrap text-nowrap ${currentActivity === status ? "text-foreground" : "text-muted-foreground"}`}>{status}</p>
+                    </div>
+                ))
+            }
+            </div>
+            <div onClick={() => setStatusPickerShown(!statusPickerShown)} className={`${statusPickerShown ? "rounded-b-lg" : "rounded-lg"} bg-muted-foreground/20 w-full  justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-1.5 flex flex-row `}>
+                <div className="flex flex-row items-center gap-2">
+                    <div className="flex items-center justify-center h-3 w-3 mb-[1px] bg-green-500 rounded-full"/>
+                    <Status type="text" status="Online" />
+                </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground ml-2" />
+            </div>
+        </div>
+    )
 }
 
 function OrgPicker({ishidden, sethidden}: {ishidden: boolean, sethidden: React.Dispatch<React.SetStateAction<boolean>>}) {
@@ -350,12 +385,6 @@ function ShiftIndicator() {
 }
 
 function Status({ type, status, size = "sm", profile, position = { left: "left-4", bottom: "bottom-1.5" } }: { type: string, status: "Online" | "Away" | "Busy" | "Offline", size?: "sm" | "md" | "lg", position?: { left: string, bottom: string }, profile?: boolean }) {
-    const activityTypes = {
-        Online: "bg-green-400",
-        Away: "bg-yellow-400",
-        Busy: "bg-red-400",
-        Offline: "bg-gray-400",
-    };
 
     const sizes = {
         sm: "h-2 w-2",

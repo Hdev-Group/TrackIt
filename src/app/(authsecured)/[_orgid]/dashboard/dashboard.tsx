@@ -33,7 +33,7 @@ export default function Dashboard() {
     return (
         <AuthChecks>
             <main className="bg-[#101218] w-full min-h-screen h-full overflow-hidden">
-                <div className="flex flex-row justify-between items-baseline h-screen">
+                <div className="flex flex-row justify-between overflow-hidden items-baseline h-screen">
                     <LockedSidebar user={user} />
                     <div className='bg-[#101218] w-full h-full overflow-y-scroll '>
                         <div className="flex flex-col items-start  mb-[20vh]  justify-start w-full h-full">
