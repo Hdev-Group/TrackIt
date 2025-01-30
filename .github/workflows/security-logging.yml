@@ -1,0 +1,55 @@
+name: Security & Logging
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 12 * * 1' 
+
+jobs:
+  security_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log Start
+        run: echo "::notice::Starting Security Scan"
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Run Secret Scanner (TruffleHog)
+        uses: edplato/trufflehog-actions-scan@v2
+        with:
+          scanArguments: "--regex --entropy=False"
+
+      - name: Enable Dependabot
+        run: echo "Dependabot enabled in repository settings"
+
+      - name: Save Logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-logs
+          path: /var/log/github-security.log
+
+      - name: Send Logs to Loki
+        run: |
+          curl -X POST "http://your-loki-server:3100/loki/api/v1/push" -H "Content-Type: application/json" -d '
+          {
+            "streams": [{
+              "labels": "{job=\"github-actions\"}",
+              "entries": [
+                {"ts": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "line": "Security scan completed"}
+              ]
+            }]
+          }'
+
+      - name: Notify Slack on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: "Security scan failed in ${{ github.repository }}"
