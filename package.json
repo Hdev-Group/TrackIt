@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"next dev\" \"node server.js\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -49,6 +49,7 @@
     "@types/react-dom": "^19",
     "babel-jest": "^29.7.0",
     "chai": "^5.1.2",
+    "concurrently": "^9.1.2",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-esm-transformer": "^1.0.0",
