@@ -6,6 +6,7 @@ export default function useActive({ userId }) {
     const socketRef = useRef(null);
     const userOnlineRef = useRef(false); 
 
+
     useEffect(() => {
         if (!socketRef.current) {
             socketRef.current = io("http://localhost:3001", { transports: ["websocket"] });
@@ -21,7 +22,9 @@ export default function useActive({ userId }) {
             const userAlreadyOnline = onlineUsers.some(user => user.userId === userId);
             if (!userAlreadyOnline) {
             if (!userOnlineRef.current) {
-                socketRef.current.emit("online", { userId });
+                const currentStatus = localStorage.getItem("status") || "online";
+                console.log("Current status:", currentStatus);
+                socketRef.current.emit("online", { userId, status: currentStatus });
                 userOnlineRef.current = true;
             }
 

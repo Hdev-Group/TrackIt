@@ -14,11 +14,11 @@ export default function handler(req, res) {
 
     res.socket.server.io = io;
 
-    io.on("connection", (socket) => {
-      console.log(`User connected: ${socket.id}`);
+    io.on("connection", (socket, status) => {
+      console.log(`User connected: ${socket.id}, status: ${status}`);
 
-      socket.on("online", (userId) => {
-        onlineUsers.set(userId, socket.id);
+      socket.on("online", (userId, userStatus) => {
+        onlineUsers.set(userId, socket.id, userStatus);
         io.emit("onlineUsers", Array.from(onlineUsers.keys())); 
       });
 
