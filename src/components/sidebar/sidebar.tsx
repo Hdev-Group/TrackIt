@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Bell, Calendar, ChevronDown, Clock, Home, Maximize2, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import useActive from "@/components/websockets/isActive/active";
@@ -7,7 +7,6 @@ import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
 
 export default function LockedSidebar({user}: {user: User | null}) {
-    console.log(user);
     const [sidebarWidth, setSidebarWidth] = useState(256); 
     const [hoveredSidebar, setHoveredSidebar] = useState(localStorage.getItem('hoveredSidebar') ? parseInt(localStorage.getItem('hoveredSidebar')!) : 1);
     const [hidden, setHidden] = useState(localStorage.getItem('hidden') === 'true' || false);
