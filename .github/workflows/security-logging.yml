@@ -22,7 +22,7 @@ jobs:
         uses: github/codeql-action/analyze@v2
 
       - name: Run Secret Scanner (TruffleHog)
-        uses: edplato/trufflehog-actions-scan@v2
+        uses: trufflesecurity/trufflehog@main
         with:
           scanArguments: "--regex --entropy=False"
 
