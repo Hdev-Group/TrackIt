@@ -25,7 +25,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-organizational-chart": "^2.2.1",
-    "recharts": "^2.15.0",
+    "recharts": "^2.15.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.6.0",
