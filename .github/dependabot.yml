@@ -1,23 +1,6 @@
-name: Dependabot
-
-on:
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-        - cron: '0 0 * * 1' # Runs every Monday at 00:00 UTC
-    push:
-        branches:
-            - main
-
-jobs:
-    dependabot:
-        runs-on: ubuntu-latest
-        steps:
-              - name: Checkout repository
-                uses: actions/checkout@v2
-        
-              - name: Run Dependabot
-                uses: dependabot/dependabot-core@v1
-                with:
-                  package-manager: 'npm'
-                  directory: '/'
-                  target-branch: 'main'
-                  open-pull-requests-limit: 5
+      interval: "weekly"
