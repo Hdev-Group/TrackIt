@@ -25,16 +25,13 @@ export default function Header() {
 
   
   useEffect(() => {
-    // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []); 
 
-  // auto set underline based on URL
   useEffect(() => {
     const path = window.location.pathname
     const navItems = [

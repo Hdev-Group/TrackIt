@@ -1,13 +1,22 @@
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { Bell, Calendar, ChevronDown, Clock, Home, Maximize2, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
+import { Bell, Calendar, ChevronDown, Clock, Home, Maximize2, MessageSquare, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
 import statusChange from "@/components/websockets/statusChange/statuschange";
 
-export default function LockedSidebar({user}: {user: User | null}) {
+export default function LockedSidebar({user}: {user: User}) {
+
+    if (!user) {
+        return null;
+    }
+    const userPhoto = user.photoURL;
+    console.log(userPhoto);
+
+    const [mainlocation, setMainLocation] = useState({top: 0, width: 0})
+    const [underlineStyle, setUnderlineStyle] = useState({ top: 0, width: 0 });
     const [sidebarWidth, setSidebarWidth] = useState(256); 
     const [hoveredSidebar, setHoveredSidebar] = useState(localStorage.getItem('hoveredSidebar') ? parseInt(localStorage.getItem('hoveredSidebar')!) : 1);
     const [hidden, setHidden] = useState(localStorage.getItem('hidden') === 'true' || false);
@@ -86,9 +95,42 @@ export default function LockedSidebar({user}: {user: User | null}) {
             };
         }
     }, []);
-    const isActive = useActive({userId: user?.uid});
+    useEffect(() => {
+        const navItems = [
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Tickets", href: "/tickets" },
+            { label: "Messages", href: "/messages" },
+            { label: "Shifts", href: "/shifts" },
+            { label: "Notifications", href: "/notifications" },
+        ];
+    
+        const activeItem = navItems.find(item => currentURL?.replace('/', '') === item.href.replace('/', ''));
+    
+        if (activeItem) {
+            requestAnimationFrame(() => {
+                const element = document.querySelector(`a[href='${activeItem.href}']`) as HTMLElement;
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    console.log("Element position:", rect.top, rect.width);
+                    setUnderlineStyle({ top: rect.top + window.scrollY, width: rect.width });  
+                    setMainLocation({ top: rect.top + window.scrollY, width: rect.width });
+                }
+            });
+            
+        }
+    }, [currentURL]);
+    const handleMouseEntering = (e: React.MouseEvent, href: string) => {
+        const target = e.currentTarget as HTMLElement;
+        const { top, width } = target.getBoundingClientRect(); 
+        setUnderlineStyle({
+            top: top + window.scrollY, 
+            width: width,
+        });
+    }
 
-    console.log(isActive);
+    const handleMouseLeaving = () => {
+        setUnderlineStyle({ width: mainlocation.width, top: mainlocation.top });
+    }
 
     return (
         <div
@@ -102,25 +144,36 @@ export default function LockedSidebar({user}: {user: User | null}) {
                     <div className="flex flex-col justify-between h-full w-full">
                         <div className="flex flex-col w-full select-none ">
                             <OrgPicker ishidden={hidden} sethidden={setHidden} />
-                            <div className="w-full flex flex-col mt-2">
-                                <div className={`w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentURL === 'dashboard' ? 'bg-neutral-200/5' : ''}`}>
-                                    <Home className="w-[17px] h-[17px] text-muted-foreground" />
-                                    <p className="text-foreground/40 text-[14px] font-semibold ml-2">Home</p>
-                                </div>
-                                <div className={`w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentURL === 'tickets' ? 'bg-neutral-200/5' : ''}`}>
-                                    <Ticket className="w-[17px] h-[17px] text-muted-foreground" />
-                                    <p className="text-foreground/40 text-[14px] font-semibold ml-2">Tickets</p>
-                                </div>
-                                <div className={`w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentURL === 'shifts' ? 'bg-neutral-200/5' : ''}`}>
-                                    <Clock className="w-[17px] h-[17px] text-muted-foreground" />
-                                    <p className="text-foreground/40 text-[14px] font-semibold ml-2">Shifts</p>
-                                </div>
-                                <div className={`w-full h-7 mx-1.5 py-0.5 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${currentURL === 'notifications' ? 'bg-neutral-200/5' : ''}`}>
-                                    <Bell className="w-[17px] h-[17px] text-muted-foreground" />
-                                    <p className="text-foreground/40 text-[14px] font-semibold ml-2">Notifications</p>
-                                </div>
+                            <div className="w-auto flex flex-col mt-2 relative">
+                                {
+                                    [
+                                        {
+                                            label: "Dashboard", icon: <Home size={18} />, href: "/dashboard" },
+                                        {
+                                            label: "Tickets", icon: <Ticket size={18} />, href: "/tickets" },
+                                        {
+                                            label: "Messages", icon: <MessageSquare size={18} />, href: "/messages" },
+                                        {
+                                            label: "Shifts", icon: <Clock size={18} />, href: "/shifts" },
+                                        {
+                                            label: "Notifications", icon: <Bell size={18} />, href: "/notifications"
+                                        }
+                                    ].map((item, index) => (
+                                        <a key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`w-full h-7 mx-1.5 z-40 py-0.5 px-1.5 flex cursor-pointer rounded-md items-center`}>
+                                            {item.icon}
+                                            <p className="text-foreground/40 text-[14px] font-semibold ml-2">{item.label}</p>
+                                        </a>
+                                    ))
+                                }
+                                <span
+                                    className="absolute bottom-0 rounded-sm border-accent h-[30px] z-0 bg-muted-foreground/10 transition-all duration-300"
+                                    style={{
+                                        top: `${underlineStyle.top}px`,
+                                        width: `100%`,
+                                        transform: `translateX(6px) translateY(-52px)`, 
+                                    }}
+                                />
                             </div>
-
                             <div className="w-full flex flex-col mt-4">
                                 <p className="text-foreground/40 text-[14px] font-semibold ml-2 mx-1.5">Departments</p>
                                 <div className="flex flex-col gap-1 mt-2 items-start">
@@ -157,7 +210,7 @@ export default function LockedSidebar({user}: {user: User | null}) {
                             <div className="flex flex-row w-full justify-between group items-center mt-2" onClick={() => setOpenedProfile(true)}>
                             <div className="flex flex-row relative items-center">
                                 <Avatar className="w-6 h-6">
-                                    <AvatarImage src={user?.photoURL ?? undefined} alt="Your Profile" />
+                                    <img src={`${userPhoto}`} alt="Your Profile" referrerPolicy="no-referrer" />
                                 </Avatar>
                                 <Status type="icon"  profile={true} />
                                 <div className="flex flex-col">
@@ -180,14 +233,13 @@ export default function LockedSidebar({user}: {user: User | null}) {
                     <div className="flex flex-col items-start gap-2">
                         <div className="flex flex-row relative">
                             <Avatar className="w-12 h-12">
-                            <AvatarImage src={user?.photoURL ?? undefined} alt="Your Profile" />
+                            <img src={user.photoURL ?? undefined} alt="Your Profile" referrerPolicy="no-referrer" />
                             <AvatarFallback className="w-6 h-6 text-xl font-semibold">
                                 {user?.displayName?.charAt(0)}
                             </AvatarFallback>
                             </Avatar>
                             <Status
                             type="icon"
-                            status="Online"
                             size="md"
                             profile={true}
                             position={{ left: "left-9", bottom: "bottom-0" }}
