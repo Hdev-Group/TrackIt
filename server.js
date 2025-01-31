@@ -12,40 +12,51 @@ const server = http.createServer((req, res) => {
 
 const io = new Server(server, {
   cors: {
-    origin: "*", 
+    origin: "*",
     methods: ["GET", "POST"],
   },
+  pingInterval: 25000,
+  pingTimeout: 60000, 
 });
 
-const onlineUsers = new Map(); 
+const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id, "Total users:", onlineUsers.size + 1);
+  console.log("New client connected! Socket ID:", socket.id);
 
-  socket.on("online", ({ userId }) => {
-    onlineUsers.set(socket.id, { userId, socketId: socket.id });
+  socket.on("online", ({ userId, status }) => {
+    console.log("User connected:", userId, "| Status:", status);
+    onlineUsers.set(socket.id, { userId, socketId: socket.id, status });
     io.emit("onlineUsers", Array.from(onlineUsers.values()));
   });
 
-  socket.on("checkOnlineStatus", ({ userId }, callback) => {
-    let isOnline = false;
-    for (let user of onlineUsers.values()) {
-      if (user.userId === userId) {
-        isOnline = true;
-        break;
-      }
+  socket.on("changeStatus", ({ userId, status }) => {
+    console.log("Status change received from:", userId, "New status:", status);
+  
+    let user = Array.from(onlineUsers.values()).find(user => user.userId === userId);
+  
+    if (user) {
+      user.status = status;
+      onlineUsers.set(user.socketId, user); 
+  
+      console.log("Status updated:", { userId, status });
+  
+      io.emit("statusChanged", { userId, status });
+  
+      io.emit("onlineUsers", Array.from(onlineUsers.values())); 
+    } else {
+      console.log("User not found:", userId);
     }
-    callback(isOnline);
   });
-
+  
   socket.on("disconnect", () => {
     const user = onlineUsers.get(socket.id);
     if (user) {
+      console.log("User disconnected:", user.userId);
       onlineUsers.delete(socket.id);
-      io.emit("userDisconnected", user.userId); 
-      io.emit("onlineUsers", Array.from(onlineUsers.values())); 
+      io.emit("userDisconnected", user.userId);
+      io.emit("onlineUsers", Array.from(onlineUsers.values()));
     }
-    console.log("User disconnected:", socket.id);
   });
 });
 

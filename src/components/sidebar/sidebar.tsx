@@ -1,13 +1,13 @@
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Bell, Calendar, ChevronDown, Clock, Home, Maximize2, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
+import statusChange from "@/components/websockets/statusChange/statuschange";
 
 export default function LockedSidebar({user}: {user: User | null}) {
-    console.log(user);
     const [sidebarWidth, setSidebarWidth] = useState(256); 
     const [hoveredSidebar, setHoveredSidebar] = useState(localStorage.getItem('hoveredSidebar') ? parseInt(localStorage.getItem('hoveredSidebar')!) : 1);
     const [hidden, setHidden] = useState(localStorage.getItem('hidden') === 'true' || false);
@@ -227,7 +227,7 @@ export default function LockedSidebar({user}: {user: User | null}) {
                                 <p className="text-xs font-semibold text-muted-foreground">Settings</p>
                                 <Settings className="w-4 h-4 text-muted-foreground" />
                             </div>
-                            <StatusPicker />
+                            <StatusPicker userid={user?.uid as string} />
                         </div>
                     </div>
                     </div>
@@ -247,9 +247,15 @@ const activityTypes = {
     Busy: "bg-red-400",
     Offline: "bg-gray-400",
 };
-function StatusPicker() {
-    const [statusPickerShown, setStatusPickerShown] = useState(false);
+function StatusPicker({userid}: {userid: string}) {
     const { status, setStatus } = useStatus();
+    const [statusPickerShown, setStatusPickerShown] = useState(false);
+    const { changeStatus } = statusChange({userId: userid, status: status});
+
+    const handleChangeStatus = (status: "Online" | "Idle" | "Busy" | "Offline") => {
+        setStatus(status);
+        changeStatus(status); 
+    };
   
     return (
       <div className="flex flex-col relative">
@@ -257,7 +263,7 @@ function StatusPicker() {
           {["Online", "Idle", "Busy", "Offline"].map((statusOption, index) => (
             <div
               key={index}
-              onClick={() => { setStatus(statusOption); setStatusPickerShown(false); }}
+              onClick={() => { handleChangeStatus(statusOption as "Online" | "Idle" | "Busy" | "Offline"); setStatusPickerShown(false); }}
               className={`w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${status === statusOption ? 'bg-neutral-200/5' : ''}`}
             >
               <div className="w-7 h-7 rounded-md items-center justify-center flex text-xl relative text-muted-foreground font-semibold">
