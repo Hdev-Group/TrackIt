@@ -31,8 +31,8 @@ export default function Messages() {
                             </div>
                         </div>
                     </div>
-                    <div className='h-full flex items-start justify-start top-0 z-50 bg-white/5'>
-                    <ActiveUsers />
+                    <div className='h-full flex items-start justify-start top-0 z-0 bg-white/5'>
+                        <ActiveUsers />
                     </div>
                 </div>
             </main>
