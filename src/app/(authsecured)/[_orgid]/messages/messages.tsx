@@ -22,8 +22,8 @@ export default function Messages() {
             <main className="bg-[#101218] w-full min-h-screen  h-full overflow-hidden">
                 <div className="flex flex-row justify-between overflow-hidden h-screen">
                     <LockedSidebar user={user as any} />
-                    <div className='bg-[#101218] w-full h-full  overflow-y-scroll '>
-                        <div className="flex flex-col items-start  mb-[20vh]  justify-start w-full h-full">
+                    <div className='bg-[#101218] w-full h-full changedscrollbar overflow-y-scroll '>
+                        <div className="flex flex-col items-start  justify-start w-full h-full">
                             <div className="h-12 flex items-center justify-end px-3 w-full">
                                 <MoreHorizontal size={24} className="text-muted-foreground" />
                             </div>

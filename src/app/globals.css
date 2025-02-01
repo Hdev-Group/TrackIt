@@ -111,3 +111,14 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.changedscrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.changedscrollbar::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+}
+.changedscrollbar::-webkit-scrollbar-thumb:hover {
+  background: #000;
+}

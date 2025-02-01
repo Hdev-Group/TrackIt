@@ -36,33 +36,34 @@ export default function ActiveUsers() {
     };
 
     useEffect(() => {
-        console.log("Users before fetching profiles:", users)
-
-        if (users.length > 0) {
-            const fetchUserProfiles = async () => {
-                const updatedUsers = await Promise.all(
-                    users.map(async (user) => {
-                        if (!user.firstName && !fetchedUsersRef.current.has(user.userId)) { 
-                            fetchedUsersRef.current.add(user.userId) 
-                            const userProfile = await getUserProfile(user.userId)
-                            return { ...user, ...userProfile }
-                        }
-                        return user
-                    })
-                )
-
-                setUsers(prevUsers => {
-                    if (JSON.stringify(prevUsers) !== JSON.stringify(updatedUsers)) {
-                        return updatedUsers 
+        console.log("Users before fetching profiles:", users);
+    
+        const fetchUserProfiles = async () => {
+            const updatedUsers = await Promise.all(
+                users.map(async (user) => {
+                    if (!user.firstName && !fetchedUsersRef.current.has(user.userId)) {
+                        fetchedUsersRef.current.add(user.userId);
+                        const userProfile = await getUserProfile(user.userId);
+                        return { ...user, ...userProfile };
                     }
-                    return prevUsers
+                    return user;
                 })
-            }
-
-            fetchUserProfiles()
+            );
+    
+            setUsers(prevUsers => {
+                if (JSON.stringify(prevUsers) !== JSON.stringify(updatedUsers)) {
+                    return updatedUsers;
+                }
+                return prevUsers;
+            });
+        };
+    
+        if (users.length > 0) {
+            fetchUserProfiles();
         }
-    }, [users]) 
-
+    
+    }, [users.length]);
+    
     const activityTypes = {
         Online: "bg-green-400",
         Idle: "bg-yellow-400",
@@ -81,20 +82,34 @@ export default function ActiveUsers() {
                     <div className="flex flex-col w-full select-none">
                         <CurrentActiveUsers setOnlineUsers={(newUsers: any) => {
                             console.log("Received Active Users:", newUsers)
-                            setUsers(newUsers)
+                            setUsers(prevUsers => {
+                                const newUserIds = new Set(newUsers.map((user: any) => user.userId));
+                                const filteredUsers = prevUsers.filter(user => newUserIds.has(user.userId));
+                                const userMap = new Map(filteredUsers.map(user => [user.userId, user]));
+                            
+                                newUsers.forEach((newUser: any) => {
+                                    if (userMap.has(newUser.userId)) {
+                                        userMap.set(newUser.userId, { ...userMap.get(newUser.userId), ...newUser });
+                                    } else {
+                                        userMap.set(newUser.userId, newUser);
+                                    }
+                                });
+                            
+                                return Array.from(userMap.values());
+                            });
                         }} />
                         <div className="flex flex-col w-full h-full">
                             <div className="flex flex-col w-full mt-5 h-full">
                             <ul className="space-y-2">
                                 {users.map((user) => (
-                                    <li key={user.userId} className="flex hover:bg-muted-foreground/10 rounded-md px-2 flex-row gap-2 items-center space-x-2">
+                                    <li key={user.userId} className="flex hover:bg-muted-foreground/10 rounded-md px-2 py-1 flex-row gap-2 items-center space-x-2">
                                         <div className="flex relative items-center justify-center w-8 h-8">
                                             <img src={user.pictureURL} alt="User Profile" className="w-8 h-8 rounded-full" />
                                             <Status status={user.status as keyof typeof activityTypes} />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span>{user.firstName} {user.lastName}</span>
-                                            <span className="text-xs text-gray-400">{user.status}</span>
+                                            <span className="text-sm">{user.firstName} {user.lastName}</span>
+                                            <span className="text-xs font-light -mt-[0.3rem] text-gray-400">{user.status}</span>
                                         </div>
                                     </li>
                                 ))}

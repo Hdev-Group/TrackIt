@@ -27,6 +27,11 @@ io.on("connection", (socket) => {
 
   socket.on("online", ({ userId, status }) => {
     console.log("User connected:", userId, "| Status:", status);
+    const user = Array.from(onlineUsers.values()).find(user => user.userId === userId);
+
+    if (user) {
+      return;
+    }
     onlineUsers.set(socket.id, { userId, socketId: socket.id, status });
     io.emit("onlineUsers", Array.from(onlineUsers.values()));
   });
