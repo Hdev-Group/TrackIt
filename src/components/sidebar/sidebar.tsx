@@ -9,11 +9,11 @@ import statusChange from "@/components/websockets/statusChange/statuschange";
 
 export default function LockedSidebar({user}: {user: User}) {
 
+    const userPhoto = user?.photoURL;
+    const [mainlocation, setMainLocation] = useState({top: 0, width: 0})
     if (!user) {
         return null;
     }
-    const userPhoto = user.photoURL;
-    const [mainlocation, setMainLocation] = useState({top: 0, width: 0})
     const [mainhiddenlocation, setMainHiddenLocation] = useState({top: 0, width: 0})
     const [underlineStyle, setUnderlineStyle] = useState({ top: 0, width: 0 });
     const [sidebarWidth, setSidebarWidth] = useState(256); 
@@ -179,7 +179,7 @@ export default function LockedSidebar({user}: {user: User}) {
                                 <span
                                     className="absolute bottom-0 rounded-sm border-accent h-[30px] z-0 bg-muted-foreground/10 transition-all duration-300"
                                     style={{
-                                        top: `${mainhiddenlocation ? underlineStyle.top : underlineStyle.top}px`,
+                                        top: `${underlineStyle.top}px`,
                                         width: `100%`,
                                         transform: `${hidden ? 'translate(6px, -194px)' : 'translateX(6px) translateY(-52px)'}`, 
                                     }}
