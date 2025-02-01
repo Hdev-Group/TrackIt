@@ -1,9 +1,6 @@
 import { useRouter } from "next/navigation";
 import { auth } from "../firebase/firebase";
 import { useEffect, useState } from "react";
-import io from "socket.io-client";
-
-let socket;
 
 const AuthWrapper = ({ children }) => {
   const Router = useRouter();

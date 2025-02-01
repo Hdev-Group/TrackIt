@@ -10,13 +10,14 @@ const server = http.createServer((req, res) => {
   handle(req, res);
 });
 
+// Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "*", 
     methods: ["GET", "POST"],
   },
   pingInterval: 25000,
-  pingTimeout: 60000, 
+  pingTimeout: 60000,
 });
 
 const onlineUsers = new Map();
@@ -30,31 +31,32 @@ io.on("connection", (socket) => {
     io.emit("onlineUsers", Array.from(onlineUsers.values()));
   });
 
+  socket.emit("onlineUsers", Array.from(onlineUsers.values()));
+
   socket.on("changeStatus", ({ userId, status }) => {
     console.log("Status change received from:", userId, "New status:", status);
-  
+
     let user = Array.from(onlineUsers.values()).find(user => user.userId === userId);
-  
+
     if (user) {
       user.status = status;
       onlineUsers.set(user.socketId, user); 
-  
+
       console.log("Status updated:", { userId, status });
-  
+
       io.emit("statusChanged", { userId, status });
-  
-      io.emit("onlineUsers", Array.from(onlineUsers.values())); 
+      io.emit("onlineUsers", Array.from(onlineUsers.values()));
     } else {
       console.log("User not found:", userId);
     }
   });
-  
+
   socket.on("disconnect", () => {
     const user = onlineUsers.get(socket.id);
     if (user) {
       console.log("User disconnected:", user.userId);
-      onlineUsers.delete(socket.id);
-      io.emit("userDisconnected", user.userId);
+      onlineUsers.delete(socket.id); 
+      io.emit("userDisconnected", user.userId); 
       io.emit("onlineUsers", Array.from(onlineUsers.values()));
     }
   });

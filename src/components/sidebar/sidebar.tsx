@@ -13,9 +13,8 @@ export default function LockedSidebar({user}: {user: User}) {
         return null;
     }
     const userPhoto = user.photoURL;
-    console.log(userPhoto);
-
     const [mainlocation, setMainLocation] = useState({top: 0, width: 0})
+    const [mainhiddenlocation, setMainHiddenLocation] = useState({top: 0, width: 0})
     const [underlineStyle, setUnderlineStyle] = useState({ top: 0, width: 0 });
     const [sidebarWidth, setSidebarWidth] = useState(256); 
     const [hoveredSidebar, setHoveredSidebar] = useState(localStorage.getItem('hoveredSidebar') ? parseInt(localStorage.getItem('hoveredSidebar')!) : 1);
@@ -59,11 +58,12 @@ export default function LockedSidebar({user}: {user: User}) {
         localStorage.setItem('hoveredSidebar', hoveredSidebar.toString())
         localStorage.setItem('hidden', hidden.toString())
     }, [sidebarWidth, hoveredSidebar, hidden])
-
     function resizeSidebar(e: React.MouseEvent) {
         const startX = e.clientX;
         const startWidth = sidebarWidth;
         console.log(startWidth);
+
+        document.body.style.userSelect = 'none';
 
         function onMouseMove(e: MouseEvent) {
             const newWidth = startWidth + (e.clientX - startX);
@@ -72,6 +72,7 @@ export default function LockedSidebar({user}: {user: User}) {
             } 
         }
         function onMouseUp() {
+            document.body.style.userSelect = 'auto';
             document.removeEventListener("mousemove", onMouseMove);
             document.removeEventListener("mouseup", onMouseUp);
         }
@@ -79,6 +80,8 @@ export default function LockedSidebar({user}: {user: User}) {
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
     }
+
+    const activeStatus = useActive({userId: user.uid});
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -96,15 +99,22 @@ export default function LockedSidebar({user}: {user: User}) {
         }
     }, []);
     useEffect(() => {
+        if (!hidden) {
+            setUnderlineStyle({ top: mainlocation.top, width: mainlocation.width });
+        } else {
+            setUnderlineStyle({ top: mainhiddenlocation.top, width: mainhiddenlocation.width });
+        }
+    }, [hidden, mainlocation, mainhiddenlocation]);
+    useEffect(() => {
         const navItems = [
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Tickets", href: "/tickets" },
-            { label: "Messages", href: "/messages" },
-            { label: "Shifts", href: "/shifts" },
-            { label: "Notifications", href: "/notifications" },
+            { label: "Dashboard", href: "./dashboard" },
+            { label: "Tickets", href: "./tickets" },
+            { label: "Messages", href: "./messages" },
+            { label: "Shifts", href: "./shifts" },
+            { label: "Notifications", href: "./notifications" },
         ];
     
-        const activeItem = navItems.find(item => currentURL?.replace('/', '') === item.href.replace('/', ''));
+        const activeItem = navItems.find(item => currentURL?.replace('./', '') === item.href.replace('./', ''));
     
         if (activeItem) {
             requestAnimationFrame(() => {
@@ -114,6 +124,7 @@ export default function LockedSidebar({user}: {user: User}) {
                     console.log("Element position:", rect.top, rect.width);
                     setUnderlineStyle({ top: rect.top + window.scrollY, width: rect.width });  
                     setMainLocation({ top: rect.top + window.scrollY, width: rect.width });
+                    setMainHiddenLocation({ top: rect.top + window.scrollY, width: rect.width });
                 }
             });
             
@@ -129,12 +140,12 @@ export default function LockedSidebar({user}: {user: User}) {
     }
 
     const handleMouseLeaving = () => {
-        setUnderlineStyle({ width: mainlocation.width, top: mainlocation.top });
+        setUnderlineStyle({ top: mainlocation.top, width: mainlocation.width });
     }
 
     return (
         <div
-        className={`${hidden ? "absolute" : "relative"} h-full flex items-center justify-start`}
+        className={`${hidden ? "absolute" : "relative"} h-full flex items-center top-0 justify-start`}
         style={hidden ? { width: 80 } : { width: sidebarWidth }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -148,15 +159,15 @@ export default function LockedSidebar({user}: {user: User}) {
                                 {
                                     [
                                         {
-                                            label: "Dashboard", icon: <Home size={18} />, href: "/dashboard" },
+                                            label: "Dashboard", icon: <Home size={18} />, href: "./dashboard" },
                                         {
-                                            label: "Tickets", icon: <Ticket size={18} />, href: "/tickets" },
+                                            label: "Tickets", icon: <Ticket size={18} />, href: "./tickets" },
                                         {
-                                            label: "Messages", icon: <MessageSquare size={18} />, href: "/messages" },
+                                            label: "Messages", icon: <MessageSquare size={18} />, href: "./messages" },
                                         {
-                                            label: "Shifts", icon: <Clock size={18} />, href: "/shifts" },
+                                            label: "Shifts", icon: <Clock size={18} />, href: "./shifts" },
                                         {
-                                            label: "Notifications", icon: <Bell size={18} />, href: "/notifications"
+                                            label: "Notifications", icon: <Bell size={18} />, href: "./notifications"
                                         }
                                     ].map((item, index) => (
                                         <a key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`w-full h-7 mx-1.5 z-40 py-0.5 px-1.5 flex cursor-pointer rounded-md items-center`}>
@@ -168,9 +179,9 @@ export default function LockedSidebar({user}: {user: User}) {
                                 <span
                                     className="absolute bottom-0 rounded-sm border-accent h-[30px] z-0 bg-muted-foreground/10 transition-all duration-300"
                                     style={{
-                                        top: `${underlineStyle.top}px`,
+                                        top: `${mainhiddenlocation ? underlineStyle.top : underlineStyle.top}px`,
                                         width: `100%`,
-                                        transform: `translateX(6px) translateY(-52px)`, 
+                                        transform: `${hidden ? 'translate(6px, -194px)' : 'translateX(6px) translateY(-52px)'}`, 
                                     }}
                                 />
                             </div>

@@ -5,8 +5,6 @@ export default function useActive({ userId }) {
     const [onlineUsers, setOnlineUsers] = useState([]);
     const socketRef = useRef(null);
     const userOnlineRef = useRef(false); 
-
-
     useEffect(() => {
         if (!socketRef.current) {
             socketRef.current = io("http://localhost:3001", { transports: ["websocket"] });
@@ -17,6 +15,7 @@ export default function useActive({ userId }) {
         };
 
         socketRef.current.on("onlineUsers", handleOnlineUsers);
+
 
         if (userId) {
             const userAlreadyOnline = onlineUsers.some(user => user.userId === userId);
