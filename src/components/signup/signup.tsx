@@ -15,6 +15,8 @@ function callGoogleSignIn() {
     })
 }
 
+
+
 export default function SignUp() {
     const router = useRouter()
     const [email, setEmail] = useState("")
