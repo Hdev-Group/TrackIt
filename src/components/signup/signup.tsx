@@ -34,7 +34,6 @@ async function callGoogleSignIn() {
 export default function SignUp() {
     const router = useRouter()
     const [email, setEmail] = useState("")
-    const [loading, setLoading] = useState(false)
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
     const handleEmailSignUp = async () => {
@@ -53,8 +52,16 @@ export default function SignUp() {
             setError("")
         } catch (err: any) {
             console.error("Email sign-up error:", err)
-            setError("An error occurred during sign-up.")
-        }
+            let errorMessage = "An error occurred during sign-up.";
+            if (err.code === 'auth/email-already-in-use') {
+                errorMessage = "The email address is already in use by another account.";
+            } else if (err.code === 'auth/invalid-email') {
+                errorMessage = "The email address is not valid.";
+            } else if (err.code === 'auth/operation-not-allowed') {
+                errorMessage = "Email/password accounts are not enabled.";
+            } else if (err.code === 'auth/weak-password') {
+                errorMessage = "The password is too weak.";
+            }        }
     }
     return (
         <div className="flex flex-col items-center w-full justify-start min-h-screen text-white">
@@ -64,7 +71,6 @@ export default function SignUp() {
                         variant="ghost-heavy"
                         className="w-full flex items-center justify-center border border-gray-600 p-2 rounded-md hover:bg-gray-800"
                         onClick={() => callGoogleSignIn()}
-                        disabled={loading}
                     >
                         <div className="flex flex-row gap-2 items-center justify-between">
                             <div className="h-5 w-5">
