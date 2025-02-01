@@ -5,47 +5,64 @@ import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWith
 import Button from "@/components/button/button"
 import { Input } from "../ui/input"
 import { useRouter } from 'next/navigation'
+import { auth, db } from "@/app/firebase/firebase"
+import { getFirestore, doc, setDoc } from "firebase/firestore"
 
-function callGoogleSignIn() {
-    const provider = new GoogleAuthProvider()
-    const auth = getAuth()
-    signInWithPopup(auth, provider).catch((error) => {
-        console.error("Google sign-in error:", error)
-        alert("Google sign-in failed. Please try again.")
-    })
+async function callGoogleSignIn() {
+    try {
+        console.log("Signing in with Google...")
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || "",
+            photoURL: user.photoURL || "",
+            provider: "google",
+            createdAt: new Date()
+        }, { merge: true });
+
+        console.log("Google Sign-In successful, user added to Firestore:", user);
+    } catch (error) {
+        console.error("Google sign-in error:", error);
+        alert("Google sign-in failed. Please try again.");
+    }
 }
-
-
 
 export default function SignUp() {
     const router = useRouter()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
-    const auth = getAuth()
     const handleEmailSignUp = async () => {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-            console.log("User signed up:", userCredential.user)
+            const user = userCredential.user
+    
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email: user.email,
+                createdAt: new Date(),
+                role: "user"
+            })
+    
+            console.log("User signed up and added to Firestore:", user)
             setError("")
         } catch (err: any) {
             console.error("Email sign-up error:", err)
-            switch (err.code) {
-                case 'auth/invalid-email':
-                    setError('Invalid email address.')
-                    break
-                case 'auth/email-already-in-use':
-                    setError('Email is already in use.')
-                    break
-                case 'auth/weak-password':
-                    setError('Password is too weak.')
-                    break
-                default:
-                    setError('An unexpected error occurred. Please try again.')
-            }
-        }
+            let errorMessage = "An error occurred during sign-up.";
+            if (err.code === 'auth/email-already-in-use') {
+                errorMessage = "The email address is already in use by another account.";
+            } else if (err.code === 'auth/invalid-email') {
+                errorMessage = "The email address is not valid.";
+            } else if (err.code === 'auth/operation-not-allowed') {
+                errorMessage = "Email/password accounts are not enabled.";
+            } else if (err.code === 'auth/weak-password') {
+                errorMessage = "The password is too weak.";
+            }        }
     }
-
     return (
         <div className="flex flex-col items-center w-full justify-start min-h-screen text-white">
             <div className="px-8 rounded-lg x w-full text-center">
@@ -53,7 +70,7 @@ export default function SignUp() {
                     <Button
                         variant="ghost-heavy"
                         className="w-full flex items-center justify-center border border-gray-600 p-2 rounded-md hover:bg-gray-800"
-                        onClick={callGoogleSignIn}
+                        onClick={() => callGoogleSignIn()}
                     >
                         <div className="flex flex-row gap-2 items-center justify-between">
                             <div className="h-5 w-5">
