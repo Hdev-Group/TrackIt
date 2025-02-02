@@ -80,6 +80,10 @@ export default function ActiveUsers() {
                                 setUsers((prevUsers) => {
                                     const userMap = new Map(prevUsers.map((u) => [u.userId, u]));
 
+                                    userMap.forEach((user, userId) => {
+                                        userMap.set(userId, { ...user, status: "Offline" });
+                                    });
+
                                     newUsers.forEach((newUser) => {
                                         if (userMap.has(newUser.userId)) {
                                             userMap.set(newUser.userId, { ...userMap.get(newUser.userId), ...newUser });
@@ -97,28 +101,57 @@ export default function ActiveUsers() {
                         <div className="flex flex-col w-full h-full">
                             <div className="flex flex-col w-full mt-5 h-full">
                                 <ul className="space-y-2">
-                                    {users.length === 0 && <p className="text-gray-500 text-sm">No active users</p>}
-                                    {users.map((user) => (
-                                        <li
-                                            key={user.userId}
-                                            className="flex hover:bg-muted-foreground/10 rounded-md px-2 py-1 flex-row gap-2 items-center space-x-2"
-                                        >
-                                            <div className="flex relative items-center justify-center w-8 h-8">
-                                                <img
-                                                    src={user.pictureURL}
-                                                    alt="User Profile"
-                                                    className="w-8 h-8 rounded-full"
-                                                />
-                                                <Status status={user.status} />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm">{user.displayName}</span>
-                                                <span className="text-xs font-light -mt-[0.3rem] text-gray-400">
-                                                    {user.status}
-                                                </span>
-                                            </div>
-                                        </li>
-                                    ))}
+                                    {users.filter(user => user.status != "Offline").length > 0 && (
+                                        <>
+                                            <h3 className="text-gray-500 text-sm ">Online</h3>
+                                            {users.filter(user => user.status != "Offline").map((user) => (
+                                                <li
+                                                    key={user.userId}
+                                                    className="flex hover:bg-muted-foreground/10 rounded-md px-2 py-1 flex-row gap-1 items-center space-x-2"
+                                                >
+                                                    <div className="flex relative items-center justify-center w-8 h-8">
+                                                        <img
+                                                            src={user.pictureURL}
+                                                            alt="User Profile"
+                                                            className="w-8 h-8 rounded-full"
+                                                            referrerPolicy="no-referrer"
+                                                        />
+                                                        <Status status={user.status} />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium">{user.displayName}</span>
+                                                        <span className="text-xs font-light -mt-[0.3rem] text-gray-400">
+                                                            {user.status}
+                                                        </span>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </>
+                                    )}
+                                    {users.filter(user => user.status === "Offline").length > 0 && (
+                                        <>
+                                            <h3 className="text-gray-500 text-sm mt-4">Offline</h3>
+                                            {users.filter(user => user.status === "Offline").map((user) => (
+                                                <li
+                                                    key={user.userId}
+                                                    className="flex hover:bg-muted-foreground/10 rounded-md px-2 py-1 flex-row gap-1 items-center space-x-2"
+                                                >
+                                                    <div className="flex relative items-center justify-center w-8 h-8">
+                                                        <img
+                                                            src={user.pictureURL}
+                                                            alt="User Profile"
+                                                            className="w-8 h-8 rounded-full"
+                                                            referrerPolicy="no-referrer"
+                                                        />
+                                                        <Status status={user.status} />
+                                                    </div>
+                                                    <div className="flex flex-col items-start justify-start h-full">
+                                                        <span className="text-sm font-medium text-white/20">{user.displayName}</span>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </>
+                                    )}
                                 </ul>
                             </div>
                         </div>
