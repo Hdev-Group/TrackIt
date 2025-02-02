@@ -2,95 +2,59 @@
 import { motion } from "framer-motion"
 import Header from "@/components/header/header";
 import Button from "@/components/button/button";
-import { Loader2, Lock, RotateCw } from "lucide-react";
+import { ArrowRightIcon} from "lucide-react";
 
 export default function Home() {
-        
-
   return (
     <>
       <Header />
       <main className="flex flex-col bg-[#101218] items-center relative justify-center min-h-screen py-2">
-        <motion.div className="h-[30rem] z-20 w-[10rem] border-[#0099ff]  border-4 rounded-r-3xl hidden xl:flex  items-center justify-start absolute top-36 -left-1"
-          initial={{ opacity: 0, left: -100 }}
-          animate={{ opacity: 1, left: -4 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        >
-          <motion.div className="h-[20rem] w-1/2 border-[#0099ff] border-4 border-l-0 flex items-center  rounded-r-3xl"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
-          >
-          </motion.div>
-        </motion.div>
-        <motion.div className="h-[30rem] z-20 w-[10rem] border-[#0099ff] border-4 border-r-0  hidden xl:flex rounded-l-3xl items-center justify-end absolute top-36 -right-1"
-          initial={{ opacity: 0, right: -100 }}
-          animate={{ opacity: 1, right: -4 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        >
-          <motion.div className="h-[20rem] w-1/2 border-[#0099ff] border-4 border-r-0 items-center flex justify-end rounded-l-3xl"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
-          >
-          </motion.div>
-        </motion.div>
-        <div className="flex flex-col items-start justify-start gap-72 w-full h-full">
-        <section className="container mx-auto h-auto relative flex flex-col items-center justify-start">
-          <div className="relative flex flex-col items-center justify-center">
-            <div className="text-6xl leading-normal flex flex-row font-semibold text-transparent pt-72 z-20 bg-clip-text textgradientmovetransition">
-            Making Ticketing Simpler With TrackIt
+        <div className="flex flex-col items-start justify-start gap-24 w-full h-full">
+        <section className="container mx-auto h-auto relative flex flex-col items-start justify-start">
+          <div className="relative flex flex-col items-start justify-start">
+            <div className="text-6xl flex flex-col font-semibold text-transparent leading-tight pt-64 z-20 bg-clip-text textgradientmovetransition">
+              <p>Making SaaS</p><p>Simpler With TrackIt</p>
             </div>
-            <p className="mt-4 text-xl text-gray-400  z-20 ">
-                TrackIt makes it simple for every step of the ticketing process for your business or project.
+            <p className="text-md w-[34rem] text-white  z-20 ">
+              TrackIt, an all-in-one platform for start-ups to manage their teams, support requests, shifts and projects.
             </p>
             <div className="flex mt-8 justify-between z-20 gap-5 w-full">
-                <Button variant="slide-fill" className="w-full flex items-center justify-center" type="button" href="/auth/signin">
-                    TRY TRACKIT FOR FREE
-                </Button>
-                <Button variant='ghost-side-fill' className="w-1/3 flex items-center justify-center" href="/features">
-                    Learn More
+                <Button variant="slide-fill" className="w-1/3 !rounded-full flex flex-row items-center justify-center" type="button" href="/auth/signin">
+                    <span className="flex flex-row gap-1 items-center justify-center">
+                      TRY IT FREE <ArrowRightIcon className="h-4" />
+                    </span>
                 </Button>
             </div>
             <motion.div 
-            className="absolute top-0 flex rounded-xl items-center justify-center -left-28 -rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
+            className="absolute top-0 flex rounded-xl items-center justify-center -left-32 -rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
             initial={{height: "0rem", top: "0rem"}}
             animate={{height: "40rem", top: "0rem"}}
             transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
             />
-            <motion.div className="absolute top-0 flex rounded-xl items-center justify-center -right-28 rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
-              initial={{height: "0rem", top: "0rem"}}
-              animate={{height: "40rem", top: "0rem"}}
-              transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
-            />
           </div>
         </section>
         <section className="container mx-auto h-auto relative flex flex-col items-center justify-start">
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="bg-gradient-to-r movegradient w-full h-4 z-0 flex items-center justify-center backdrop-blur-md blur-[3rem]"/>
-            <div className="w-full h-auto bg-background rounded-2xl z-10 flex flex-col items-start justify-start">
-              <div className="w-full items-center h-14 justify-between flex px-3 flex-row pt-1">
-                <div className=" h-10 justify-start gap-1 flex items-center">
-                  <div className="w-3 h-3 bg-red-500 hover:bg-red-600 transition-all rounded-full" />
-                  <div className="w-3 h-3 bg-yellow-500 hover:bg-yellow-600 transition-all rounded-full" />
-                  <div className="w-3 h-3 bg-green-500 hover:bg-green-600 transition-all rounded-full" />
-                </div>
-                <div className="flex flex-row items-center w-full justify-center">
-                  <div className="px-4 gap-2 w-1/2 text-muted-foreground justify-between text-md z-50 py-1 bg-white/20 flex items-center rounded-lg">
-                    <Lock className="w-4" />
-                    <p className="">trackit.hdev.uk</p>
-                    <RotateCw className="w-4" />
-                  </div>
-                </div>
-                <div className=""></div>
-              </div>
-              <div className="w-full border-hidden">
+          <div className="flex flex-col items-start justify-start w-full">
+            <div className="bg-gradient-to-r w-full h-4 z-0 flex items-start justify-start backdrop-blur-md blur-[3rem]"/>
+            <div className="spinnercard borderspincard h-[40rem] w-auto rounded-2xl z-10  flex flex-col outerzoomer items-start justify-start">
+              <div className="inner h-[40rem] w-auto">
+                <img src="/trackitindeximages/dashboard.png" alt="TrackIt" className="rounded-md w-auto z-50 h-[40rem]" />
               </div>
             </div>
           </div>
         </section>
-        <section className="container mx-auto h-auto relative flex flex-col items-center justify-start">
-          
+        <section className="w-full bg-neutral-200/90 h-auto relative flex flex-col mt-24 items-center justify-start">
+          <div className="flex container mx-auto flex-col items-start mt-24 justify-start">
+            <h1 className="text-7xl font-semibold text-black ">Next-level productivity</h1>
+            <p className="text-md w-[50%] text-black mt-4">
+              TrackIt is a support, team and project management platform that provides seamless collaboration for your team.
+            </p>
+            <div className="flex mt-8 justify-between gap-5 w-full">
+              <div className="flex flex-col items-end justify-end w-1/3">
+                <p className="text-md  text-black"><b>Support</b></p>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
       </main>
