@@ -68,7 +68,7 @@ export default function Header() {
     setUnderlineStyle({ width: mainlocation.width, left: mainlocation.left })
   }
   return (
-    <header className={`fixed w-full items-center justify-center px-4 top-0 z-50 rounded-b-lg bg-[#222831]/20 backdrop-blur-xl transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+    <header className={`w-full items-center justify-center px-4 top-0 z-50 rounded-b-lg bg-[#222831]/20 backdrop-blur-xl transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="lg:container w-full lg:mx-auto">
         <div className="flex justify-between w-full items-center py-4 lg:justify-start md:space-x-10">
           <div className="flex justify-start items-center gap-5 lg:w-0 lg:flex-1">

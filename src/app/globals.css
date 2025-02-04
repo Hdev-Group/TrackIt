@@ -19,6 +19,19 @@ body {
   -webkit-text-fill-color: transparent; 
 }
 
+.textgradientmovetransitionincident{
+  background: linear-gradient(    90deg,
+  rgba(255, 255, 255, 1) 20%, 
+  rgb(255, 108, 108) 50%, 
+  rgba(255, 255, 255, 1) 80% 
+);
+  background-size: 200% 200%;
+  animation: gradientmove 6s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+}
+
 @keyframes gradientmove {
   0% {
     background-position: 150% 50%; 
@@ -145,9 +158,7 @@ body {
   transform-origin: top center;
 }
 
-.borderspincard::after {
-  height: -5500px;
-}
+
 @keyframes rotate {
   from {
     transform: rotate(0);
