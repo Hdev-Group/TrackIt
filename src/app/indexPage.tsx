@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import Header from "@/components/header/header";
 import Button from "@/components/button/button";
 import { ArrowRightIcon} from "lucide-react";
+import Footer from "@/components/footer/footer";
 
 export default function Home() {
   return (
@@ -31,7 +32,7 @@ export default function Home() {
               <motion.div 
               className="absolute top-0 flex rounded-xl items-center justify-center -left-32 -rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
               initial={{height: "0rem", top: "0rem"}}
-              animate={{height: "70rem", top: "-30rem"}}
+              animate={{height: "90rem", top: "-50rem"}}
               transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
               />
             </div>
@@ -132,17 +133,21 @@ export default function Home() {
             <p className="text-md text-white/80 mt-2">TrackIt’s security features ensure your data is safe and secure.</p>
             <div className="flex mt-8 justify-between flex-col gap-5 w-full">
               <div className="md:grid flex flex-col md:grid-cols-3 gap-5 w-full">
-                <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-96 flex flex-col items-start justify-end">
-                  <h2><b>Secure Data Storage</b> with TrackIt – Your data is stored securely on our servers.</h2>
+                <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
+                  <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
+                  <h2><b>Secure Data Storage</b> with TrackIt – Your data is stored securely on our servers. a</h2>
                 </div>
-                <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 flex flex-col items-start justify-end">
+                <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
+                  <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
                   <h2><b>Encrypted Data</b> – Your data is encrypted to ensure it remains secure.</h2>
                 </div>
-                <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 flex flex-col items-start justify-end">
-                  <h2><b>Regular Backups</b> – Your data is backed up regularly to prevent data loss.</h2>
+                <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
+                  <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
+                    <h2><b>Regular Backups</b> – Your data is backed up regularly to prevent data loss.</h2>
                 </div>
-                <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-96 flex flex-col items-start justify-end">
-                  <h2><b>Secure Access</b> – Access to your data is secure and protected.</h2>
+                <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
+                  <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
+                    <h2><b>Secure Access</b> – Access to your data is secure and protected.</h2>
                 </div>
               </div>
             </div>
@@ -150,9 +155,11 @@ export default function Home() {
         </section>
       </div>
       </main>
+      <Footer />
     </>
   );
 }
+
 
 const Teamssvg = () => (
   <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="25" height="25" viewBox="0 0 50 50">
