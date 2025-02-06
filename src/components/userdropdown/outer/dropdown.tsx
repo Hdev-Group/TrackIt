@@ -32,7 +32,7 @@ export default function UserDropdown({headerOpen}: {headerOpen: boolean}) {
         setIsLoading(true)
         try {
             await signOut(auth)
-            router.push('/sign-in')
+            router.push('/auth/signin')
         } catch (error) {
             console.error('Error signing out:', error)
         } finally {

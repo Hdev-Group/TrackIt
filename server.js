@@ -1,7 +1,9 @@
 const { Server } = require("socket.io");
 const http = require("http");
 const next = require("next");
-
+require('dotenv').config({ path: '.env.local' });
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = process.env.MONGODB_URI
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
@@ -66,6 +68,24 @@ io.on("connection", (socket) => {
     }
   });
 });
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+async function run() {
+  try {
+    await client.connect();
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    await client.close();
+  }
+}
+run().catch(console.dir);
 
 app.prepare().then(() => {
   server.listen(3001, () => {

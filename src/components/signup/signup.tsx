@@ -4,16 +4,22 @@ import { useState } from "react"
 import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import Button from "@/components/button/button"
 import { Input } from "../ui/input"
-import { useRouter } from 'next/navigation'
 import { auth, db } from "@/app/firebase/firebase"
-import { getFirestore, doc, setDoc } from "firebase/firestore"
+import { doc, setDoc, getDoc } from "firebase/firestore"
 
 async function callGoogleSignIn() {
+    
     try {
         console.log("Signing in with Google...")
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
+
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+            window.location.href = '/1/dashboard';
+            return;
+        }
 
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
@@ -24,7 +30,8 @@ async function callGoogleSignIn() {
             createdAt: new Date()
         }, { merge: true });
 
-        console.log("Google Sign-In successful, user added to Firestore:", user);
+        window.location.href = '/1/dashboard';
+
     } catch (error) {
         console.error("Google sign-in error:", error);
         alert("Google sign-in failed. Please try again.");
@@ -32,7 +39,13 @@ async function callGoogleSignIn() {
 }
 
 export default function SignUp() {
-    const router = useRouter()
+    const auth = getAuth()
+
+    if (auth.currentUser) {
+        window.location.href = '/1/dashboard'
+        return null
+    }
+
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
@@ -48,7 +61,6 @@ export default function SignUp() {
                 role: "user"
             })
     
-            console.log("User signed up and added to Firestore:", user)
             setError("")
         } catch (err: any) {
             console.error("Email sign-up error:", err)
