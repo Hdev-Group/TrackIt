@@ -153,6 +153,16 @@ export default function Home() {
             </div>
           </div>
         </section>
+        <section className="w-full h-auto relative flex flex-col items-center justify-start bg-black/30">
+          <div className="flex container mx-auto flex-col items-end mt-24 pb-24 justify-start">
+            <h1 className="text-7xl font-semibold text-white textbeatyellow">
+              Stay Updated with Real-Time Status.
+            </h1>
+            <p className="text-md text-white/80 mt-2">
+              TrackIt’s status page keeps your customers informed with real-time updates on system performance and incidents.
+            </p>
+          </div>
+        </section>
       </div>
       </main>
       <Footer />

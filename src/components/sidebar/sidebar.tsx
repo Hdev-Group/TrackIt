@@ -1,13 +1,14 @@
-
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { Bell, Calendar, ChevronDown, Clock, Home, Maximize2, MessageSquare, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
+import { AlertOctagonIcon, Bell, Calendar, ChevronDown, Clock, Home, Maximize2, MessageSquare, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
 import statusChange from "@/components/websockets/statusChange/statuschange";
 
-export default function LockedSidebar({user}: {user: User}) {
+export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}) {
+
+    hide 
 
     const userPhoto = user?.photoURL;
     const [mainlocation, setMainLocation] = useState({top: 0, width: 0})
@@ -111,6 +112,7 @@ export default function LockedSidebar({user}: {user: User}) {
             { label: "Tickets", href: "./tickets" },
             { label: "Messages", href: "./messages" },
             { label: "Shifts", href: "./shifts" },
+            { label: "Incidents", href: "./incidents" },
             { label: "Notifications", href: "./notifications" },
         ];
     
@@ -145,34 +147,29 @@ export default function LockedSidebar({user}: {user: User}) {
 
     return (
         <div
-        className={`${hidden ? "absolute" : "relative"} h-full flex items-center top-0 justify-start`}
-        style={hidden ? { width: 80 } : { width: sidebarWidth }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-    >
-        <div className={`${!hidden ? "h-full relative bg-white/5" : "h-[70vh] overflow-y-auto absolute rounded-r-xl overflow-hidden bg-muted/50 border-4 border-x-0 z-50"} flex-row flex  justify-between transition-all duration-300`} style={!hidden ? { width: sidebarWidth } : { width: hoveredSidebar }}>
-                <div className="flex flex-col items-start mx-2 w-full h-full mr-4">
+            className={`${hidden ? "absolute" : "relative"} h-full flex items-center top-0 justify-start`}
+            style={!hidden ? hide ? { width: "70px" } : { width: sidebarWidth } : { width: hoveredSidebar }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+            <div className={`${!hidden ? "h-full relative bg-white/5" : "h-[70vh] overflow-y-auto absolute rounded-r-xl overflow-hidden bg-muted/50 border-4 border-x-0 z-50"}  flex-row flex  justify-between transition-all duration-300`} style={!hidden ? hide ? { width: "70px" } : { width: sidebarWidth } : { width: hoveredSidebar }}>
+                <div className={`${hide ? "" : "mx-2 mr-4"}flex flex-col items-start w-full h-full `}>
                     <div className="flex flex-col justify-between h-full w-full">
                         <div className="flex flex-col w-full select-none ">
-                            <OrgPicker ishidden={hidden} sethidden={setHidden} />
-                            <div className="w-auto flex flex-col mt-2 relative">
+                            <OrgPicker hidden={hide ?? false} ishidden={hidden} sethidden={setHidden} />
+                            <div className="w-full justify-center flex flex-col items-center mt-2 relative">
                                 {
                                     [
-                                        {
-                                            label: "Dashboard", icon: <Home size={18} />, href: "./dashboard" },
-                                        {
-                                            label: "Tickets", icon: <Ticket size={18} />, href: "./tickets" },
-                                        {
-                                            label: "Messages", icon: <MessageSquare size={18} />, href: "./messages" },
-                                        {
-                                            label: "Shifts", icon: <Clock size={18} />, href: "./shifts" },
-                                        {
-                                            label: "Notifications", icon: <Bell size={18} />, href: "./notifications"
-                                        }
+                                        { label: "Dashboard", icon: <Home size={18} />, href: "./dashboard" },
+                                        { label: "Tickets", icon: <Ticket size={18} />, href: "./tickets" },
+                                        { label: "Messages", icon: <MessageSquare size={18} />, href: "./messages" },
+                                        { label: "Shifts", icon: <Clock size={18} />, href: "./shifts" },
+                                        { label: "Incidents", icon: <AlertOctagonIcon size={18} />, href: "./incidents" },
+                                        { label: "Notifications", icon: <Bell size={18} />, href: "./notifications" }
                                     ].map((item, index) => (
-                                        <a key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`w-full h-7 mx-1.5 z-40 py-0.5 px-1.5 flex cursor-pointer rounded-md items-center`}>
+                                        <a key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`${hide ? "justify-center"  : "mx-1.5 px-4"} w-full h-7 z-40 py-0.5  flex cursor-pointer  rounded-md items-center`}>
                                             {item.icon}
-                                            <p className="text-foreground/40 text-[14px] font-semibold ml-2">{item.label}</p>
+                                            <p className={`${hide ? "hidden" : " ml-2"} text-foreground/40 text-[14px] font-semibold`}>{item.label}</p>
                                         </a>
                                     ))
                                 }
@@ -181,62 +178,50 @@ export default function LockedSidebar({user}: {user: User}) {
                                     style={{
                                         top: `${underlineStyle.top}px`,
                                         width: `100%`,
-                                        transform: `${hidden ? 'translate(6px, -194px)' : 'translateX(6px) translateY(-52px)'}`, 
+                                        transform: `${hidden ? 'translate(6px, -194px)' : hide ? 'translateX(0px) translateY(-52px)' : 'translateX(6px) translateY(-52px)'}`,
                                     }}
                                 />
                             </div>
                             <div className="w-full flex flex-col mt-4">
-                                <p className="text-foreground/40 text-[14px] font-semibold ml-2 mx-1.5">Departments</p>
+                                <p className={`${hide ? "hidden" : ""} text-foreground/40 text-[14px] font-semibold ml-2 mx-1.5`}>Departments</p>
                                 <div className="flex flex-col gap-1 mt-2 items-start">
-                                    <div className="bg-cyan-300/30 group hover:bg-cyan-400/60 transition-colors flex flex-row items-center w-full h-7 mx-1.5 py-0.5 px-1.5 cursor-pointer rounded-md justify-between">
+                                    <div className={`${hide ? " items-center justify-center" : "mx-1.5 justify-between"} bg-cyan-300/30 group hover:bg-cyan-400/60 transition-colors flex flex-row items-center w-full h-7  py-0.5 px-1.5 cursor-pointer rounded-md`}>
                                         <div className="gap-0.5 flex flex-row items-center">
                                             <div className="rounded-md flex items-center justify-center w-5 h-5 bg-muted font-semibold">
                                                 <p className="text-xs">HR</p>
                                             </div>
-                                            <p className="text-white/80 group-hover:text-white text-[14px] font-semibold ml-2">Human Resorces</p>
-                                        </div>
-                                    </div>
-                                    <div className="bg-green-300/30 group hover:bg-green-400/60 transition-colors flex flex-row items-center w-full h-7 mx-1.5 py-0.5 px-1.5 cursor-pointer rounded-md justify-between">
-                                        <div className="gap-0.5 flex flex-row items-center">
-                                            <div className="rounded-md flex items-center justify-center w-5 h-5 bg-muted font-semibold">
-                                                <p className="text-xs">IT</p>
-                                            </div>
-                                            <p className="text-white/80 group-hover:text-white text-[14px] font-semibold ml-2">Information Technology</p>
-                                        </div>
-                                    </div>
-                                    <div className="bg-yellow-300/30 group hover:bg-yellow-400/60 transition-colors flex flex-row items-center w-full h-7 mx-1.5 py-0.5 px-1.5 cursor-pointer rounded-md justify-between">
-                                        <div className="gap-0.5 flex flex-row items-center">
-                                            <div className="rounded-md flex items-center justify-center w-5 h-5 bg-muted font-semibold">
-                                                <p className="text-xs">SA</p>
-                                            </div>
-                                            <p className="text-white/80 group-hover:text-white text-[14px] font-semibold ml-2">Sales</p>
+                                            <p className={`${hide ? "hidden" : ""} text-white/80 group-hover:text-white text-[14px] font-semibold ml-2`}>Human Resources</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div>
-                        <ShiftIndicator />
-                        <div className="border-t select-none border-foreground/10 w-full mt-2 py-2 px-1.5 flex flex-col items-start">
-                            <div className="flex flex-row w-full justify-between group items-center mt-2" onClick={() => setOpenedProfile(true)}>
-                            <div className="flex flex-row relative items-center">
-                                <Avatar className="w-6 h-6">
-                                    <img src={`${userPhoto}`} alt="Your Profile" referrerPolicy="no-referrer" />
-                                </Avatar>
-                                <Status type="icon"  profile={true} />
-                                <div className="flex flex-col">
-                                    <p className="text-foreground text-[14px] -mb-2 mt-1 font-semibold ml-2 flex-nowrap text-nowrap ">{user?.displayName}</p>
-                                    <div className="overflow-hidden h-[20px]">
-                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1"><Status type="text" /></p>
-                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
+                            <ShiftIndicator hidden={hide} />
+                            <div className="border-t select-none border-foreground/10 w-full mt-2 py-2 px-1.5 flex flex-col items-start">
+                                <div className={`flex  w-full justify-between group mt-2 ${hide ? "flex-col items-start" : "flex-row items-center"}`} onClick={() => setOpenedProfile(true)}>
+                                    <div className="flex flex-row relative items-center">
+                                        <Avatar className="w-6 h-6">
+                                            <img src={`${userPhoto}`} alt="Your Profile" referrerPolicy="no-referrer" />
+                                        </Avatar>
+                                        <Status type="icon" profile={true} />
+                                        {
+                                            !hide && (
+                                                <div className="flex flex-col">
+                                                    <p className="text-foreground text-[14px] -mb-2 mt-1 font-semibold ml-2 flex-nowrap text-nowrap ">{user?.displayName}</p>
+                                                    <div className="overflow-hidden h-[20px]">
+                                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1"><Status type="text" /></p>
+                                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
+                                                    </div>
+                                                </div>
+                                            )
+                                        }
+                                    </div>
+                                    <div className={`w-6 h-6 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center ${hide ? "mt-1" : "ml-2"}`}>
+                                        <Settings className="w-4 h-4 text-muted-foreground" />
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-6 h-6 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center ml-2">
-                                <Settings className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                            </div>
-                        </div>
                         </div>
                     </div>
                 </div>
@@ -244,62 +229,65 @@ export default function LockedSidebar({user}: {user: User}) {
                     <div className="flex flex-col items-start gap-2">
                         <div className="flex flex-row relative">
                             <Avatar className="w-12 h-12">
-                            <img src={user.photoURL ?? undefined} alt="Your Profile" referrerPolicy="no-referrer" />
-                            <AvatarFallback className="w-6 h-6 text-xl font-semibold">
-                                {user?.displayName?.charAt(0)}
-                            </AvatarFallback>
+                                <img src={user.photoURL ?? undefined} alt="Your Profile" referrerPolicy="no-referrer" />
+                                <AvatarFallback className="w-6 h-6 text-xl font-semibold">
+                                    {user?.displayName?.charAt(0)}
+                                </AvatarFallback>
                             </Avatar>
                             <Status
-                            type="icon"
-                            size="md"
-                            profile={true}
-                            position={{ left: "left-9", bottom: "bottom-0" }}
+                                type="icon"
+                                size="md"
+                                profile={true}
+                                position={{ left: "left-9", bottom: "bottom-0" }}
                             />
                         </div>
-                        <div className="">
-                        <h1 className="text-white text-xl font-semibold flex-nowrap text-nowrap">{user?.displayName}</h1>
-                        <p className="text-muted-foreground text-xs font-normal flex-nowrap text-nowrap ">Lead Software Engineer</p>
+                        <div>
+                            <h1 className="text-white text-xl font-semibold flex-nowrap text-nowrap">{user?.displayName}</h1>
+                            <p className="text-muted-foreground text-xs font-normal flex-nowrap text-nowrap ">Lead Software Engineer</p>
                         </div>
                     </div>
                     <div className="flex w-full flex-col gap-4 mt-3 border-t pt-3 h-full">
                         <div className="flex flex-col w-full gap-4 h-full justify-between">
                             <div className="flex flex-col gap-4">
-                                    <div className="bg-muted-foreground/20 w-full rounded-lg px-3 py-3 flex flex-col gap-2">
-                                <p className="text-xs font-semibold text-muted-foreground">On Shift</p>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center h-10 w-10 bg-green-500 rounded-md">
-                                    <TicketCheck className="w-7 h-7 text-white" />
+                                <div className="bg-muted-foreground/20 w-full rounded-lg px-3 py-3 flex flex-col gap-2">
+                                    <p className="text-xs font-semibold text-muted-foreground">On Shift</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center justify-center h-10 w-10 bg-green-500 rounded-md">
+                                            <TicketCheck className="w-7 h-7 text-white" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white text-sm font-semibold">Ticket #1234</p>
+                                            <p className="text-white text-xs font-normal">Working</p>
+                                            <p className="text-xs text-muted-foreground">Until 19:00</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                    <p className="text-white text-sm font-semibold">Ticket #1234</p>
-                                    <p className="text-white text-xs font-normal">Working</p>
-                                    <p className="text-xs text-muted-foreground">Until 19:00</p>
-                                    </div>
-                                </div>
                                 </div>
                                 <div className="bg-muted-foreground/20 w-full rounded-lg px-3 py-3 flex flex-col gap-2">
-                                <p className="text-xs font-semibold text-muted-foreground">Work Hours</p>
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-white text-sm font-semibold">Monday - Friday</p>
-                                    <p className="text-white text-xs font-normal">09:00 - 18:00</p>
+                                    <p className="text-xs font-semibold text-muted-foreground">Work Hours</p>
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-white text-sm font-semibold">Monday - Friday</p>
+                                        <p className="text-white text-xs font-normal">09:00 - 18:00</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex flex-col relative gap-2">
-                            <div className="bg-muted-foreground/20 w-full rounded-lg justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-2 flex flex-row ">
-                                <p className="text-xs font-semibold text-muted-foreground">Settings</p>
-                                <Settings className="w-4 h-4 text-muted-foreground" />
+                            <div className="flex flex-col relative gap-2">
+                                <div className="bg-muted-foreground/20 w-full rounded-lg justify-between hover:bg-muted-foreground/30 cursor-pointer transition-all text-center items-center px-3 py-2 flex flex-row ">
+                                    <p className="text-xs font-semibold text-muted-foreground">Settings</p>
+                                    <Settings className="w-4 h-4 text-muted-foreground" />
+                                </div>
+                                <StatusPicker userid={user?.uid as string} />
                             </div>
-                            <StatusPicker userid={user?.uid as string} />
                         </div>
                     </div>
-                    </div>
-                    </div>
-
-                <div
-                    className={`w-1 h-full bg-muted hover:bg-neutral-300/30 transition-all cursor-col-resize`}
-                    onMouseDown={resizeSidebar}
-                ></div>
+                </div>
+                {
+                    hide ? null : (
+                        <div
+                        className={`w-1 h-full bg-muted hover:bg-neutral-300/30 transition-all cursor-col-resize`}
+                        onMouseDown={resizeSidebar}
+                    ></div>
+                    )
+                }
             </div>
         </div>
     );
@@ -353,16 +341,15 @@ function StatusPicker({userid}: {userid: string}) {
     );
   }
 
-function OrgPicker({ishidden, sethidden}: {ishidden: boolean, sethidden: React.Dispatch<React.SetStateAction<boolean>>}) {
+function OrgPicker({ishidden, sethidden, hidden}: {ishidden: boolean, sethidden: React.Dispatch<React.SetStateAction<boolean>>, hidden: boolean}) {
     const [orgPicker, SetOrgPicker] = useState(false);
-
     function OrgSelector({name}: {name: string}) {
         return(
             <div className="w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer justify-start rounded-md items-center">
             <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-sm text-muted-foreground font-semibold">
                 <p>{name.split(' ').map(word => word.charAt(0)).join('')}</p>
             </div>
-            <p className="text-foreground/70 text-sm font-semibold ml-2 flex-nowrap text-nowrap ">{name}</p>
+            <p className={`text-foreground/70 text-sm font-semibold ml-2 flex-nowrap text-nowrap`}>{name}</p>
         </div>
         )
     }
@@ -392,20 +379,20 @@ function OrgPicker({ishidden, sethidden}: {ishidden: boolean, sethidden: React.D
     ]
 
     return(
-        <div className="w-full h-9 mx-1.5 mt-2 py-0.5 px-1.5 cursor-pointer flex hover:bg-neutral-300/10 rounded-md items-center justify-between">
+        <div className={`${hidden ? "justify-center" : "py-0.5 px-1.5 mx-1.5 justify-between"} w-full h-9  mt-2 cursor-pointer flex hover:bg-neutral-300/10 rounded-md items-center `}>
             <div className="flex flex-row gap-0.5 relative justify-between w-full items-center">
-                <div className="flex relative flex-row gap-0.5 justify-center items-center" onClick={() => SetOrgPicker(!orgPicker)}>
+                <div className={`${hidden ? "flex-col " : "flex-row"} flex relative w-full gap-0.5 justify-center items-center`} onClick={() => SetOrgPicker(!orgPicker)}>
                     <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-xl text-muted-foreground font-semibold">
                         <p>H</p>
                     </div>
-                    <p className="text-foreground/80 text-md font-semibold ml-2 flex-nowrap text-nowrap ">Hdev Group</p>
-                    <ChevronDown className={`w-5 h-4 text-muted-foreground ml-1 transition-all ${orgPicker ? "rotate-180" : "rotate-0"}`} />
+                    <p className={`${hidden ? "hidden" : ""} text-foreground/80 text-md font-semibold ml-2 flex-nowrap text-nowrap`}>Hdev Group</p>
+                    <ChevronDown className={`${hidden ? "hidden" : ""} w-5 h-4 text-muted-foreground ml-1 transition-all ${orgPicker ? "rotate-180" : "rotate-0"}`} />
                     </div>
-                    <div className="w-8 h-8 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center z-50" onClick={() => sethidden(!ishidden)}>
+                    <div className={`w-8 h-8 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center z-50 ${hidden ? "hidden" : ""}`} onClick={() => sethidden(!ishidden)}>
                     {
-                        ishidden ? <Maximize2 className="w-5 h-5 text-muted-foreground" /> : <Minimize2Icon className="w-5 h-5 text-muted-foreground transform rotate-180" />
+                        ishidden  ? <Maximize2 className="w-5 h-5 text-muted-foreground" /> : <Minimize2Icon className="w-5 h-5 text-muted-foreground transform rotate-180" />
                     }
-                </div>
+                    </div>
                 <div className={`${orgPicker ? "absolute" : "hidden"} bg-muted/50 backdrop-blur-lg w-full h-auto top-10 left-0 rounded-lg px-2 py-2 w z-50`}>
                         <div className="flex w-full items-start justify-start flex-col gap-0.5">
                             {
@@ -420,8 +407,9 @@ function OrgPicker({ishidden, sethidden}: {ishidden: boolean, sethidden: React.D
     )
 }
 
-function ShiftIndicator() {
+function ShiftIndicator({hidden}: {hidden?: boolean}) {
     const [progress, setProgress] = useState(40)
+    console.log(hidden);
   
     useEffect(() => {
       const updateProgress = () => {
@@ -440,8 +428,8 @@ function ShiftIndicator() {
     }, [])
   
     return (
-      <div className="bg-muted cursor-pointer flex-nowrap text-nowrap hover:bg-muted-foreground/20 transition-all rounded-md flex-col shadow-sm px-2 py-2 max-w-sm w-full h-20 ml-1">
-        <div className="flex flex-row items-end w- h-full gap-2">
+      <div className={`${hidden ? "" : "ml-1"} bg-muted cursor-pointer flex-nowrap text-nowrap hover:bg-muted-foreground/20 transition-all rounded-md flex-col shadow-sm px-2 py-2 max-w-sm w-full h-20`}>
+        <div className={`${hidden ? "items-center justify-center w-full" : "items-end"} flex flex-row h-full gap-2`}>
             <div className="bg-muted-foreground/15 h-full justify-end items-end flex w-2 rounded-lg">
                 <div
                     className="bg-blue-600 w-2 rounded-full transition-all duration-1000 ease-in-out"
@@ -449,9 +437,9 @@ function ShiftIndicator() {
                 />
             </div>
           <div className="flex flex-col items-start w-full justify-center">
-            <h1 className="text-white text-sm font-semibold mt-3">Your on shift</h1>
-            <p className="text-white text-xs font-normal flex flex-row gap-1 items-center"><Clock className="w-4" /> Until 18:00</p>
-            <p className="text-white text-xs font-normal flex flex-row gap-1 items-center"><Calendar className="w-4" /> {new Date().toLocaleDateString()}</p>
+            <h1 className={`${hidden ? "hidden" : "visible"} text-white text-sm font-semibold mt-3`}>Your on shift</h1>
+            <p className={`text-white text-xs font-normal flex flex-row gap-1 items-center ${hidden ? "hidden" : "visible"}`}><Clock className="w-4" /> Until 18:00</p>
+            <p className={`text-white text-xs font-normal flex flex-row gap-1 items-center ${hidden ? "hidden" : "visible"}`}><Calendar className="w-4" /> {new Date().toLocaleDateString()}</p>
           </div>
         </div>
       </div>

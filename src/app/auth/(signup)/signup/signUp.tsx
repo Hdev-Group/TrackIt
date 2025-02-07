@@ -49,7 +49,7 @@ export default function Page() {
 
   return (
     <body>
-      <title>Sign In | TrackIt</title>
+      <title>Sign Up | TrackIt</title>
       <main className="flex flex-col md:flex-row justify-between items-start h-screen bg-background">
       <div className='mx-auto md:px-10 h-screen flex flex-col w-full'>
         <div className='w-full h-20 md:px-0 px-3 py-3 flex items-center justify-between'>
@@ -61,7 +61,7 @@ export default function Page() {
               <Button
                 variant='ghost-side-fill'
                 className='border-muted'
-                onClick={() => router.push('/signin')}
+                onClick={() => router.push('/auth/signin')}
                 >
                 Sign In
                 </Button>

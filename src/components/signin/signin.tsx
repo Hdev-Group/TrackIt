@@ -7,15 +7,32 @@ import { signInWithPopup, GoogleAuthProvider } from "firebase/auth"
 import { Input } from "../ui/input"
 import { useRouter } from 'next/navigation'
 import { useAuth } from "@/app/firebase/AuthContext"
+import { fetchSignInMethodsForEmail } from "firebase/auth"
 
-function callGoogleSignIn() {
-    const provider = new GoogleAuthProvider()
-    const auth = getAuth()
-    signInWithPopup(auth, provider).catch(error => {
-        console.error("Google sign-in error:", error)
-    })
+async function callGoogleSignIn() {
+    const provider = new GoogleAuthProvider();
+    const auth = getAuth();
+
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        var signInMethods = [];
+
+        if (user.email) {
+            signInMethods = await fetchSignInMethodsForEmail(auth, user.email);
+        } else {
+            throw new Error("User email is null");
+        }
+        if (signInMethods.length === 0) {
+            console.log("No existing account, proceeding with sign-in");
+        } else {
+            console.log("Existing account found, signing in");
+        }
+    } catch (error) {
+        console.error("Google sign-in error:", error);
+    }
 }
-
 export default function SignIn() {
     const auth = useAuth()
     const [email, setEmail] = useState("")
