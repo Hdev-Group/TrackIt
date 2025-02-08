@@ -112,12 +112,12 @@ export default function Header() {
               user ? (
                 <UserDropdown headerOpen={true}/>
               ) : (
-                    <Button variant="ghost" href="/login">
+                    <Button variant="ghost" href="/auth/signin">
                         Sign in
                     </Button>
                 )
             }
-            <Button variant="slide-fill" type="button">
+            <Button variant="slide-fill" type="button" href='/auth/signup'>
                 Get Started
             </Button>
           </div>

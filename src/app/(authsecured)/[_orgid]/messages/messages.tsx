@@ -37,7 +37,6 @@ export default function Messages() {
     <AuthChecks>
       <main className="bg-[#101218] text-foreground w-full min-h-screen overflow-hidden">
         <div className="flex h-screen">
-          <LockedSidebar hide={true} user={user as any} />
           <Channels />
           <div className="flex-grow overflow-hidden flex flex-col">
             <header className="h-16 flex items-center justify-between border-b px-4">
@@ -63,9 +62,6 @@ export default function Messages() {
                 </Button>
               </form>
             </footer>
-          </div>
-          <div className="w-64 border-l">
-            <ActiveUsers />
           </div>
         </div>
       </main>

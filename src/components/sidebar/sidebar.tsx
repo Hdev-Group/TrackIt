@@ -5,84 +5,24 @@ import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
 import statusChange from "@/components/websockets/statusChange/statuschange";
+import Link from "next/link";
 
 export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}) {
 
-    hide 
 
     const userPhoto = user?.photoURL;
-    const [mainlocation, setMainLocation] = useState({top: 0, width: 0})
-    if (!user) {
-        return null;
-    }
-    const [mainhiddenlocation, setMainHiddenLocation] = useState({top: 0, width: 0})
+    const [mainlocation, setMainLocation] = useState({ top: 0, width: 0 });
+    const [mainhiddenlocation, setMainHiddenLocation] = useState({ top: 0, width: 0 });
     const [underlineStyle, setUnderlineStyle] = useState({ top: 0, width: 0 });
-    const [sidebarWidth, setSidebarWidth] = useState(256); 
-    const [hoveredSidebar, setHoveredSidebar] = useState(localStorage.getItem('hoveredSidebar') ? parseInt(localStorage.getItem('hoveredSidebar')!) : 1);
-    const [hidden, setHidden] = useState(localStorage.getItem('hidden') === 'true' || false);
+    const [sidebarWidth, setSidebarWidth] = useState(256);
+    const [hoveredSidebar, setHoveredSidebar] = useState(1);
+    const [hidden, setHidden] = useState(false);
     const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [openedProfile, setOpenedProfile] = useState(false);
 
-    const handleMouseEnter = () => {
-        if (timeoutIdRef.current) {
-            clearTimeout(timeoutIdRef.current);
-            timeoutIdRef.current = null;
-        }
-        setHoveredSidebar(sidebarWidth);
-    };
-    const currentURL = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
 
-    const handleMouseLeave = () => {
-        timeoutIdRef.current = setTimeout(() => {
-            setHoveredSidebar(1);
-        }, 2000);
-    };
 
-    useEffect(() => {
-        const storedSidebarWidth = localStorage.getItem('sidebarWidth')
-        const storedHoveredSidebar = localStorage.getItem('hoveredSidebar')
-        const storedHidden = localStorage.getItem('hidden')
-
-        if (storedSidebarWidth) {
-            setSidebarWidth(parseInt(storedSidebarWidth))
-        }
-        if (storedHoveredSidebar) {
-            setHoveredSidebar(parseInt(storedHoveredSidebar))
-        }
-        if (storedHidden) {
-            setHidden(storedHidden === 'true')
-        }
-    }, [])
-
-    useEffect(() => {
-        localStorage.setItem('sidebarWidth', sidebarWidth.toString())
-        localStorage.setItem('hoveredSidebar', hoveredSidebar.toString())
-        localStorage.setItem('hidden', hidden.toString())
-    }, [sidebarWidth, hoveredSidebar, hidden])
-    function resizeSidebar(e: React.MouseEvent) {
-        const startX = e.clientX;
-        const startWidth = sidebarWidth;
-        console.log(startWidth);
-
-        document.body.style.userSelect = 'none';
-
-        function onMouseMove(e: MouseEvent) {
-            const newWidth = startWidth + (e.clientX - startX);
-            if (newWidth >= 256 && newWidth <= window.innerWidth * 0.25) {  
-                setSidebarWidth(newWidth);
-            } 
-        }
-        function onMouseUp() {
-            document.body.style.userSelect = 'auto';
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-        }
-
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-    }
-
-    const activeStatus = useActive({userId: user.uid});
+    const currentURL = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -116,6 +56,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
             { label: "Notifications", href: "./notifications" },
         ];
     
+        
         const activeItem = navItems.find(item => currentURL?.replace('./', '') === item.href.replace('./', ''));
     
         if (activeItem) {
@@ -132,6 +73,64 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
             
         }
     }, [currentURL]);
+    useEffect(() => {
+        if (!user) return;
+    }, [user]);
+
+    useEffect(() => {
+        const storedSidebarWidth = localStorage.getItem("sidebarWidth");
+        const storedHoveredSidebar = localStorage.getItem("hoveredSidebar");
+        const storedHidden = localStorage.getItem("hidden");
+
+        if (storedSidebarWidth) setSidebarWidth(parseInt(storedSidebarWidth));
+        if (storedHoveredSidebar) setHoveredSidebar(parseInt(storedHoveredSidebar));
+        if (storedHidden) setHidden(storedHidden === "true");
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem("sidebarWidth", sidebarWidth.toString());
+        localStorage.setItem("hoveredSidebar", hoveredSidebar.toString());
+        localStorage.setItem("hidden", hidden.toString());
+    }, [sidebarWidth, hoveredSidebar, hidden]);
+
+
+    const handleMouseEnter = () => {
+        if (timeoutIdRef.current) {
+            clearTimeout(timeoutIdRef.current);
+            timeoutIdRef.current = null;
+        }
+        setHoveredSidebar(sidebarWidth);
+    };
+
+    const handleMouseLeave = () => {
+        timeoutIdRef.current = setTimeout(() => {
+            setHoveredSidebar(1);
+        }, 2000);
+    };
+
+    function resizeSidebar(e: React.MouseEvent) {
+        const startX = e.clientX;
+        const startWidth = sidebarWidth;
+        console.log(startWidth);
+
+        document.body.style.userSelect = 'none';
+
+        function onMouseMove(e: MouseEvent) {
+            const newWidth = startWidth + (e.clientX - startX);
+            if (newWidth >= 256 && newWidth <= window.innerWidth * 0.25) {  
+                setSidebarWidth(newWidth);
+            } 
+        }
+        function onMouseUp() {
+            document.body.style.userSelect = 'auto';
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+        }
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    }
+
     const handleMouseEntering = (e: React.MouseEvent, href: string) => {
         const target = e.currentTarget as HTMLElement;
         const { top, width } = target.getBoundingClientRect(); 
@@ -140,6 +139,9 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
             width: width,
         });
     }
+
+    const activeStatus = useActive({ userId: user?.uid });
+
 
     const handleMouseLeaving = () => {
         setUnderlineStyle({ top: mainlocation.top, width: mainlocation.width });
@@ -167,10 +169,10 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                                         { label: "Incidents", icon: <AlertOctagonIcon size={18} />, href: "./incidents" },
                                         { label: "Notifications", icon: <Bell size={18} />, href: "./notifications" }
                                     ].map((item, index) => (
-                                        <a key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`${hide ? "justify-center"  : "mx-1.5 px-4"} w-full h-7 z-40 py-0.5  flex cursor-pointer  rounded-md items-center`}>
+                                        <Link key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`${hide ? "justify-center"  : "mx-1.5 px-4"} w-full h-7 z-40 py-0.5  flex cursor-pointer  rounded-md items-center`}>
                                             {item.icon}
                                             <p className={`${hide ? "hidden" : " ml-2"} text-foreground/40 text-[14px] font-semibold`}>{item.label}</p>
-                                        </a>
+                                        </Link>
                                     ))
                                 }
                                 <span
@@ -229,7 +231,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                     <div className="flex flex-col items-start gap-2">
                         <div className="flex flex-row relative">
                             <Avatar className="w-12 h-12">
-                                <img src={user.photoURL ?? undefined} alt="Your Profile" referrerPolicy="no-referrer" />
+                                <img src={user?.photoURL ?? undefined} alt="Your Profile" referrerPolicy="no-referrer" />
                                 <AvatarFallback className="w-6 h-6 text-xl font-semibold">
                                     {user?.displayName?.charAt(0)}
                                 </AvatarFallback>
