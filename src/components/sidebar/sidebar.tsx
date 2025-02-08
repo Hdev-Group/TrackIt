@@ -46,18 +46,26 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
             setUnderlineStyle({ top: mainhiddenlocation.top, width: mainhiddenlocation.width });
         }
     }, [hidden, mainlocation, mainhiddenlocation]);
+
+        // url structure = /orgid/page
+
+        const getOrgID = () => {
+            const parts = window.location.pathname.split('/');
+            return parts.length > 1 ? parts[1] : '';
+        }
+
     useEffect(() => {
         const navItems = [
-            { label: "Dashboard", href: "./dashboard" },
-            { label: "Tickets", href: "./tickets" },
-            { label: "Messages", href: "./messages" },
-            { label: "Shifts", href: "./shifts" },
-            { label: "Incidents", href: "./incidents" },
-            { label: "Notifications", href: "./notifications" },
+            { label: "Dashboard", href: `/${getOrgID()}/dashboard` },
+            { label: "Tickets", href: `/${getOrgID()}/tickets` },
+            { label: "Messages", href: `/${getOrgID()}/messages` },
+            { label: "Shifts", href: `/${getOrgID()}/shifts` },
+            { label: "Incidents", href: `/${getOrgID()}/incidents` },
+            { label: "Notifications", href: `/${getOrgID()}/notifications` },
         ];
     
         
-        const activeItem = navItems.find(item => currentURL?.replace('./', '') === item.href.replace('./', ''));
+        const activeItem = navItems.find(item => currentURL?.includes(item.href.split('/').pop() ?? ''));
     
         if (activeItem) {
             requestAnimationFrame(() => {
@@ -162,12 +170,12 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                             <div className="w-full justify-center flex flex-col items-center mt-2 relative">
                                 {
                                     [
-                                        { label: "Dashboard", icon: <Home size={18} />, href: "./dashboard" },
-                                        { label: "Tickets", icon: <Ticket size={18} />, href: "./tickets" },
-                                        { label: "Messages", icon: <MessageSquare size={18} />, href: "./messages" },
-                                        { label: "Shifts", icon: <Clock size={18} />, href: "./shifts" },
-                                        { label: "Incidents", icon: <AlertOctagonIcon size={18} />, href: "./incidents" },
-                                        { label: "Notifications", icon: <Bell size={18} />, href: "./notifications" }
+                                        { label: "Dashboard", icon: <Home size={18} />, href: `/${getOrgID()}/dashboard` },
+                                        { label: "Tickets", icon: <Ticket size={18} />, href: `/${getOrgID()}/tickets` },
+                                        { label: "Messages", icon: <MessageSquare size={18} />, href: `/${getOrgID()}/messages` },
+                                        { label: "Shifts", icon: <Clock size={18} />, href: `/${getOrgID()}/shifts` },
+                                        { label: "Incidents", icon: <AlertOctagonIcon size={18} />, href: `/${getOrgID()}/incidents` },
+                                        { label: "Notifications", icon: <Bell size={18} />, href: `/${getOrgID()}/notifications` }
                                     ].map((item, index) => (
                                         <Link key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`${hide ? "justify-center"  : "mx-1.5 px-4"} w-full h-7 z-40 py-0.5  flex cursor-pointer  rounded-md items-center`}>
                                             {item.icon}

@@ -1,4 +1,4 @@
-import Messages from "./[channelID]/messages";
+import Messages from "./messages";
 
 export async function generateMetadata() {
   return {

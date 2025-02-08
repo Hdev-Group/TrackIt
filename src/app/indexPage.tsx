@@ -132,7 +132,7 @@ export default function Home() {
             </h1>
             <p className="text-md text-white/80 mt-2">TrackIt’s security features ensure your data is safe and secure.</p>
             <div className="flex mt-8 justify-between flex-col gap-5 w-full">
-              <div className="md:grid flex flex-col md:grid-cols-3 gap-5 w-full">
+              <div className="md:grid flex flex-col md:grid-cols-3 grid-rows-2 gap-5 w-full">
                 <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
                   <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
                   <h2><b>Secure Data Storage</b> with TrackIt – Your data is stored securely on our servers. a</h2>
@@ -141,13 +141,13 @@ export default function Home() {
                   <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
                   <h2><b>Encrypted Data</b> – Your data is encrypted to ensure it remains secure.</h2>
                 </div>
-                <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
+                <div className="bg-[#222831] rounded-xl col-span-1 row-span-1 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
                   <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
                     <h2><b>Regular Backups</b> – Your data is backed up regularly to prevent data loss.</h2>
                 </div>
-                <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
+                <div className="bg-[#222831] rounded-xl col-span-2 row-span-2 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
                   <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
-                    <h2><b>Secure Access</b> – Access to your data is secure and protected.</h2>
+                  <h2><b>Secure Access</b> – Access to your data is secure and protected.</h2>
                 </div>
               </div>
             </div>
