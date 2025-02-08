@@ -345,8 +345,6 @@ function StatusPicker({userid}: {userid: string}) {
 
 function OrgPicker({ishidden, sethidden, hidden}: {ishidden: boolean, sethidden: React.Dispatch<React.SetStateAction<boolean>>, hidden: boolean}) {
     const [orgPicker, SetOrgPicker] = useState(false);
-    console.log(hidden);
-
     function OrgSelector({name}: {name: string}) {
         return(
             <div className="w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer justify-start rounded-md items-center">
