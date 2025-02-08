@@ -6,6 +6,7 @@ import { AlertCircle, Building2Icon, CheckCircle, Clock, Glasses, LucideTickets,
 import { getAuth, User } from 'firebase/auth';
 import { useEffect, useState, JSX } from 'react';
 import { m } from 'framer-motion';
+import ActiveUsers from '@/components/activeUsers/activeUsers';
 
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
@@ -32,9 +33,6 @@ export default function Dashboard() {
 
     return (
         <AuthChecks>
-            <main className="bg-[#101218] w-full min-h-screen h-full overflow-hidden">
-                <div className="flex flex-row justify-between overflow-hidden items-baseline h-screen">
-                    <LockedSidebar user={user as any} />
                     <div className='bg-[#101218] w-full h-full overflow-y-scroll changedscrollbar'>
                         <div className="flex flex-col items-start  mb-[20vh]  justify-start w-full h-full">
                             <div className="h-12 flex items-center justify-end px-3 w-full">
@@ -59,8 +57,6 @@ export default function Dashboard() {
                             </div>
                         </div>
                     </div>
-                </div>
-            </main>
         </AuthChecks>
     );
 }
