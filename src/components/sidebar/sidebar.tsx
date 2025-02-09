@@ -22,7 +22,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
 
 
 
-    const currentURL = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
+    const currentURL = typeof window !== "undefined" ? window.location.pathname : "";
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -66,6 +66,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
     
         
         const activeItem = navItems.find(item => currentURL?.includes(item.href.split('/').pop() ?? ''));
+        console.log("Active item:", activeItem);
     
         if (activeItem) {
             requestAnimationFrame(() => {
@@ -165,7 +166,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
             <div className={`${!hidden ? "h-full relative bg-white/5" : "h-[70vh] overflow-y-auto absolute rounded-r-xl overflow-hidden bg-muted/50 border-4 border-x-0 z-50"}  flex-row flex  justify-between transition-all duration-300`} style={!hidden ? hide ? { width: "70px" } : { width: sidebarWidth } : { width: hoveredSidebar }}>
                 <div className={`${hide ? "" : "mx-2 mr-4"}flex flex-col items-start w-full h-full `}>
                     <div className="flex flex-col justify-between h-full w-full">
-                        <div className="flex flex-col w-full select-none ">
+                        <div className="flex flex-col w-full select-none">
                             <OrgPicker hidden={hide ?? false} ishidden={hidden} sethidden={setHidden} />
                             <div className="w-full justify-center flex flex-col items-center mt-2 relative">
                                 {
@@ -355,12 +356,14 @@ function OrgPicker({ishidden, sethidden, hidden}: {ishidden: boolean, sethidden:
     const [orgPicker, SetOrgPicker] = useState(false);
     function OrgSelector({name}: {name: string}) {
         return(
-            <div className="w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer justify-start rounded-md items-center">
-            <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-sm text-muted-foreground font-semibold">
-                <p>{name.split(' ').map(word => word.charAt(0)).join('')}</p>
+            <div className="h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer justify-start rounded-md items-center">
+                <div className="flex flex-row gap-2 w-full items-start">
+                    <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-sm text-muted-foreground font-semibold">
+                        <p>{name.split(' ').map(word => word.charAt(0)).join('')}</p>
+                    </div>
+                    <p className={`text-foreground/70 text-sm font-semibold ml-2 flex-nowrap text-nowrap`}>{name}</p>
+                </div>
             </div>
-            <p className={`text-foreground/70 text-sm font-semibold ml-2 flex-nowrap text-nowrap`}>{name}</p>
-        </div>
         )
     }
 
@@ -447,7 +450,7 @@ function ShiftIndicator({hidden}: {hidden?: boolean}) {
                 />
             </div>
           <div className="flex flex-col items-start w-full justify-center">
-            <h1 className={`${hidden ? "hidden" : "visible"} text-white text-sm font-semibold mt-3`}>Your on shift</h1>
+            <h1 className={`${hidden ? "hidden" : "visible"} text-white text-sm font-semibold mt-3`}>You're on shift</h1>
             <p className={`text-white text-xs font-normal flex flex-row gap-1 items-center ${hidden ? "hidden" : "visible"}`}><Clock className="w-4" /> Until 18:00</p>
             <p className={`text-white text-xs font-normal flex flex-row gap-1 items-center ${hidden ? "hidden" : "visible"}`}><Calendar className="w-4" /> {new Date().toLocaleDateString()}</p>
           </div>

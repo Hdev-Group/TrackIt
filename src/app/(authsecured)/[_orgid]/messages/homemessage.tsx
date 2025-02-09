@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { getAuth, type User } from "firebase/auth"
 import { MoreHorizontal, Plus, Send } from "lucide-react"
 import type React from "react"
-import AuthChecks from "../../../authchecks"
+import AuthChecks from "../../authchecks"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
@@ -22,15 +22,6 @@ export default function Messages() {
     { id: 3, name: "help" },
     { id: 4, name: "announcements" },
   ])
-
-  useEffect(() => {
-    const checker = window.location.pathname.split("/").pop()
-    const check = channels.find((channel) => channel.id === parseInt(checker as string))
-    if (check) {
-      setActiveChannel(check)
-    }
-  }, [channels])
-
   const [activeChannel, setActiveChannel] = useState<Channel>(channels[0])
   const [newChannelName, setNewChannelName] = useState("")
   const auth = getAuth()
@@ -43,40 +34,12 @@ export default function Messages() {
     return () => unsubscribe()
   }, [auth])
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Sending message:", message);
-  
-    const userToken = await user?.getIdToken();
-  
-    const messageData = {
-      message: message,
-      channel: activeChannel.id,
-      userid: user?.uid,
-    };
-  
-    try {
-      const res = await fetch("/api/application/v1/messages/restricted/messageSend", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${userToken}`,
-        },
-        body: JSON.stringify(messageData),
-      });
-  
-      if (res.ok) {
-        console.log("Message sent successfully");
-        setMessage("");
-      } else {
-        console.error("Failed to send message");
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
-  
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault()
+    // TODO: Implement send message functionality
+    console.log("Sending message:", message)
+    setMessage("")
+  }
 
   const handleCreateChannel = (e: React.FormEvent) => {
     e.preventDefault()
@@ -109,26 +72,9 @@ export default function Messages() {
                 <MoreHorizontal className="h-5 w-5" />
               </button>
             </header>
-            <div className="flex-grow overflow-y-auto  bg-muted/30 border-t border-l rounded-tl-xl">
-              <MessageList />
+            <div className="flex-grow overflow-y-auto flex bg-muted/30 border-t items-center justify-center border-l rounded-tl-xl">
+                <h1 className="text-xl font-bold">Choose a text channel to begin chatting</h1>
             </div>
-            <footer className="h-16 border-t border-l bg-muted/20 px-4 py-3">
-              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder={`Type a message in #${activeChannel.name}`}
-                  className="flex-grow bg-muted-foreground/5 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-500/20 text-white rounded px-4 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <Send className="h-5 w-5" />
-                </button>
-              </form>
-            </footer>
           </div>
         </div>
       </main>
@@ -166,9 +112,9 @@ function Channels({
           </button>
         </div>
         <div className="flex-grow overflow-y-auto gap-1 flex-col flex px-1 py-1">
-        {channels.map((channel) => (
+          {channels.map((channel) => (
             <Link
-                href={`./${channel.id}`}
+                href={`./messages/${channel.id}`}
                 key={channel.id}
                 onClick={() => setActiveChannel(channel)}
                 className={cn(
@@ -186,7 +132,6 @@ function Channels({
 }
 
 function MessageList() {
-  // TODO: Implement actual message list
   return (
     <div className="p-4 space-y-4">
       <p>Message list placeholder</p>
