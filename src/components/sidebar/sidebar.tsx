@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { AlertOctagonIcon, Bell, Calendar, ChevronDown, Clock, Home, Maximize2, MessageSquare, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
+import { AlertOctagonIcon, BarChart2, Bell, Calendar, ChevronDown, Clock, Home, Maximize2, MessageSquare, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
@@ -61,6 +61,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
             { label: "Messages", href: `/${getOrgID()}/messages` },
             { label: "Shifts", href: `/${getOrgID()}/shifts` },
             { label: "Incidents", href: `/${getOrgID()}/incidents` },
+            { label: "Status Page", href: `/${getOrgID()}/status-page` },
             { label: "Notifications", href: `/${getOrgID()}/notifications` },
         ];
     
@@ -176,6 +177,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                                         { label: "Messages", icon: <MessageSquare size={18} />, href: `/${getOrgID()}/messages` },
                                         { label: "Shifts", icon: <Clock size={18} />, href: `/${getOrgID()}/shifts` },
                                         { label: "Incidents", icon: <AlertOctagonIcon size={18} />, href: `/${getOrgID()}/incidents` },
+                                        { label: "Status Page", icon: <BarChart2 size={18} />, href: `/${getOrgID()}/status-page` },
                                         { label: "Notifications", icon: <Bell size={18} />, href: `/${getOrgID()}/notifications` }
                                     ].map((item, index) => (
                                         <Link key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`${hide ? "justify-center"  : "mx-1.5 px-4"} w-full h-7 z-40 py-0.5  flex cursor-pointer  rounded-md items-center`}>

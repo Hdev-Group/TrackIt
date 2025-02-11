@@ -24,11 +24,15 @@ export default function Messages() {
   ])
 
   useEffect(() => {
-    const checker = window.location.pathname.split("/").pop()
-    const check = channels.find((channel) => channel.id === parseInt(checker as string))
-    if (check) {
-      setActiveChannel(check)
-    }
+    const checker = window.location.pathname.split("/").pop();
+    const parsedChecker = parseInt(checker as string, 10);
+    
+    if (!isNaN(parsedChecker)) {
+      const check = channels.find((channel) => channel.id === parsedChecker);
+      if (check) {
+        setActiveChannel(check);
+      }
+    }    
   }, [channels])
 
   const [activeChannel, setActiveChannel] = useState<Channel>(channels[0])
@@ -110,7 +114,7 @@ export default function Messages() {
               </button>
             </header>
             <div className="flex-grow overflow-y-auto  bg-muted/30 border-t border-l rounded-tl-xl">
-              <MessageList />
+              <MessageList user={user} channelID={activeChannel.id} />
             </div>
             <footer className="h-16 border-t border-l bg-muted/20 px-4 py-3">
               <form onSubmit={handleSendMessage} className="flex items-center gap-2">
@@ -185,11 +189,51 @@ function Channels({
   )
 }
 
-function MessageList() {
-  // TODO: Implement actual message list
+function MessageList({channelID, user}: {channelID: number, user: User | null}) {
+
+  const [messages, setMessages] = useState<any[]>([]);
+
+  
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const userToken = await user?.getIdToken();
+      try {
+        const response = await fetch(`/api/application/v1/messages/restricted/messageGet?channel=${channelID}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${userToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+        setMessages(data.messages);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    fetchMessages();
+  }, [channelID]);
+
+
   return (
-    <div className="p-4 space-y-4">
-      <p>Message list placeholder</p>
+    <div className="px-1 pt-2">
+      {
+      messages.length === 0 ? (
+        <p>No messages yet...</p>
+      ) : (
+        messages?.map((message: any) => (
+        <div key={message._id} className="flex gap-2 hover:bg-muted-foreground/5 px-2 py-1 rounded-md">
+          <div className="w-8 h-8 bg-gray-500 rounded-full"></div>
+          <div>
+          <p className="text-sm font-semibold">{message.userid}</p>
+          <p className="text-sm">{message.message}</p>
+          </div>
+        </div>
+        ))
+      )
+      }
     </div>
   )
 }
