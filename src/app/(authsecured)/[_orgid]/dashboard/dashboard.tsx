@@ -1,13 +1,12 @@
 "use client";
 
-import { AlertCircle, Building2Icon, ChartSpline, CheckCircle, ChevronDown, Clock, Glasses, Grip, GripHorizontal, GripVertical, LucideTickets, MoreHorizontal, Ticket } from 'lucide-react';
+import { AlertCircle, Building2Icon, ChartSpline, CheckCircle, ChevronDown, Clock, Glasses, GripHorizontal, LucideTickets, MoreHorizontal, Ticket } from 'lucide-react';
 import AuthChecks from '../../authchecks';
 import { getAuth, User } from 'firebase/auth';
 import { useEffect, useState, JSX } from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
 import React from 'react';
 
 export default function Dashboard() {
@@ -69,7 +68,7 @@ export default function Dashboard() {
                         </div>
                         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                             <SortableContext items={widgets.map((w) => w.id)} strategy={verticalListSortingStrategy}>
-                                <div className='flex flex-col w-full gap-4'>
+                                <div className='flex flex-col w-full '>
                                     {widgets.map((widget) => (
                                         <Draggable key={widget.id} id={widget.id}>
                                             {widget.component}
@@ -88,6 +87,8 @@ export default function Dashboard() {
 function Draggable({ id, children }: { id: string, children: React.ReactNode }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
+
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -95,7 +96,7 @@ function Draggable({ id, children }: { id: string, children: React.ReactNode }) 
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} className=" group p-4 rounded-lg">
-            <div  className="flex justify-between  items-center">
+            <div className="flex justify-between  items-center">
                 <div className='group-hover:opacity-100 opacity-0 transition-all items-center flex flex-row w-full cursor-default justify-between'>
                     <GripHorizontal {...listeners} size={22} className='text-muted-foreground cursor-grab' />
                     <MoreHorizontal size={22} className='text-muted-foreground cursor-pointer' />
@@ -184,7 +185,7 @@ function AssignedTickets() {
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-pointer'>
+            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
             <div onClick={() => setShowMore(!showMore)} className='flex items-center border-b justify-start px-4 w-full h-10 gap-2 cursor-pointer'>
                     <Ticket className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>
@@ -239,7 +240,7 @@ function TicketStats() {
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-pointer'>
+            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
                 <div onClick={() => setShowMore(!showMore)} className='flex items-center border-b justify-start px-4 w-full h-10 gap-2'>
                     <LucideTickets className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>
@@ -358,7 +359,7 @@ function RecentActivities() {
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-pointer'>
+            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
                 <div onClick={() => setShowMore(!showMore)} className='flex border-b items-center justify-start px-4 w-full h-10 gap-2'>
                     <Glasses className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>
@@ -436,7 +437,7 @@ function DepartmentsAssignedTo(){
                 </div>
             </div>
         </div>
-        <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-pointer'>
+        <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
                 <div onClick={() => setShowMore(!showMore)} className='flex border-b items-center justify-start px-4 w-full h-10 gap-2'>
                     <Building2Icon className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, JSX } from "react";
 import { AlertOctagonIcon, BarChart2, Bell, Calendar, ChevronDown, Clock, Home, Maximize2, MessageSquare, Minimize2Icon, Settings, Ticket, TicketCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import useActive from "@/components/websockets/isActive/active";
@@ -47,7 +47,6 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
         }
     }, [hidden, mainlocation, mainhiddenlocation]);
 
-        // url structure = /orgid/page
 
         const getOrgID = () => {
             const parts = window.location.pathname.split('/');
@@ -59,6 +58,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
             { label: "Dashboard", href: `/${getOrgID()}/dashboard` },
             { label: "Tickets", href: `/${getOrgID()}/tickets` },
             { label: "Messages", href: `/${getOrgID()}/messages` },
+            { label: "Calendar", href: `/${getOrgID()}/calendar` },
             { label: "Shifts", href: `/${getOrgID()}/shifts` },
             { label: "Incidents", href: `/${getOrgID()}/incidents` },
             { label: "Status Page", href: `/${getOrgID()}/status-page` },
@@ -171,19 +171,39 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                             <OrgPicker hidden={hide ?? false} ishidden={hidden} sethidden={setHidden} />
                             <div className="w-full justify-center flex flex-col items-center mt-2 relative">
                                 {
-                                    [
-                                        { label: "Dashboard", icon: <Home size={18} />, href: `/${getOrgID()}/dashboard` },
-                                        { label: "Tickets", icon: <Ticket size={18} />, href: `/${getOrgID()}/tickets` },
-                                        { label: "Messages", icon: <MessageSquare size={18} />, href: `/${getOrgID()}/messages` },
-                                        { label: "Shifts", icon: <Clock size={18} />, href: `/${getOrgID()}/shifts` },
-                                        { label: "Incidents", icon: <AlertOctagonIcon size={18} />, href: `/${getOrgID()}/incidents` },
-                                        { label: "Status Page", icon: <BarChart2 size={18} />, href: `/${getOrgID()}/status-page` },
-                                        { label: "Notifications", icon: <Bell size={18} />, href: `/${getOrgID()}/notifications` }
-                                    ].map((item, index) => (
-                                        <Link key={index} onMouseLeave={handleMouseLeaving} href={item.href} onMouseEnter={(e) => handleMouseEntering(e, item.href)} className={`${hide ? "justify-center"  : "mx-1.5 px-4"} w-full h-7 z-40 py-0.5  flex cursor-pointer  rounded-md items-center`}>
-                                            {item.icon}
-                                            <p className={`${hide ? "hidden" : " ml-2"} text-foreground/40 text-[14px] font-semibold`}>{item.label}</p>
-                                        </Link>
+                                    Object.entries(
+                                        [
+                                            { label: "Dashboard", icon: <Home size={18} />, href: `/${getOrgID()}/dashboard` },
+                                            { label: "Messages", category: "Team", icon: <MessageSquare size={18} />, href: `/${getOrgID()}/messages` },
+                                            { label: "Calendar", category: "Team", icon: <Calendar size={18} />, href: `/${getOrgID()}/calendar` },
+                                            { label: "Shifts", category: "Team", icon: <Clock size={18} />, href: `/${getOrgID()}/shifts` },
+                                            { label: "Tickets", icon: <Ticket size={18} />, href: `/${getOrgID()}/tickets` },
+                                            { label: "Incidents", category: "Response", icon: <AlertOctagonIcon size={18} />, href: `/${getOrgID()}/incidents` },
+                                            { label: "Status Page", category: "Response", icon: <BarChart2 size={18} />, href: `/${getOrgID()}/status-page` },
+                                            { label: "Notifications", icon: <Bell size={18} />, href: `/${getOrgID()}/notifications` }
+                                        ].reduce((acc, item) => {
+                                            const category = item.category || "General";
+                                            if (!acc[category]) acc[category] = [];
+                                            acc[category].push(item);
+                                            return acc;
+                                        }, {} as Record<string, { label: string; icon: JSX.Element; href: string; category?: string }[]>)
+                                    ).map(([category, items]: [string, any[]]) => (
+                                        <div key={category} className="w-full z-50">
+                                            {items.map((item, index) => (
+                                                <Link
+                                                    key={index}
+                                                    onMouseLeave={handleMouseLeaving}
+                                                    href={item.href}
+                                                    onMouseEnter={(e) => handleMouseEntering(e, item.href)}
+                                                    className={`${hide ? "justify-center" : "mx-1.5 px-2"} w-full h-7 z-40 py-0.5 flex cursor-pointer rounded-md items-center`}
+                                                >
+                                                    {item.icon}
+                                                    <p className={`${hide ? "hidden" : " ml-2"} text-foreground/40 text-[14px] font-semibold`}>
+                                                        {item.label}
+                                                    </p>
+                                                </Link>
+                                            ))}
+                                        </div>
                                     ))
                                 }
                                 <span
@@ -213,7 +233,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                             <ShiftIndicator hidden={hide} />
                             <div className="border-t select-none border-foreground/10 w-full mt-2 py-2 px-1.5 flex flex-col items-start">
                                 <div className={`flex  w-full justify-between group mt-2 ${hide ? "flex-col items-start" : "flex-row items-center"}`} onClick={() => setOpenedProfile(true)}>
-                                    <div className="flex flex-row relative items-center">
+                                    <div className="flex flex-row relative items-center cursor-pointer">
                                         <Avatar className="w-6 h-6">
                                             <img src={`${userPhoto}`} alt="Your Profile" referrerPolicy="no-referrer" />
                                         </Avatar>
@@ -238,7 +258,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                         </div>
                     </div>
                 </div>
-                <div id="profilepopup" className={`${openedProfile ? "absolute" : "hidden"} transition-all bg-[#000000cc] backdrop-blur-lg border rounded-lg ${hidden ? " bottom-0 mx-0 rounded-b-none h-auto" : "bottom-12 h-[30rem] mx-3"}  w-full p-4 flex flex-col items-start`}>
+                <div id="profilepopup" className={`${openedProfile ? "absolute" : "hidden"}  transition-all bg-[#000000cc] backdrop-blur-lg border rounded-lg ${hidden ? " bottom-0 mx-0 rounded-b-none h-auto" : "bottom-12 h-[30rem] mx-3"}  w-full p-4 flex flex-col items-start`}>
                     <div className="flex flex-col items-start gap-2">
                         <div className="flex flex-row relative">
                             <Avatar className="w-12 h-12">
@@ -396,7 +416,7 @@ function OrgPicker({ishidden, sethidden, hidden}: {ishidden: boolean, sethidden:
     return(
         <div className={`${hidden ? "justify-center" : "py-0.5 px-1.5 mx-1.5 justify-between"} w-full h-9  mt-2 cursor-pointer flex hover:bg-neutral-300/10 rounded-md items-center `}>
             <div className="flex flex-row gap-0.5 relative justify-between w-full items-center">
-                <div className={`${hidden ? "flex-col " : "flex-row"} flex relative w-full gap-0.5 justify-center items-center`} onClick={() => SetOrgPicker(!orgPicker)}>
+                <div className={`${hidden ? "flex-col " : "flex-row"} flex relative w-full gap-0.5 justify-start items-center`} onClick={() => SetOrgPicker(!orgPicker)}>
                     <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-xl text-muted-foreground font-semibold">
                         <p>H</p>
                     </div>
@@ -408,7 +428,7 @@ function OrgPicker({ishidden, sethidden, hidden}: {ishidden: boolean, sethidden:
                         ishidden  ? <Maximize2 className="w-5 h-5 text-muted-foreground" /> : <Minimize2Icon className="w-5 h-5 text-muted-foreground transform rotate-180" />
                     }
                     </div>
-                <div className={`${orgPicker ? "absolute" : "hidden"} bg-muted/50 backdrop-blur-lg w-full h-auto top-10 left-0 rounded-lg px-2 py-2 w z-50`}>
+                <div className={`${orgPicker ? "absolute" : "hidden"} bg-muted/90 backdrop-blur-lg w-full h-auto top-10 left-0 rounded-lg px-2 py-2 w z-50`}>
                         <div className="flex w-full items-start justify-start flex-col gap-0.5">
                             {
                                 orgPicker && OrgList.map((org, index) => (
