@@ -104,12 +104,7 @@ function Channels({
       <div className="h-screen flex flex-col">
         <div className="h-16 flex items-center justify-between px-4">
           <h2 className="font-semibold">Channels</h2>
-          <button
-            className="text-gray-400 hover:text-white"
-            onClick={() => document.getElementById("newChannelInput")?.focus()}
-          >
-            <Plus className="h-5 w-5" />
-          </button>
+
         </div>
         <div className="flex-grow overflow-y-auto gap-1 flex-col flex px-1 py-1">
           {channels.map((channel) => (
