@@ -108,6 +108,9 @@ export default function Header() {
             </nav>
 
           <div className="hidden lg:flex items-center justify-end flex-1 lg:w-0 space-x-4">
+            <Button variant="slide-fill" type="button" href='/auth/signup'>
+                Get Started
+            </Button>
             {
               user ? (
                 <UserDropdown headerOpen={true}/>
@@ -117,9 +120,6 @@ export default function Header() {
                     </Button>
                 )
             }
-            <Button variant="slide-fill" type="button" href='/auth/signup'>
-                Get Started
-            </Button>
           </div>
 
           <div className="flex lg:hidden">

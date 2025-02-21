@@ -2,40 +2,43 @@
 import { motion } from "framer-motion"
 import Header from "@/components/header/header";
 import Button from "@/components/button/button";
-import { ArrowRightIcon} from "lucide-react";
+import { AlertOctagon, ArrowRightIcon, CheckIcon, ChevronDown, Minus, MinusIcon} from "lucide-react";
 import Footer from "@/components/footer/footer";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import Jointoday from "@/components/jointoday/jointoday";
 
 export default function Home() {
   return (
     <>
-      <main className="flex flex-col bg-[#101218] items-center relative justify-center min-h-screen pb-2">
+      <main className="flex flex-col bg-[#101218] items-center relative justify-center overflow-hidden  min-h-screen">
       <Header />
         <div className="flex flex-col items-start justify-start w-full h-full">
           <section className="container mx-auto h-auto relative flex mt-24 flex-col items-start justify-start">
-            <div className="relative flex flex-col items-start justify-start">
-              <div className="w-[10rem]  z-40 py-1 rounded-full flex items-start justify-start">
-                <img src="/trackitlogo/light/logo.png" alt="TrackIt" className="w-10 h-10" />
+            <div className="relative flex flex-col items-start justify-start max-w-full overflow-hidden">
+              <div className="w-[10rem] z-40 py-1 rounded-full flex items-start justify-start">
+              <img src="/trackitlogo/light/logo.png" alt="TrackIt" className="w-10 h-10" />
               </div>
-              <div className="text-6xl flex flex-col font-semibold text-transparent leading-tight  z-20 bg-clip-text textgradientmovetransition">
-                <p>Making SaaS</p><p>Simpler With TrackIt</p>
+              <div className="text-6xl flex flex-col font-semibold text-transparent leading-tight z-20 bg-clip-text textgradientmovetransition">
+              <p>Making SaaS</p><p>Simpler With TrackIt</p>
               </div>
-              <p className="text-md w-[34rem] text-white  z-20 ">
-                TrackIt, an all-in-one platform for start-ups to manage their teams, support requests, shifts and projects.
+              <p className="text-md md:max-w-[34rem] w-full text-white text-wrap flex-wrap z-20">
+              TrackIt, an all-in-one platform for start-ups to manage their teams, support requests, shifts and projects.
               </p>
               <div className="flex mt-8 justify-between z-20 gap-5 w-full">
-                  <Button variant="slide-fill" className="w-1/3 !rounded-full flex flex-row items-center justify-center" type="button" href="/auth/signin">
-                      <span className="flex flex-row gap-1 items-center justify-center">
-                        TRY IT FREE <ArrowRightIcon className="h-4" />
-                      </span>
-                  </Button>
+                <Button variant="slide-fill" className="md:w-1/3 !rounded-full flex flex-row items-center justify-center" type="button" href="/auth/signin">
+                  <span className="flex flex-row gap-1 items-center justify-center">
+                  TRY IT FREE <ArrowRightIcon className="h-4" />
+                  </span>
+                </Button>
               </div>
-              <motion.div 
+            </div>
+            <motion.div 
               className="absolute top-0 flex rounded-xl items-center justify-center -left-32 -rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
               initial={{height: "0rem", top: "0rem"}}
               animate={{height: "90rem", top: "-50rem"}}
               transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
-              />
-            </div>
+            />
           </section>
         <section className="container mx-auto h-auto relative mt-24 z-40 flex flex-col items-center justify-start">
           <div className="flex flex-col items-start justify-start w-full">
@@ -94,23 +97,31 @@ export default function Home() {
             TrackIt’s incident management system ensures your team is immediately alerted, so the right people can respond when an incident occurs.
           </p>
           <div className="flex mt-8 justify-between flex-col gap-5 w-full">
-            <div className="md:grid flex flex-col md:grid-cols-3 gap-5 w-full">
-              <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 flex flex-col items-start justify-end">
+            <div className="md:grid flex flex-col md:grid-cols-2 grid-rows-2 gap-5 h-full w-full">
+              <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-64 flex flex-col items-start justify-end">
                 <h2><b>Incident Management</b> with TrackIt – Instantly alert the right team members when an incident occurs.</h2>
               </div>
-              <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-96 flex flex-col items-start justify-end">
-                <h2><b>Real-Time Collaboration</b> – Collaborate in real-time with your team to resolve incidents faster.</h2>
+              <div className="bg-[#222831] rounded-xl rounded-l-3xl col-span-1 row-span-2 px-8 py-4 h-full flex flex-col items-start justify-end">
+              <h2><b>Incident Reporting</b> – Track incidents and generate reports to help prevent future incidents.</h2>
               </div>
-              <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-96 flex flex-col items-start justify-end">
+              <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-64 flex flex-col items-start justify-end">
                 <h2><b>Customizable Alerts</b> – Customize alerts to ensure the right team members are notified every time.</h2>
               </div>
-              <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 flex flex-col items-start justify-end">
-                <h2><b>Incident Reporting</b> – Track incidents and generate reports to help prevent future incidents.</h2>
-              </div>
+
             </div>
             <div className="text-foreground items-end justify-end flex flex-row gap-5 w-full">
                 <p className="font-medium relative after:h-[80%] after:w-[1px] after:bg-foreground after:absolute after:left-full after:top-[10%] after:ml-2">Replaces</p> <div className="flex flex-row fill-white gap-2"><PagerDutysvg /> <IncidentIO /></div>
               </div>            
+            </div>
+          </div>
+        </section>
+        <section className="w-full h-auto bg-cyan-300/30 relative flex flex-col items-center justify-start">
+          <div className="flex container mx-auto flex-col items-end mt-24 pb-24 justify-start">
+            <h1 className="text-7xl flex flex-row text-wrap text-end flex-wrap font-semibold text-white">
+              Provide Real Time Support <br /> Anywhere.
+            </h1>
+            <p className="text-md text-white/80 mt-2">TrackIt’s ticket support system ensures your customers get the help they need, when they need it.</p>
+            <div className="flex mt-8 justify-between flex-col gap-5 w-full">
             </div>
           </div>
         </section>
@@ -127,12 +138,12 @@ export default function Home() {
         </section>
         <section className="w-full h-auto relative flex flex-col items-center justify-start">
           <div className="flex container mx-auto flex-col items-start mt-24 pb-24 justify-start">
-            <h1 className="text-7xl flex flex-row font-semibold text-white">
+            <h1 className="text-7xl flex flex-row text-wrap flex-wrap font-semibold text-white">
               Keeping <img src="/trackitlogo/light/logo.png" alt="TrackIt" className="w-[70px] h-[70px] ml-2 -mr-1" /> rack of Security.
             </h1>
             <p className="text-md text-white/80 mt-2">TrackIt’s security features ensure your data is safe and secure.</p>
             <div className="flex mt-8 justify-between flex-col gap-5 w-full">
-              <div className="md:grid flex flex-col md:grid-cols-3 gap-5 w-full">
+              <div className="md:grid flex flex-col md:grid-cols-3 grid-rows-2 gap-5 w-full">
                 <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
                   <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
                   <h2><b>Secure Data Storage</b> with TrackIt – Your data is stored securely on our servers. a</h2>
@@ -141,28 +152,51 @@ export default function Home() {
                   <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
                   <h2><b>Encrypted Data</b> – Your data is encrypted to ensure it remains secure.</h2>
                 </div>
-                <div className="bg-[#222831] rounded-xl col-span-1 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
+                <div className="bg-[#222831] rounded-xl col-span-1 row-span-1 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
                   <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
                     <h2><b>Regular Backups</b> – Your data is backed up regularly to prevent data loss.</h2>
                 </div>
-                <div className="bg-[#222831] rounded-xl col-span-2 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
+                <div className="bg-[#222831] rounded-xl col-span-2 row-span-2 px-8 py-4 h-96 relative flex flex-col group items-start justify-end">
                   <div className="absolute group-hover:h-32 transition-all h-10 w-2 bg-white/20 group-hover:bg-cyan-300 top-10 rounded-r-lg left-0" />
-                    <h2><b>Secure Access</b> – Access to your data is secure and protected.</h2>
+                  <h2><b>Secure Access</b> – Access to your data is secure and protected.</h2>
                 </div>
               </div>
             </div>
           </div>
         </section>
-        <section className="w-full h-auto relative flex flex-col items-center justify-start bg-black/30">
+        <section className="w-full h-auto relative flex flex-col overflow-hidden items-center justify-start bg-black/30">
           <div className="flex container mx-auto flex-col items-end mt-24 pb-24 justify-start">
+
             <h1 className="text-7xl font-semibold text-white textbeatyellow">
               Stay Updated with Real-Time Status.
             </h1>
             <p className="text-md text-white/80 mt-2">
               TrackIt’s status page keeps your customers informed with real-time updates on system performance and incidents.
             </p>
-          </div>
+            <div className="flex items-center z-50 flex-col w-full rounded-md p-4 mt-8">
+              <div className="items-center flex flex-col w-full gap-2">
+                <div className="bg-red-500 ring-4 ring-red-300/40 rounded-full w-9 h-9 items-center justify-center flex">
+                  <Minus className="h-9 w-9 text-black" />
+                </div>
+                <div className="flex flex-col items-center justify-center mb-5">
+                  <h2 className="text-2xl font-semibold text-white">Partial Outage</h2>
+                   <p className="text-sm text-muted-foreground">Last updated: {new Date(Date.now() - 5 * 60 * 1000).toLocaleString([], { hour: '2-digit', minute: '2-digit', year: 'numeric', month: 'numeric', day: 'numeric' })}</p>
+                </div>
+                <div className="border-muted-foreground/20 gap-2 flex flex-col lg:w-1/2 w-full mx-auto rounded-lg border bg-white/10 p-3">
+                  <DropDownZone title="Supertime" issue="Partial Outage" projectUrl="supertime.com" />
+                  <DropDownZone title="Hdev Site" projectUrl="hdev.uk"  />
+                  <DropDownZone title="Securesite" projectUrl="securesite.uk"  issue="Degraded Performance" />
+                </div>
+              </div>
+              <div className="text-foreground z-50 mt-10 items-end justify-end flex flex-row gap-5 w-full">
+                <p className="font-medium relative after:h-[80%] after:w-[1px] after:bg-foreground after:absolute after:left-full after:top-[10%] after:ml-2">Replaces</p> <div className="flex flex-row fill-white gap-2"><StatusPage /></div>
+              </div>   
+            </div>
+          </div>         
         </section>
+      </div>
+      <div className="mt-16 w-full h-auto relative flex flex-col items-center justify-start">
+        <Jointoday />
       </div>
       </main>
       <Footer />
@@ -170,6 +204,87 @@ export default function Home() {
   );
 }
 
+type Status = "Operational" | "Degraded Performance" | "Partial Outage" | "Major Outage"
+
+interface DropDownZoneProps {
+  title: string
+  issue?: Status
+  status?: string
+  time?: string
+  projectUrl?: string
+}
+
+const statusConfig: Record<Status, { color: string; icon: React.ReactNode }> = {
+  Operational: { color: "bg-green-500", icon: <CheckIcon className="h-4 w-4 text-black" /> },
+  "Degraded Performance": { color: "bg-yellow-500", icon: <MinusIcon className="h-5 w-5 text-black" /> },
+  "Partial Outage": { color: "bg-red-500", icon: <MinusIcon className="h-5 w-5 text-black" /> },
+  "Major Outage": { color: "bg-red-900", icon: <AlertOctagon className="h-5 w-5 text-red-300" /> },
+}
+
+function DropDownZone({ title, issue = "Operational", status, time, projectUrl }: DropDownZoneProps) {
+  const [open, setOpen] = useState(false)
+
+  const { color, icon } = statusConfig[issue]
+
+  const toggleOpen = () => setOpen(!open)
+
+  // check if a status- has been hovered over
+
+  useEffect(() => {
+    if (open) {
+      const status = document.getElementById(`status-${89}`)
+      if (status) {
+        status.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    }
+  }, [open])
+
+  return (
+  <div className="relative">
+
+    <div className="flex flex-col items-start justify-start bg-muted-foreground/10 rounded-lg overflow-hidden">
+      <button
+        onClick={toggleOpen}
+        className="flex w-full cursor-pointer hover:bg-muted-foreground/20 transition-all py-5 px-3 items-center justify-between gap-2"
+        aria-expanded={open}
+        aria-controls="dropdown-content"
+      >
+        <span className="text-sm text-gray-800 dark:text-gray-200">{title}</span>
+        <div className="flex items-center gap-2">
+          <div className={`${color} rounded-full w-5 h-5 flex items-center justify-center`}>{icon}</div>
+          <span className="text-sm text-gray-800 dark:text-gray-200 whitespace-nowrap">{issue}</span>
+          <div className="p-0.5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+            <ChevronDown
+              className={`h-4 w-4 text-gray-600 dark:text-gray-300 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+            />
+          </div>
+        </div>
+      </button>
+      <div
+        id="dropdown-content"
+        className={`w-full transition-all duration-300 ease-in-out overflow-hidden ${open ? "max-h-[500px]" : "max-h-0"}`}
+      >
+        <div className="p-3 flex flex-col gap-4">
+          <div className="flex items-start gap-2">
+            <div className={`${color} rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0`}>{icon}</div>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{projectUrl}</p>
+          </div>
+          <div className="flex gap-[1px] relative">
+            {Array.from({ length: 90 }).map((_, i) => (
+              <div
+                key={i}
+                id={`status-${i}`}
+                className={`w-3 h-10 ${i === 89 ? color : "bg-green-500"} rounded-xs first:rounded-l-md last:rounded-r-md relative group`}
+              >
+            </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  )
+}
 
 const Teamssvg = () => (
   <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="25" height="25" viewBox="0 0 50 50">
@@ -194,4 +309,17 @@ const IncidentIO = () => (
     <path d="M25 0H0V25H25V0Z"/>
     <path fillRule="evenodd" clipRule="evenodd" d="M10.9633 21.1945V18.8537H14.0446V21.214C16.878 20.615 18.9628 18.226 18.9628 15.1445C18.9628 12.617 17.198 9.30656 15.1214 8.15707C15.3981 9.167 14.9642 10.4786 14.4098 10.3498C14.1757 10.297 14.1538 9.92234 14.1175 9.22997C14.0482 8.105 13.9354 6.00856 11.9894 3.875C11.8117 5.34125 9.45163 8.18014 7.951 10.2613C7.76463 10.5025 7.58884 10.7286 7.429 10.9415C6.60816 11.9643 6.00759 13.4423 6.00759 15.1445C6.00759 18.315 8.07355 20.4893 10.9633 21.1945ZM14.2564 16.2234C14.2564 17.198 13.426 18.0284 12.4514 18.0284C11.4768 18.0284 10.6464 17.198 10.6464 16.2234C10.6464 15.857 10.792 15.5249 11.0161 15.1801C11.0653 15.1088 11.123 15.0341 11.1898 14.9589L11.1899 14.9588C11.5982 14.426 12.283 13.536 12.3279 13.0903C13.6064 13.977 14.2564 15.4351 14.2564 16.2234Z" fill="white"/>
   </svg>
+)
+
+const StatusPage = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 32 32" fill="none">
+<path d="M15.9914 25C19.0901 25 21.6022 22.4421 21.6022 19.2868C21.6022 16.1315 19.0901 13.5736 15.9914 13.5736C12.8926 13.5736 10.3806 16.1315 10.3806 19.2868C10.3806 22.4421 12.8926 25 15.9914 25Z" fill="url(#paint0_linear)"/>
+<path d="M4.16144 12.6444L7.20346 16.2926C7.44006 16.5679 7.8457 16.6023 8.0823 16.3614C12.9833 11.8872 19.0335 11.8872 23.9346 16.3614C24.205 16.6023 24.6106 16.5679 24.8134 16.2926C25.557 15.3977 27.1118 13.5048 27.8554 12.6444C28.0582 12.369 28.0582 11.9905 27.7878 11.7495C20.6898 5.41682 11.2933 5.41682 4.19527 11.7495C3.95867 11.9905 3.92484 12.4035 4.16144 12.6444Z" fill="white"/>
+<defs>
+<linearGradient id="paint0_linear" x1="16.0065" y1="12.6405" x2="16.0065" y2="21.3602" gradientUnits="userSpaceOnUse">
+<stop stopColor="white" stopOpacity="0.4"/>
+<stop offset="1" stopColor="white"/>
+</linearGradient>
+</defs>
+</svg>
 )

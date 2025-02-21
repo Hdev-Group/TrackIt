@@ -1,4 +1,4 @@
-import Messages from "./homemessage";
+import Messages from "./messages";
 
 export async function generateMetadata() {
   return {
