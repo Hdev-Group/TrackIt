@@ -43,7 +43,7 @@ export default function Button({
   const variantClasses: Record<ButtonVariant, string> = {
     simple: "bg-blue-500 hover:bg-boldcol",
     secondary: "bg-transparent text-blue-500 hover:bg-blue-500 hover:text-white border-2 border-blue",
-    outline: "border border-muted-foreground hover:border-[#00ADB5] hover:bg-[#00ADB5] hover:text-foreground",
+    outline: "border border-muted-foreground hover:text-foreground",
     ghost: "text-foreground hover:bg-[#00ADB5]/20",
     gradient: "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-purple-500 hover:to-blue-500 text-white",
     "slide-fill": "relative overflow-hidden bg-foreground rounded-md text-[#000] dark:text-background hover:text-background group",

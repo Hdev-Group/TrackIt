@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LinkedinIcon as LinkedIn, Github} from 'lucide-react';
+import Button from '../button/button';
 
 export default function Footer() {
   const [isHovered, setIsHovered] = useState(false);
@@ -11,30 +12,11 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative overflow-hidden bg-gradient-to-br shadow-2xl shadow-cyan-500 from-[#090a0c] to-[#1c1e24] text-[#f0f0f0] py-16">
-      <div className="container z-30 mx-auto px-4">
+    <footer className="relative flex items-center bg-[#101218] justify-center flex-col gap-10 w-full text-[#f0f0f0] py-16">
+      <div className="container z-30 mx-auto px-4 ">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          <div className="col-span-1 md:col-span-2">
-            <motion.h2 
-              className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#0099ff] to-cyan-500"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              Join TrackIt Today
-            </motion.h2>
-            <motion.p 
-              className="text-md mb-8 leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              TrackIt helps start-ups manage teams, support requests, shifts, and projects efficiently.
-            </motion.p>
-          </div>
           <FooterLinks />
         </div>
-        
         <div className="border-t z-50 border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-400 mb-4 md:mb-0">
             &copy; {new Date().getFullYear()} Hdev Group. All rights reserved.
@@ -58,15 +40,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      
-      <motion.div
-        className="absolute inset-0 z-10 bg-gradient-to-r from-[#0099ff]/35 to-cyan-500/30 blur-3xl pointer-events-none"
-        animate={{
-          scale: isHovered ? 1.1 : 1,
-          opacity: isHovered ? 0.8 : 0.5,
-        }}
-        transition={{ duration: 0.8 }}
-      />
+
     </footer>
   );
 }

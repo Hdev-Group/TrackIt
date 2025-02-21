@@ -48,7 +48,7 @@ export default function UserDropdown({headerOpen}: {headerOpen: boolean}) {
         <Popover>
             <PopoverTrigger asChild>
                 <Button variant='ghost' className="h-12 w-12 flex hover:bg-muted-foreground/30 items-center justify-center rounded-full p-0" aria-label="Open user menu">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-9 w-9">
                         <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User avatar'} />
                         <AvatarFallback>{user.displayName?.[0] || 'U'}</AvatarFallback>
                     </Avatar>
