@@ -22,7 +22,11 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
 
 
 
-    const currentURL = typeof window !== "undefined" ? window.location.pathname : "";
+    const [currentURL, setCurrentURL] = useState("");
+
+    useEffect(() => {
+      setCurrentURL(window.location.pathname);
+    }, []);
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -49,8 +53,11 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
 
 
         const getOrgID = () => {
-            const parts = window.location.pathname.split('/');
-            return parts.length > 1 ? parts[1] : '';
+            if (typeof window !== 'undefined') {
+                const parts = window.location.pathname.split('/');
+                return parts.length > 1 ? parts[1] : '';
+            }
+            return '';
         }
 
     useEffect(() => {
@@ -66,23 +73,19 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
         ];
     
         
-        const activeItem = navItems.find(item => currentURL?.includes(item.href.split('/').pop() ?? ''));
-        console.log("Active item:", activeItem);
-    
-        if (activeItem) {
-            requestAnimationFrame(() => {
-                const element = document.querySelector(`a[href='${activeItem.href}']`) as HTMLElement;
-                if (element) {
-                    const rect = element.getBoundingClientRect();
-                    console.log("Element position:", rect.top, rect.width);
-                    setUnderlineStyle({ top: rect.top + window.scrollY, width: rect.width });  
-                    setMainLocation({ top: rect.top + window.scrollY, width: rect.width });
-                    setMainHiddenLocation({ top: rect.top + window.scrollY, width: rect.width });
-                }
-            });
-            
-        }
-    }, [currentURL]);
+  const activeItem = navItems.find(item => currentURL?.includes(item.href.split('/').pop() ?? ''));
+  if (activeItem) {
+    const element = document.querySelector(`a[href='${activeItem.href}']`) as HTMLElement;
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const top = rect.top + window.scrollY;
+      const width = rect.width;
+      setUnderlineStyle({ top, width });
+      setMainLocation({ top, width });
+      setMainHiddenLocation({ top, width });
+    }
+  }
+}, [currentURL]);
     useEffect(() => {
         if (!user) return;
     }, [user]);
@@ -158,9 +161,9 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
     }
 
     return (
-        <div
-            className={`${hidden ? "absolute" : "relative"} h-full flex items-center top-0 justify-start`}
-            style={!hidden ? hide ? { width: "70px" } : { width: sidebarWidth } : { width: hoveredSidebar }}
+    <div
+        className={`${hidden ? "absolute" : "relative"} h-full flex items-center top-0 justify-start`}
+        style={!hidden && !hide ? { width: `${sidebarWidth}px` } : { width: `${hoveredSidebar}px` }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
@@ -243,7 +246,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                                                 <div className="flex flex-col">
                                                     <p className="text-foreground text-[14px] -mb-2 mt-1 font-semibold ml-2 flex-nowrap text-nowrap ">{user?.displayName}</p>
                                                     <div className="overflow-hidden h-[20px]">
-                                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1"><Status type="text" /></p>
+                                                        <div className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1"><Status type="text" /></div>
                                                         <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
                                                     </div>
                                                 </div>
@@ -496,7 +499,7 @@ function Status({ type, size = "sm", className, status, profile, position = { le
     if (type === "text") {
       return (
         <div className="flex flex-row items-center">
-          <p className={`text-foreground/40 text-[11px] font-normal ${className}`}>{currentActivity}</p>
+          <div className={`text-foreground/40 text-[11px] font-normal ${className}`}>{currentActivity}</div>
         </div>
       );
     } else if (type === "icon") {
