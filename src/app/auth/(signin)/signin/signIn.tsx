@@ -60,7 +60,7 @@ export default function Page() {
               <p className='text-muted-foreground text-sm'>New to TrackIt?</p>
               <Button
                 variant='ghost-side-fill'
-                className='border-muted'
+                className='!border-muted'
                 onClick={() => router.push('/auth/signup')}
                 >
                 Sign Up

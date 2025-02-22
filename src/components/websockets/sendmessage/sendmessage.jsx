@@ -1,40 +1,61 @@
 import { useEffect, useRef } from "react";
 import io from "socket.io-client";
+import { getSocket } from "../../../lib/socket"
 
-export default function SendMessage({ userId, message }) {
+export default function useSendMessage(userId, channel, onMessageReceived) {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    if (!socketRef.current) {
-      console.log("Connecting WebSocket...");
-      socketRef.current = io("http://localhost:3001", { transports: ["websocket"] });
+    if (!userId || !channel) return;
+  
+    console.log("Connecting WebSocket...");
+    socketRef.current = getSocket();
+    socketRef.current = io("http://localhost:3001", {
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
+  
+    const socket = socketRef.current;
+  
+    const handleConnect = () => {
 
-      socketRef.current.on("messageSent", ({ userId, message }) => {
-        console.log("Message sent:", userId, "Message:", message);
-      });
+      socket.emit("userJoinedChannel", { userId, channel });
+    };
 
-      socketRef.current.on("disconnect", () => {
-        console.log("WebSocket disconnected.");
-      });
-
-      socketRef.current.on("connect_error", (err) => {
-        console.error("WebSocket connection error:", err);
-      });
+    if (socket.connected) {
+      handleConnect();
+    } else {
+      socket.on("connect", handleConnect);
     }
-
+  
+    socket.on("disconnect", () => console.log("WebSocket disconnected."));
+    socket.on("connect_error", (err) => console.error("WebSocket error:", err));
+  
+    socket.on("messageReceiver", (message) => {
+      if (message.channel === channel && typeof onMessageReceived === "function") {
+        onMessageReceived(message);
+      } else {
+        console.warn("Message rejected - Channel mismatch or invalid callback");
+        console.warn("Expected channel:", channel, "Got:", message.channel);
+        console.warn("onMessageReceived type:", typeof onMessageReceived);
+      }
+    });
+  
     return () => {
+      console.log("Disconnecting WebSocket before unmounting.");
       if (socketRef.current) {
-        console.log("Disconnecting WebSocket before unmounting.");
         socketRef.current.disconnect();
-        socketRef.current = null; 
+        socketRef.current = null;
       }
     };
-  }, [userId, message]); 
+  }, [userId, channel, onMessageReceived]);
 
   const sendMessage = (newMessage) => {
     if (socketRef.current?.connected) {
-      console.log("Emitting 'sendMessage':", newMessage);
-      socketRef.current.emit("sendMessage", { userId, message: newMessage });
+      console.log("Emitting 'sendMessage':", { userId, message: newMessage, channel });
+      socketRef.current.emit("sendMessage", { userId, message: newMessage, channel });
     } else {
       console.error("Socket not connected! Cannot emit 'sendMessage'.");
     }

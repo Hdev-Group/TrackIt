@@ -8,14 +8,14 @@ const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
+
 const server = http.createServer((req, res) => {
   handle(req, res);
 });
 
-// Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: "*", 
+    origin: "*",
     methods: ["GET", "POST"],
   },
   pingInterval: 25000,
@@ -38,7 +38,49 @@ io.on("connection", (socket) => {
     io.emit("onlineUsers", Array.from(onlineUsers.values()));
   });
 
+  socket.on("userJoinedChannel", ({ userId, channel }) => {
+    console.log(`User ${userId} joined channel: ${channel}`);
+    socket.join(channel); 
+  
+    socket.to(channel).emit("userJoinedChannel", { userId, channel });
+  });
+  
+
   socket.emit("onlineUsers", Array.from(onlineUsers.values()));
+
+  socket.on("sendMessage", ({ userId, message, channel }) => {
+    const roomClients = io.sockets.adapter.rooms.get(channel);
+    
+    console.log(`Sending message from ${userId} to channel ${channel}`);
+    console.log(`Channel ${channel} has ${roomClients?.size || 0} clients`);
+    
+    if (!roomClients || roomClients.size === 0) {
+      console.warn(`No clients in channel ${channel}. Message not sent`);
+      return;
+    }
+    
+    console.log(`Broadcasting message to ${roomClients.size} clients in channel ${channel}`);
+    io.to(channel).emit("messageReceiver", { userId, message, channel });
+  });
+  
+  
+  
+  socket.on("channelTyping", ({ userId, channel }) => {
+    console.log(`User ${userId} is typing in channel: ${channel}`);
+    socket.to(channel).emit("typing", { userId, channel });
+  });
+
+  socket.on("channelCreated", ({ userId, channelName }) => {
+    console.log("Channel created received from:", userId, "Channel name:", channelName);
+    io.emit("channelCreated", { userId, channelName });
+  });
+
+  socket.on("leaveChannel", ({ userId, channel }) => {
+    console.log(`User ${userId} left channel: ${channel}`);
+    socket.leave(channel);
+    socket.to(channel).emit("userLeftChannel", { userId, channel });
+  });
+  
 
   socket.on("changeStatus", ({ userId, status }) => {
     console.log("Status change received from:", userId, "New status:", status);
@@ -62,8 +104,14 @@ io.on("connection", (socket) => {
     const user = onlineUsers.get(socket.id);
     if (user) {
       console.log("User disconnected:", user.userId);
-      onlineUsers.delete(socket.id); 
-      io.emit("userDisconnected", user.userId); 
+      const rooms = Array.from(socket.rooms).filter((room) => room !== socket.id);
+      rooms.forEach((room) => {
+        socket.leave(room);
+        socket.to(room).emit("userLeftChannel", { userId: user.userId, channel: room });
+      });
+  
+      onlineUsers.delete(socket.id);
+      io.emit("userDisconnected", user.userId);
       io.emit("onlineUsers", Array.from(onlineUsers.values()));
     }
   });

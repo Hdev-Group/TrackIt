@@ -7,6 +7,7 @@ import type React from "react"
 import AuthChecks from "../../authchecks"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import Channels from "@/components/channels/channels"
 
 interface Channel {
   id: number
@@ -40,30 +41,19 @@ export default function Messages() {
     console.log("Sending message:", message)
     setMessage("")
   }
-
-  const handleCreateChannel = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newChannelName.trim()) {
-      const newChannel = {
-        id: channels.length + 1,
-        name: newChannelName.trim(),
-      }
-      setChannels([...channels, newChannel])
-      setNewChannelName("")
-    }
-  }
+   const [openChannel, setOpenChannel] = useState(false);
 
   return (
     <AuthChecks>
       <main className="bg-[#16181c] text-white w-full min-h-screen overflow-hidden">
-        <div className="flex h-screen">
+        <div className="flex h-screen w-full">
           <Channels
             channels={channels}
             activeChannel={activeChannel}
             setActiveChannel={setActiveChannel}
             newChannelName={newChannelName}
             setNewChannelName={setNewChannelName}
-            handleCreateChannel={handleCreateChannel}
+            handleCreateChannel={(e) => { e.preventDefault(); setOpenChannel(!openChannel); }}
           />
           <div className="flex-grow overflow-hidden flex flex-col">
             <header className="h-16 flex items-center justify-between px-4">
@@ -79,50 +69,6 @@ export default function Messages() {
         </div>
       </main>
     </AuthChecks>
-  )
-}
-
-interface ChannelsProps {
-  channels: Channel[]
-  activeChannel: Channel
-  setActiveChannel: (channel: Channel) => void
-  newChannelName: string
-  setNewChannelName: (name: string) => void
-  handleCreateChannel: (e: React.FormEvent) => void
-}
-
-function Channels({
-  channels,
-  activeChannel,
-  setActiveChannel,
-  newChannelName,
-  setNewChannelName,
-  handleCreateChannel,
-}: ChannelsProps) {
-  return (
-    <aside className="w-64">
-      <div className="h-screen flex flex-col">
-        <div className="h-16 flex items-center justify-between px-4">
-          <h2 className="font-semibold">Channels</h2>
-
-        </div>
-        <div className="flex-grow overflow-y-auto gap-1 flex-col flex px-1 py-1">
-          {channels.map((channel) => (
-            <Link
-                href={`./messages/${channel.id}`}
-                key={channel.id}
-                onClick={() => setActiveChannel(channel)}
-                className={cn(
-                "w-full text-left text-sm px-4 py-1 hover:bg-muted-foreground/5 rounded-md",
-                channel.id === activeChannel.id && "bg-muted-foreground/10",
-            )}
-            >
-              # {channel.name}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </aside>
   )
 }
 

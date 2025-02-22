@@ -34,7 +34,6 @@ export async function POST(req) {
         }
 
         const decodedToken = await admin.auth().verifyIdToken(token);
-        console.log("Decoded token:", decodedToken);
 
         req.user = decodedToken;
 
