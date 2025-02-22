@@ -29,16 +29,16 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <AuthProvider>
-      <StatusProvider>
-      <head >
-      <link href="https://fonts.googleapis.com/css2?family=Funnel+Sans:ital,wght@0,300;1,300&family=Noto+Sans+JP:wght@100..900&family=Rubik:ital,wght@0,300..900;1,300..900&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet"></link>
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
-      >
-        {children}
-      </body>
-      </StatusProvider>
+        <StatusProvider>
+        <head>
+          <link href="https://fonts.googleapis.com/css2?family=Funnel+Sans:ital,wght@0,300;1,300&family=Noto+Sans+JP:wght@100..900&family=Rubik:ital,wght@0,300..900;1,300..900&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet"></link>
+        </head>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
+        >
+          {children}
+        </body>
+        </StatusProvider>
       </AuthProvider>
     </html>
   );

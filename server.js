@@ -1,21 +1,14 @@
 const { Server } = require("socket.io");
 const http = require("http");
-const next = require("next");
 require('dotenv').config({ path: '.env.local' });
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = process.env.MONGODB_URI
-const dev = process.env.NODE_ENV !== "production";
-const app = next({ dev });
-const handle = app.getRequestHandler();
+const uri = process.env.MONGODB_URI;
 
-
-const server = http.createServer((req, res) => {
-  handle(req, res);
-});
+const server = http.createServer(); 
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:3001", 
     methods: ["GET", "POST"],
   },
   pingInterval: 25000,
@@ -30,41 +23,31 @@ io.on("connection", (socket) => {
   socket.on("online", ({ userId, status }) => {
     console.log("User connected:", userId, "| Status:", status);
     const user = Array.from(onlineUsers.values()).find(user => user.userId === userId);
-
-    if (user) {
-      return;
-    }
+    if (user) return;
     onlineUsers.set(socket.id, { userId, socketId: socket.id, status });
     io.emit("onlineUsers", Array.from(onlineUsers.values()));
   });
 
   socket.on("userJoinedChannel", ({ userId, channel }) => {
     console.log(`User ${userId} joined channel: ${channel}`);
-    socket.join(channel); 
-  
+    socket.join(channel);
     socket.to(channel).emit("userJoinedChannel", { userId, channel });
   });
-  
 
   socket.emit("onlineUsers", Array.from(onlineUsers.values()));
 
   socket.on("sendMessage", ({ userId, message, channel }) => {
     const roomClients = io.sockets.adapter.rooms.get(channel);
-    
     console.log(`Sending message from ${userId} to channel ${channel}`);
     console.log(`Channel ${channel} has ${roomClients?.size || 0} clients`);
-    
     if (!roomClients || roomClients.size === 0) {
       console.warn(`No clients in channel ${channel}. Message not sent`);
       return;
     }
-    
     console.log(`Broadcasting message to ${roomClients.size} clients in channel ${channel}`);
     io.to(channel).emit("messageReceiver", { userId, message, channel });
   });
-  
-  
-  
+
   socket.on("channelTyping", ({ userId, channel }) => {
     console.log(`User ${userId} is typing in channel: ${channel}`);
     socket.to(channel).emit("typing", { userId, channel });
@@ -80,19 +63,14 @@ io.on("connection", (socket) => {
     socket.leave(channel);
     socket.to(channel).emit("userLeftChannel", { userId, channel });
   });
-  
 
   socket.on("changeStatus", ({ userId, status }) => {
     console.log("Status change received from:", userId, "New status:", status);
-
     let user = Array.from(onlineUsers.values()).find(user => user.userId === userId);
-
     if (user) {
       user.status = status;
-      onlineUsers.set(user.socketId, user); 
-
+      onlineUsers.set(user.socketId, user);
       console.log("Status updated:", { userId, status });
-
       io.emit("statusChanged", { userId, status });
       io.emit("onlineUsers", Array.from(onlineUsers.values()));
     } else {
@@ -109,7 +87,6 @@ io.on("connection", (socket) => {
         socket.leave(room);
         socket.to(room).emit("userLeftChannel", { userId: user.userId, channel: room });
       });
-  
       onlineUsers.delete(socket.id);
       io.emit("userDisconnected", user.userId);
       io.emit("onlineUsers", Array.from(onlineUsers.values()));
@@ -122,8 +99,9 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
+
 async function run() {
   try {
     await client.connect();
@@ -133,10 +111,8 @@ async function run() {
     await client.close();
   }
 }
-run().catch(console.dir);
 
-app.prepare().then(() => {
-  server.listen(3001, () => {
-    console.log("Server running on http://localhost:3001");
-  });
+server.listen(3001, () => {
+  console.log("Socket.IO server running on http://localhost:3001");
+  run().catch(console.dir); 
 });
