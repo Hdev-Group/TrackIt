@@ -19,6 +19,20 @@ body {
   -webkit-text-fill-color: transparent; 
 }
 
+.linedgrid{
+  background-size: 59px 60px;
+  background-image:
+    linear-gradient(to right, rgba(128, 128, 128, 0.056) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(128, 128, 128, 0.056) 1px, transparent 1px);
+}
+
+.linedgridbright{
+  background-size: 59px 60px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.256) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.256) 1px, transparent 1px);
+}
+
 .textgradientmovetransitionincident{
   background: linear-gradient(    90deg,
   rgba(255, 255, 255, 1) 20%, 

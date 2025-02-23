@@ -34,7 +34,6 @@ export async function GET(req) {
         }
 
         const decodedToken = await admin.auth().verifyIdToken(token);
-        console.log("Decoded token:", decodedToken);
 
         req.user = decodedToken;
 
@@ -52,7 +51,6 @@ export async function GET(req) {
             .find({ channel: parseInt(channelID) }) 
             .sort({ timestamp: -1 }) 
             .toArray();
-        console.log("Messages:", messages);
 
         return NextResponse.json({ messages }, { status: 200 });
     } catch (error) {

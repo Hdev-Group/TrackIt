@@ -26,7 +26,6 @@ export const StatusProvider: React.FC<StatusProviderProps> = ({ children }) => {
                 userToken = await user.getIdToken(); 
                 console.log(userToken, "token");
             } else {
-                console.error('User is not authenticated');
                 return;
             }
             try {

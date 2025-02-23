@@ -7,9 +7,7 @@ import { useStatus } from "@/components/statusProvider/statusProvider";
 import statusChange from "@/components/websockets/statusChange/statuschange";
 import Link from "next/link";
 
-export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}) {
-
-
+export default function LockedSidebar({user, hide, orgID}: {user: User, hide?: boolean, orgID: string}) {
     const userPhoto = user?.photoURL;
     const [mainlocation, setMainLocation] = useState({ top: 0, width: 0 });
     const [mainhiddenlocation, setMainHiddenLocation] = useState({ top: 0, width: 0 });
@@ -22,7 +20,11 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
 
 
 
-    const currentURL = typeof window !== "undefined" ? window.location.pathname : "";
+    const [currentURL, setCurrentURL] = useState("");
+
+    useEffect(() => {
+      setCurrentURL(window.location.pathname);
+    }, []);
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -47,42 +49,32 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
         }
     }, [hidden, mainlocation, mainhiddenlocation]);
 
-
-        const getOrgID = () => {
-            const parts = window.location.pathname.split('/');
-            return parts.length > 1 ? parts[1] : '';
-        }
-
     useEffect(() => {
         const navItems = [
-            { label: "Dashboard", href: `/${getOrgID()}/dashboard` },
-            { label: "Tickets", href: `/${getOrgID()}/tickets` },
-            { label: "Messages", href: `/${getOrgID()}/messages` },
-            { label: "Calendar", href: `/${getOrgID()}/calendar` },
-            { label: "Shifts", href: `/${getOrgID()}/shifts` },
-            { label: "Incidents", href: `/${getOrgID()}/incidents` },
-            { label: "Status Page", href: `/${getOrgID()}/status-page` },
-            { label: "Notifications", href: `/${getOrgID()}/notifications` },
+            { label: "Dashboard", href: `/${orgID}/dashboard` },
+            { label: "Tickets", href: `/${orgID}/tickets` },
+            { label: "Messages", href: `/${orgID}/messages` },
+            { label: "Calendar", href: `/${orgID}/calendar` },
+            { label: "Shifts", href: `/${orgID}/shifts` },
+            { label: "Incidents", href: `/${orgID}/incidents` },
+            { label: "Status Page", href: `/${orgID}/status-page` },
+            { label: "Notifications", href: `/${orgID}/notifications` },
         ];
     
         
-        const activeItem = navItems.find(item => currentURL?.includes(item.href.split('/').pop() ?? ''));
-        console.log("Active item:", activeItem);
-    
-        if (activeItem) {
-            requestAnimationFrame(() => {
-                const element = document.querySelector(`a[href='${activeItem.href}']`) as HTMLElement;
-                if (element) {
-                    const rect = element.getBoundingClientRect();
-                    console.log("Element position:", rect.top, rect.width);
-                    setUnderlineStyle({ top: rect.top + window.scrollY, width: rect.width });  
-                    setMainLocation({ top: rect.top + window.scrollY, width: rect.width });
-                    setMainHiddenLocation({ top: rect.top + window.scrollY, width: rect.width });
-                }
-            });
-            
-        }
-    }, [currentURL]);
+  const activeItem = navItems.find(item => currentURL?.includes(item.href.split('/').pop() ?? ''));
+  if (activeItem) {
+    const element = document.querySelector(`a[href='${activeItem.href}']`) as HTMLElement;
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const top = rect.top + window.scrollY;
+      const width = rect.width;
+      setUnderlineStyle({ top, width });
+      setMainLocation({ top, width });
+      setMainHiddenLocation({ top, width });
+    }
+  }
+}, [currentURL]);
     useEffect(() => {
         if (!user) return;
     }, [user]);
@@ -158,9 +150,9 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
     }
 
     return (
-        <div
-            className={`${hidden ? "absolute" : "relative"} h-full flex items-center top-0 justify-start`}
-            style={!hidden ? hide ? { width: "70px" } : { width: sidebarWidth } : { width: hoveredSidebar }}
+    <div
+        className={`${hidden ? "absolute" : "relative"} h-full flex items-center top-0 justify-start`}
+        style={!hidden && !hide ? { width: `${sidebarWidth}px` } : { width: `${hoveredSidebar}px` }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
@@ -173,14 +165,14 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                                 {
                                     Object.entries(
                                         [
-                                            { label: "Dashboard", icon: <Home size={18} />, href: `/${getOrgID()}/dashboard` },
-                                            { label: "Messages", category: "Team", icon: <MessageSquare size={18} />, href: `/${getOrgID()}/messages` },
-                                            { label: "Calendar", category: "Team", icon: <Calendar size={18} />, href: `/${getOrgID()}/calendar` },
-                                            { label: "Shifts", category: "Team", icon: <Clock size={18} />, href: `/${getOrgID()}/shifts` },
-                                            { label: "Tickets", icon: <Ticket size={18} />, href: `/${getOrgID()}/tickets` },
-                                            { label: "Incidents", category: "Response", icon: <AlertOctagonIcon size={18} />, href: `/${getOrgID()}/incidents` },
-                                            { label: "Status Page", category: "Response", icon: <BarChart2 size={18} />, href: `/${getOrgID()}/status-page` },
-                                            { label: "Notifications", icon: <Bell size={18} />, href: `/${getOrgID()}/notifications` }
+                                            { label: "Dashboard", icon: <Home size={18} />, href: `/${orgID}/dashboard` },
+                                            { label: "Messages", category: "Team", icon: <MessageSquare size={18} />, href: `/${orgID}/messages` },
+                                            { label: "Calendar", category: "Team", icon: <Calendar size={18} />, href: `/${orgID}/calendar` },
+                                            { label: "Shifts", category: "Team", icon: <Clock size={18} />, href: `/${orgID}/shifts` },
+                                            { label: "Tickets", icon: <Ticket size={18} />, href: `/${orgID}/tickets` },
+                                            { label: "Incidents", category: "Response", icon: <AlertOctagonIcon size={18} />, href: `/${orgID}/incidents` },
+                                            { label: "Status Page", category: "Response", icon: <BarChart2 size={18} />, href: `/${orgID}/status-page` },
+                                            { label: "Notifications", icon: <Bell size={18} />, href: `/${orgID}/notifications` }
                                         ].reduce((acc, item) => {
                                             const category = item.category || "General";
                                             if (!acc[category]) acc[category] = [];
@@ -243,7 +235,7 @@ export default function LockedSidebar({user, hide}: {user: User, hide?: boolean}
                                                 <div className="flex flex-col">
                                                     <p className="text-foreground text-[14px] -mb-2 mt-1 font-semibold ml-2 flex-nowrap text-nowrap ">{user?.displayName}</p>
                                                     <div className="overflow-hidden h-[20px]">
-                                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1"><Status type="text" /></p>
+                                                        <div className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1"><Status type="text" /></div>
                                                         <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
                                                     </div>
                                                 </div>
@@ -496,7 +488,7 @@ function Status({ type, size = "sm", className, status, profile, position = { le
     if (type === "text") {
       return (
         <div className="flex flex-row items-center">
-          <p className={`text-foreground/40 text-[11px] font-normal ${className}`}>{currentActivity}</p>
+          <div className={`text-foreground/40 text-[11px] font-normal ${className}`}>{currentActivity}</div>
         </div>
       );
     } else if (type === "icon") {
