@@ -119,7 +119,7 @@ export default function LockedSidebar({user, hide, orgID}: {user: User, hide?: b
 
         function onMouseMove(e: MouseEvent) {
             const newWidth = startWidth + (e.clientX - startX);
-            if (newWidth >= 256 && newWidth <= window.innerWidth * 0.25) {  
+            if (newWidth >= 300 && newWidth <= window.innerWidth * 0.25) {  
                 setSidebarWidth(newWidth);
             } 
         }
@@ -149,15 +149,39 @@ export default function LockedSidebar({user, hide, orgID}: {user: User, hide?: b
         setUnderlineStyle({ top: mainlocation.top, width: mainlocation.width });
     }
 
+
+    const [isMobie, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 1024) {
+                setSidebarWidth(60);
+                setHoveredSidebar(60);
+                setIsMobile(true);
+            } else {
+                setSidebarWidth(500)
+                setIsMobile(false);
+            }
+        };
+
+        handleResize(); 
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+
     return (
     <div
-        className={`${hidden ? "absolute" : "relative"} h-full flex items-center top-0 justify-start`}
+        className={`${hidden ? "absolute" : "relative"} h-full flex overflow-hidden items-center top-0 justify-start`}
         style={!hidden && !hide ? { width: `${sidebarWidth}px` } : { width: `${hoveredSidebar}px` }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            <div className={`${!hidden ? "h-full relative bg-white/5" : "h-[70vh] overflow-y-auto absolute rounded-r-xl overflow-hidden bg-muted/50 border-4 border-x-0 z-50"}  flex-row flex  justify-between transition-all duration-300`} style={!hidden ? hide ? { width: "70px" } : { width: sidebarWidth } : { width: hoveredSidebar }}>
-                <div className={`${hide ? "" : "mx-2 mr-4"}flex flex-col items-start w-full h-full `}>
+            <div className={`${!hidden ? "h-full relative bg-white/5" : "h-[70vh] overflow-y-auto absolute rounded-r-xl overflow-hidden bg-muted/50 border-4 border-x-0 z-50"}  flex-row flex  justify-between transition-all duration-300`} style={!hidden ? hide ? { width: "70px" } : { width: isMobie ? 55 : sidebarWidth } : { width: hoveredSidebar }}>
+                <div className={`flex flex-col items-start w-full h-full`}>
                     <div className="flex flex-col justify-between h-full w-full">
                         <div className="flex flex-col w-full select-none">
                             <OrgPicker hidden={hide ?? false} ishidden={hidden} sethidden={setHidden} />
@@ -187,10 +211,10 @@ export default function LockedSidebar({user, hide, orgID}: {user: User, hide?: b
                                                     onMouseLeave={handleMouseLeaving}
                                                     href={item.href}
                                                     onMouseEnter={(e) => handleMouseEntering(e, item.href)}
-                                                    className={`${hide ? "justify-center" : "mx-1.5 px-2"} w-full h-7 z-40 py-0.5 flex cursor-pointer rounded-md items-center`}
+                                                    className={`${hide ? "justify-center" : " "} lg:justify-start lg:ml-3 justify-center w-full ml-0 sm:-ml-1 h-7 z-40 py-0.5 flex cursor-pointer rounded-md items-center`}
                                                 >
                                                     {item.icon}
-                                                    <p className={`${hide ? "hidden" : " ml-2"} text-foreground/40 text-[14px] font-semibold`}>
+                                                    <p className={`${hide ? "hidden" : " ml-2"} lg:flex hidden text-foreground/40 text-[14px] font-semibold`}>
                                                         {item.label}
                                                     </p>
                                                 </Link>
@@ -199,50 +223,39 @@ export default function LockedSidebar({user, hide, orgID}: {user: User, hide?: b
                                     ))
                                 }
                                 <span
-                                    className="absolute bottom-0 rounded-sm border-accent h-[30px] z-0 bg-muted-foreground/10 transition-all duration-300"
+                                    className="absolute bottom-0  rounded-sm border-accent h-[30px] -left-0 z-0 bg-muted-foreground/10 transition-all duration-300"
                                     style={{
                                         top: `${underlineStyle.top}px`,
-                                        width: `100%`,
+                                        width: `${isMobie ? "73%" : "97%"}`,
                                         transform: `${hidden ? 'translate(6px, -194px)' : hide ? 'translateX(0px) translateY(-52px)' : 'translateX(6px) translateY(-52px)'}`,
                                     }}
                                 />
                             </div>
-                            <div className="w-full flex flex-col mt-4">
-                                <p className={`${hide ? "hidden" : ""} text-foreground/40 text-[14px] font-semibold ml-2 mx-1.5`}>Departments</p>
-                                <div className="flex flex-col gap-1 mt-2 items-start">
-                                    <div className={`${hide ? " items-center justify-center" : "mx-1.5 justify-between"} bg-cyan-300/30 group hover:bg-cyan-400/60 transition-colors flex flex-row items-center w-full h-7  py-0.5 px-1.5 cursor-pointer rounded-md`}>
-                                        <div className="gap-0.5 flex flex-row items-center">
-                                            <div className="rounded-md flex items-center justify-center w-5 h-5 bg-muted font-semibold">
-                                                <p className="text-xs">HR</p>
-                                            </div>
-                                            <p className={`${hide ? "hidden" : ""} text-white/80 group-hover:text-white text-[14px] font-semibold ml-2`}>Human Resources</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
-                        <div>
+                        <div className="w-full pr-1">
                             <ShiftIndicator hidden={hide} />
-                            <div className="border-t select-none border-foreground/10 w-full mt-2 py-2 px-1.5 flex flex-col items-start">
-                                <div className={`flex  w-full justify-between group mt-2 ${hide ? "flex-col items-start" : "flex-row items-center"}`} onClick={() => setOpenedProfile(true)}>
-                                    <div className="flex flex-row relative items-center cursor-pointer">
-                                        <Avatar className="w-6 h-6">
-                                            <img src={`${userPhoto}`} alt="Your Profile" referrerPolicy="no-referrer" />
-                                        </Avatar>
-                                        <Status type="icon" profile={true} />
+                            <div className="border-t select-none border-foreground/10 w-full mt-2 py-2 lg:px-1.5 flex flex-col items-start">
+                                <div className={`flex  w-full justify-between flex-col lg:flex-row group mt-2 items-center lg:items-center`} onClick={() => setOpenedProfile(true)}>
+                                    <div className="flex flex-row relative lg:items-end items-center cursor-pointer">
+                                        <div className="lg:ml-0">
+                                            <Avatar className="w-6 h-6">
+                                                <img src={`${userPhoto}`} alt="Your Profile" referrerPolicy="no-referrer" />
+                                            </Avatar>
+                                            <Status type="icon" profile={false} />
+                                        </div>
                                         {
                                             !hide && (
                                                 <div className="flex flex-col">
-                                                    <p className="text-foreground text-[14px] -mb-2 mt-1 font-semibold ml-2 flex-nowrap text-nowrap ">{user?.displayName}</p>
+                                                    <p className="text-foreground text-[14px] -mb-1.5 font-semibold ml-2 flex-nowrap text-nowrap lg:flex hidden">{user?.displayName}</p>
                                                     <div className="overflow-hidden h-[20px]">
-                                                        <div className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1"><Status type="text" /></div>
-                                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1">Lead Software Engineer</p>
+                                                        <div className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1 lg:flex hidden"><Status type="text" /></div>
+                                                        <p className="text-foreground/50 text-[10px] group-hover:-translate-y-5 transition-all ml-2 mt-1 lg:flex hidden">Lead Software Engineer</p>
                                                     </div>
                                                 </div>
                                             )
                                         }
                                     </div>
-                                    <div className={`w-6 h-6 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center ${hide ? "mt-1" : "ml-2"}`}>
+                                    <div className={`w-6 h-6 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center`}>
                                         <Settings className="w-4 h-4 text-muted-foreground" />
                                     </div>
                                 </div>
@@ -372,10 +385,10 @@ function OrgPicker({ishidden, sethidden, hidden}: {ishidden: boolean, sethidden:
         return(
             <div className="h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer justify-start rounded-md items-center">
                 <div className="flex flex-row gap-2 w-full items-start">
-                    <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-sm text-muted-foreground font-semibold">
+                    <div className="w-7 h-7 bg-muted rounded-md  items-center justify-center flex text-sm text-muted-foreground font-semibold">
                         <p>{name.split(' ').map(word => word.charAt(0)).join('')}</p>
                     </div>
-                    <p className={`text-foreground/70 text-sm font-semibold ml-2 flex-nowrap text-nowrap`}>{name}</p>
+                    <p className={`text-foreground/70  text-sm font-semibold ml-2 flex-nowrap text-nowrap`}>{name}</p>
                 </div>
             </div>
         )
@@ -406,18 +419,18 @@ function OrgPicker({ishidden, sethidden, hidden}: {ishidden: boolean, sethidden:
     ]
 
     return(
-        <div className={`${hidden ? "justify-center" : "py-0.5 px-1.5 mx-1.5 justify-between"} w-full h-9  mt-2 cursor-pointer flex hover:bg-neutral-300/10 rounded-md items-center `}>
-            <div className="flex flex-row gap-0.5 relative justify-between w-full items-center">
+        <div className={`${hidden ? "justify-center" : "py-0.5 px-0.5 mx-2.5 justify-between"} pr-4 w-full h-9 mt-2 cursor-pointer flex lg:hover:bg-neutral-300/10 rounded-md items-center `}>
+            <div className="flex flex-row gap-0.5 relative justify-between  w-full items-center">
                 <div className={`${hidden ? "flex-col " : "flex-row"} flex relative w-full gap-0.5 justify-start items-center`} onClick={() => SetOrgPicker(!orgPicker)}>
-                    <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-xl text-muted-foreground font-semibold">
+                    <div className="w-7 h-7 bg-muted rounded-md items-center justify-center flex text-xl  text-muted-foreground font-semibold">
                         <p>H</p>
                     </div>
-                    <p className={`${hidden ? "hidden" : ""} text-foreground/80 text-md font-semibold ml-2 flex-nowrap text-nowrap`}>Hdev Group</p>
-                    <ChevronDown className={`${hidden ? "hidden" : ""} w-5 h-4 text-muted-foreground ml-1 transition-all ${orgPicker ? "rotate-180" : "rotate-0"}`} />
+                    <p className={`${hidden ? "hidden" : ""} text-foreground/80 text-md font-semibold ml-2 flex-nowrap text-nowrap lg:flex hidden`}>Hdev Group</p>
+                    <ChevronDown className={`${hidden ? "hidden" : ""} w-5 h-4 text-muted-foreground ml-1 lg:flex hidden transition-all ${orgPicker ? "rotate-180" : "rotate-0"}`} />
                     </div>
-                    <div className={`w-8 h-8 p-0.5 hover:bg-muted/50 cursor-pointer rounded-md items-center flex justify-center z-50 ${hidden ? "hidden" : ""}`} onClick={() => sethidden(!ishidden)}>
+                    <div className={`w-8 h-8 p-0.5  hover:bg-muted/50 cursor-pointer rounded-md items-center lg:flex hidden justify-center z-50 ${hidden ? "hidden" : ""}`} onClick={() => sethidden(!ishidden)}>
                     {
-                        ishidden  ? <Maximize2 className="w-5 h-5 text-muted-foreground" /> : <Minimize2Icon className="w-5 h-5 text-muted-foreground transform rotate-180" />
+                        ishidden  ? <Maximize2 className="w-5 h-5 lg:flex hidden text-muted-foreground" /> : <Minimize2Icon className="w-5 h-5 lg:flex hidden text-muted-foreground transform rotate-180" />
                     }
                     </div>
                 <div className={`${orgPicker ? "absolute" : "hidden"} bg-muted/90 backdrop-blur-lg w-full h-auto top-10 left-0 rounded-lg px-2 py-2 w z-50`}>
@@ -455,18 +468,18 @@ function ShiftIndicator({hidden}: {hidden?: boolean}) {
     }, [])
   
     return (
-      <div className={`${hidden ? "" : "ml-1"} bg-muted cursor-pointer flex-nowrap text-nowrap hover:bg-muted-foreground/20 transition-all rounded-md flex-col shadow-sm px-2 py-2 max-w-sm w-full h-20`}>
-        <div className={`${hidden ? "items-center justify-center w-full" : "items-end"} flex flex-row h-full gap-2`}>
+      <div className={`${hidden ? "" : "mr-2.5"} bg-muted cursor-pointer flex-nowrap text-nowrap hover:bg-muted-foreground/20 transition-all rounded-md flex-col shadow-sm px-2 py-2 max-w-sm w-full h-20`}>
+        <div className={`${hidden ? "items-center justify-center w-full" : "items-end  justify-center"} flex flex-row h-full gap-2`}>
             <div className="bg-muted-foreground/15 h-full justify-end items-end flex w-2 rounded-lg">
                 <div
                     className="bg-blue-600 w-2 rounded-full transition-all duration-1000 ease-in-out"
                     style={{ height: `${progress}%` }}
                 />
             </div>
-          <div className="flex flex-col items-start w-full justify-center">
-            <h1 className={`${hidden ? "hidden" : "visible"} text-white text-sm font-semibold mt-3`}>You're on shift</h1>
-            <p className={`text-white text-xs font-normal flex flex-row gap-1 items-center ${hidden ? "hidden" : "visible"}`}><Clock className="w-4" /> Until 18:00</p>
-            <p className={`text-white text-xs font-normal flex flex-row gap-1 items-center ${hidden ? "hidden" : "visible"}`}><Calendar className="w-4" /> {new Date().toLocaleDateString()}</p>
+          <div className="lg:flex hidden flex-col items-start w-full justify-center">
+            <h1 className={`${hidden ? "hidden" : "visible"} text-white text-sm font-semibold lg:flex hidden mt-3`}>You're on shift</h1>
+            <p className={`text-white text-xs font-normal flex-row gap-1 items-center lg:flex hidden ${hidden ? "hidden" : "visible"}`}><Clock className="w-4" /> Until 18:00</p>
+            <p className={`text-white text-xs font-normal flex-row gap-1 items-center lg:flex hidden ${hidden ? "hidden" : "visible"}`}><Calendar className="w-4" /> {new Date().toLocaleDateString()}</p>
           </div>
         </div>
       </div>
@@ -493,7 +506,7 @@ function Status({ type, size = "sm", className, status, profile, position = { le
       );
     } else if (type === "icon") {
       return (
-        <div className={`flex flex-row items-center ${profile ? "absolute" : "relative"} ${position.left} ${position.bottom} border-black border rounded-full`}>
+        <div className={`flex flex-row items-center ${profile ? "absolute" : "relative"} ${position.left} ${position.bottom} rounded-full`}>
           <div className={`${sizeClass} ${status ? activityTypes[status] : statusColor} rounded-full`}></div>
         </div>
       );

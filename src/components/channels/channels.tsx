@@ -23,7 +23,7 @@ export default function Channels({
     handleCreateChannel,
   }: ChannelsProps) {
     return (
-      <aside className="min-w-[50rem] w-full">
+      <aside className="w-[20rem]">
         <div className="h-screen flex flex-col">
           <div className="h-16 flex items-center justify-between px-4">
             <h2 className="font-semibold">Channels</h2>
