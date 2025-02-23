@@ -2,7 +2,7 @@ import Button from "../button/button";
 
 export default function Jointoday() {
     return(
-        <div className="mx-auto w-full h-80 bg-gradient-to-br container from-cyan-600 to-cyan-500 rounded-xl z-50 flex flex-col items-center justify-center gap-8 text-white relative overflow-hidden">
+        <div className="mx-auto w-full h-auto py-20 bg-gradient-to-br container from-cyan-600 to-cyan-500 rounded-xl z-50 flex flex-col items-center justify-center gap-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 w-full h-full linedgridbright z-50" />
         <div className="absolute inset-0">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-50">

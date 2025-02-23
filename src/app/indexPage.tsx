@@ -183,7 +183,7 @@ export default function Home() {
             </div>
             <div className="flex mt-8 justify-between flex-col gap-5 w-full">
               <div className="md:grid flex flex-col md:grid-cols-4 gap-5 w-full">
-                <div className="bg-indigo-700 relative border border-muted-foreground/10 rounded-xl col-span-2 hover:shadow-lg hover:shadow-black transition-all duration-300 ease-in-out h-96 flex flex-col items-start justify-start">
+                <div className="bg-indigo-700 hover:border-muted-foreground/20 relative border border-muted-foreground/10 rounded-xl col-span-2 hover:shadow-lg hover:shadow-black transition-all duration-300 ease-in-out h-96 flex flex-col items-start justify-start">
                   <div className="w-full flex flex-col px-4 py-6 gap-2 mb-2">
                     <h2 className="text-xl font-semibold">Support Tickets</h2>
                     <p className="text-sm font-semibold text-white/80">TrackIt’s ticket support system ensures your customers get the help they need, when they need it.</p>
@@ -358,7 +358,7 @@ export default function Home() {
               <Hand className="h-5 w-5 text-purple-500" />
               <p className="text-md font-semibold text-purple-500 capitalize">SUPPORT</p>
               </div>
-              <h1 className="text-6xl font-medium text-white my-9 backdrop-blur-md z-50">Support your customers with TrackIt.</h1>
+              <h1 className="text-6xl font-medium text-white my-9 backdrop-blur-md z-40">Support your customers with TrackIt.</h1>
             </div>
             <div className="relative h-auto w-full overflow-visible rounded-xl">
               <div id="supportcarousel" className="relative flex w-full gap-4 mt-20 h-full transition-all overflow-visible">
@@ -400,7 +400,7 @@ export default function Home() {
               <FileLock className="h-5 w-5 text-blue-500" />
               <p className="text-md font-semibold text-blue-500 capitalize">SECURITY</p>
               </div>
-              <h1 className="text-6xl font-medium text-white my-9 backdrop-blur-md flex flex-row text-wrap flex-wrap items-end z-50">Keeping <img src="/trackitlogo/light/logo.png" alt="TrackIt" className="w-[70px] h-[70px] ml-2 -mr-1" /> rack of Security.</h1>
+              <h1 className="text-6xl font-medium text-white my-9 backdrop-blur-md flex flex-row text-wrap flex-wrap items-end z-40">Keeping <img src="/trackitlogo/light/logo.png" alt="TrackIt" className="w-[70px] h-[70px] ml-2 -mr-1" /> rack of Security.</h1>
             </div>
             <div className="relative h-auto w-full overflow-visible rounded-xl">
             <div className="flex mt-8 justify-between flex-col gap-5 w-full">
