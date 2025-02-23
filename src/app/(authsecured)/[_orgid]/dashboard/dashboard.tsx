@@ -56,10 +56,10 @@ export default function Dashboard() {
     return (
         <AuthChecks>
             <div className='bg-[#101218] w-full h-full overflow-y-scroll changedscrollbar'>
-                <div className="flex flex-col items-start mb-[20vh] mt-20 justify-start w-full h-full">
-                    <div className="container mx-auto xl:px-56 px-2 flex flex-col justify-start items-start w-full h-full">
+                <div className="flex flex-col items-start mb-[20vh] mt-10 justify-start w-full h-full">
+                    <div className="container mx-auto px-2 lg:px-10 flex flex-col justify-start items-start w-full h-full">
                         <div className="flex flex-row items-center justify-start w-full mb-2">
-                            <h1 className="text-[26px] text-foreground font-medium">
+                            <h1 className="text-[26px] ml-4 text-foreground font-medium">
                                 Good {getGreetingTime()},
                             </h1>
                             <div className="py-[1px] transition-all ml-1.5 rounded-md text-foreground text-[26px] font-medium">

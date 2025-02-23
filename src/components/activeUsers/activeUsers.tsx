@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import CurrentActiveUsers from "../websockets/activeUsers/activeUsers";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { SidebarClose, SidebarOpen } from "lucide-react";
 
 interface User {
     userId: string;
@@ -69,9 +70,15 @@ export default function ActiveUsers() {
         })();
     }, [users]);
 
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!isSidebarOpen);
+    };
+
     return (
-        <div className="w-[15rem] h-full flex flex-col z-10 transition-all duration-300">
-            <div className="flex flex-col items-start w-full h-full mx-2">
+        <div className={`w-[4rem] lg:w-[${isSidebarOpen ? "15" : "4"}rem] h-full flex flex-col z-10 transition-all duration-300`}>
+            <div className="flex flex-col items-start w-full h-full">
                 <div className="flex flex-col justify-between h-full w-full">
                     <div className="flex flex-col w-full select-none">
                         <CurrentActiveUsers
@@ -99,15 +106,27 @@ export default function ActiveUsers() {
                             }}
                         />
                         <div className="flex flex-col w-full h-full">
-                            <div className="flex flex-col w-full mt-5 h-full">
-                                <ul className="space-y-2">
+                            <div className={`${isSidebarOpen ? "" : "items-center justify-center"} py-4 px-2 flex border-b`}>
+                                {
+                                    isSidebarOpen ? (
+                                        <SidebarOpen 
+                                        onClick={() => toggleSidebar()}
+                                        className="w-8 hover:bg-muted rounded-md transition-all cursor-pointer h-8 p-1 text-white/80" />
+                                    ) : (
+                                        <SidebarClose
+                                        onClick={() => toggleSidebar()}
+                                        className="w-8 hover:bg-muted rounded-md transition-all cursor-pointer h-8 p-1 text-white/80" />
+                                    )
+                                }
+                            </div>
+                            <div className="flex flex-col w-full h-full">
+                                <ul className="space-y-2 mt-3">
                                     {users.filter(user => user.status != "Offline").length > 0 && (
                                         <>
-                                            <h3 className="text-gray-500 text-sm ">Online</h3>
                                             {users.filter(user => user.status != "Offline").map((user) => (
                                                 <li
                                                     key={user.userId}
-                                                    className="flex hover:bg-muted-foreground/10 rounded-md px-2 py-1 flex-row gap-1 items-center space-x-2"
+                                                    className={`flex hover:bg-muted-foreground/10 rounded-md ${isSidebarOpen ? "mx-2 px-2  space-x-2": "px-2 mr-4 justify-center w-full"} cursor-pointer py-1 flex-row gap-1 items-center`}
                                                 >
                                                     <div className="flex relative items-center justify-center w-8 h-8">
                                                         <img
@@ -118,9 +137,9 @@ export default function ActiveUsers() {
                                                         />
                                                         <Status status={user.status} />
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-medium">{user.displayName}</span>
-                                                        <span className="text-xs font-light -mt-[0.3rem] text-gray-400">
+                                                    <div className={`${isSidebarOpen ? "flex" : "hidden"} hidden flex-col lg:flex`}>
+                                                        <span className={`${isSidebarOpen ? "flex" : "hidden"} text-sm font-medium`}>{user.displayName}</span>
+                                                        <span className={`${isSidebarOpen ? "flex" : "hidden"} text-xs font-light -mt-[0.3rem] text-gray-400`}>
                                                             {user.status}
                                                         </span>
                                                     </div>

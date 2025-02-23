@@ -43,7 +43,7 @@ export default function RootLayout({
                 orgID={resolvedParams._orgid}
               />
               {children}
-              <div className="w-64 h-full border-l">
+              <div className="w-auto h-full border-l">
                 <ActiveUsers />
               </div>
             </div>
