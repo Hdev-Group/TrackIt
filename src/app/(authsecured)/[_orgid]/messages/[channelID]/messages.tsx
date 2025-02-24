@@ -233,20 +233,34 @@ export default function Messages() {
             <div className="flex-grow overflow-y-auto bg-muted/30 border-t border-l rounded-tl-xl">
               <MessageList user={user} channelDetails={activeChannel} />
             </div>
-            <footer className="min-h-20 h-auto border-t flex border-l bg-muted/20 items-start px-4 py-3">
-                <form onSubmit={handleSendMessage} className="flex items-end flex-row w-full gap-2">
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder={`Type a message in #${activeChannel.name}`}
-                  className="flex-grow overflow-hidden resize-none h-full text-wrap bg-muted-foreground/5 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
+            <footer className="min-h-12 h-auto border-t flex border-l bg-muted/20 items-start px-4 py-1">
+                <form onSubmit={handleSendMessage} className="flex items-center flex-row w-full h-full gap-2">
+                    <div className="relative flex-grow">
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder={`Type a message in #${activeChannel.name}`}
+                      className="overflow-hidden resize-none h-auto min-h-10 mt-1.5 max-h-40 text-wrap bg-muted-foreground/5 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                      style={{ height: `${Math.min(40, message.split('\n').length * 20)}px` }}
+                      rows={1}
+                      onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = `${target.scrollHeight}px`;
+                      }}
+                    />
+                    {
+                      message.length > 1700 && (
+                        <div className={`absolute bottom-1 right-1 text-sm font-semibold ${message.length >= 2000 ? "text-red-500" : "text-yellow-400"}`}>{message.length}</div>
+                      )
+                    }
+                    </div>
+                  <button
                   type="submit"
                   className="bg-blue-500/20 text-white rounded px-4 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
+                  >
                   <Send className="h-5 w-5" />
-                </button>
+                  </button>
                 </form>
             </footer>
           </div>
@@ -354,7 +368,13 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
     displayName?: string;
     photoURL?: string;
   }
-
+  const getDateString = (timestamp: string) => {
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
   async function fetchUserDetails(userId: string): Promise<UserDetails | null> {
     const db = getFirestore();
     const userRef = doc(db, "users", userId);
@@ -387,12 +407,37 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
       {messages?.length === 0 ? (
         null
       ) : (
-        messages?.slice().reverse().map((message: any) => (
-          <MessageItem key={message._id} message={message} fetchUserDetails={fetchUserDetails} />
-        ))
+        messages
+          .slice()
+          .reverse()
+          .map((message: any, index: number, arr: any[]) => {
+            const currentDate = getDateString(message.timestamp);
+            const prevMessage = arr[index - 1];
+            const prevDate = prevMessage ? getDateString(prevMessage.timestamp) : null;
+            const showSeparator = index > 0 && currentDate !== prevDate;
+
+            return (
+              <div key={message._id || index} className=" w-full">
+                {showSeparator && (
+                  <div className="relative w-full my-4 flex items-center justify-center">
+                    <hr className="w-full border-t  border-muted-foreground/30" />
+                    <span className="absolute backdrop-blur-3xl px-2 text-xs text-gray-400">
+                      {new Date(message.timestamp).toLocaleDateString("en-UK", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                )}
+                <MessageItem message={message} fetchUserDetails={fetchUserDetails} />
+              </div>
+            );
+          })
       )}
     </div>
-  )
+  );
 }
 interface UserDetails {
   displayName?: string;
@@ -406,6 +451,7 @@ function MessageItem({
     message: any;
     fetchUserDetails: (userId: any) => Promise<any>;
   }) {
+    console.log("MessageItem:", message);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   useEffect(() => {
     fetchUserDetails(message.userid)
@@ -418,14 +464,31 @@ function MessageItem({
   }, [message.userid]);
 
   return (
-    <div key={message._id} className="flex gap-2 text-wrap break-words whitespace-break-spaces hover:bg-muted-foreground/5 px-2 py-1 rounded-md">
+    <div key={message._id} className="flex gap-2 text-wrap w-full break-words whitespace-break-spaces hover:bg-muted/20 px-2 py-1 rounded-md">
       {userDetails?.photoURL ? (
         <img src={userDetails.photoURL} className="w-8 h-8 rounded-full" />
       ) : (
         <div className="w-8 h-8 bg-gray-500 rounded-full"></div>
       )}
       <div>
-        <p className="text-sm font-semibold">{userDetails?.displayName || "Unknown User"}</p>
+        <div className="flex flex-row gap-2">
+          <p className="text-sm font-semibold">{userDetails?.displayName}</p>
+            <p className="text-xs text-gray-400">
+            {(() => {
+              const messageDate = new Date(message.timestamp);
+              const now = new Date();
+              const isToday = messageDate.toDateString() === new Date().toDateString();
+              const isYesterday = messageDate.toDateString() === new Date(now.setDate(now.getDate() - 1)).toDateString();
+                if (isToday) {
+                return `Today at ${messageDate.toLocaleTimeString('en-UK', { hour: '2-digit', minute: '2-digit' })}`;
+                } else if (isYesterday) {
+                return `Yesterday at ${messageDate.toLocaleTimeString('en-UK', { hour: '2-digit', minute: '2-digit' })}`;
+                } else {
+                return messageDate.toLocaleTimeString('en-UK', { day: "2-digit", month: "2-digit", year: "2-digit", hour: '2-digit', minute: '2-digit' });
+                }
+            })()}
+            </p>
+        </div>
         <p className="text-sm break-all">{message.message}</p>
       </div>
     </div>
