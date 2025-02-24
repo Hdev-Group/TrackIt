@@ -36,7 +36,7 @@ io.on("connection", (socket) => {
 
   socket.emit("onlineUsers", Array.from(onlineUsers.values()));
 
-  socket.on("sendMessage", ({ userId, message, channel }) => {
+  socket.on("sendMessage", ({ userId, message, channel, timestamp }) => {
     const roomClients = io.sockets.adapter.rooms.get(channel);
     console.log(`Sending message from ${userId} to channel ${channel}`);
     console.log(`Channel ${channel} has ${roomClients?.size || 0} clients`);
@@ -45,7 +45,9 @@ io.on("connection", (socket) => {
       return;
     }
     console.log(`Broadcasting message to ${roomClients.size} clients in channel ${channel}`);
-    io.to(channel).emit("messageReceiver", { userId, message, channel });
+    console.log("Message:", { userId, message, channel });
+    const timestamp = new Date().toISOString();
+    io.to(channel).emit("messageReceiver", { userId, message, channel, timestamp });
   });
 
   socket.on("channelTyping", ({ userId, channel }) => {

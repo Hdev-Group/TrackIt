@@ -77,7 +77,7 @@ export default function ActiveUsers() {
     };
 
     return (
-        <div className={`w-[4rem] lg:w-[${isSidebarOpen ? "15" : "4"}rem] h-full flex flex-col z-10 transition-all duration-300`}>
+        <div className={`w-[${isSidebarOpen ? "20" : "4"}rem] min-w-[4rem] h-full flex flex-col z-10 transition-all duration-300`}>
             <div className="flex flex-col items-start w-full h-full">
                 <div className="flex flex-col justify-between h-full w-full">
                     <div className="flex flex-col w-full select-none">

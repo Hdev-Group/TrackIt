@@ -230,7 +230,7 @@ export default function Messages() {
                 <MoreHorizontal className="h-5 w-5" />
               </button>
             </header>
-            <div className="flex-grow overflow-y-auto bg-muted/30 border-t border-l rounded-tl-xl">
+            <div className="flex-grow overflow-y-auto bg-muted/30 h-full border-t border-l rounded-tl-xl">
               <MessageList user={user} channelDetails={activeChannel} />
             </div>
             <footer className="min-h-12 h-auto border-t flex border-l bg-muted/20 items-start px-4 py-1">
@@ -329,6 +329,7 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
       const structuredMessage = {
         userid: newMessage.userId,
         message: newMessage.message,
+        timestamp: new Date().toISOString(),
       };
       console.log("New message structured:", structuredMessage);
       setMessages((prevMessages: any[]) => {
@@ -340,7 +341,10 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
     }
   }, [channelDetails.id]);
 
-  const { sendMessage } = useSendMessage(user?.uid, channelDetails.id, handleMessageReceived);
+  const timestamp = new Date().toISOString();
+  console.log("Timestamp:", timestamp);
+
+  const { sendMessage } = useSendMessage(user?.uid, channelDetails.id, handleMessageReceived, timestamp);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -398,8 +402,8 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
   }
 
   return (
-    <div className="pt-2 pb-5 h-full flex-col overflow-y-auto w-full flex items-start justify-end">
-      <div className="flex px-3 flex-col gap-1 border-b border-muted-foreground/20 w-full mb-5 pb-5">
+    <div className="pt-2 pb-5 min-h-full flex-col overflow-y-auto w-full flex items-start justify-end">
+      <div className="flex px-3  flex-col gap-1 border-b overflow-y-auto border-muted-foreground/20 w-full mb-5 pb-5">
         <div className="w-12 h-12 text-3xl bg-gray-500/20 rounded-full items-center justify-center flex">#</div>
         <h2 className="text-xl font-bold">Welcome to the start of #{channelDetails.name}</h2>
         <p className="text-sm text-gray-400">This is the very beginning of the #{channelDetails.name} channel.</p>
@@ -451,7 +455,7 @@ function MessageItem({
     message: any;
     fetchUserDetails: (userId: any) => Promise<any>;
   }) {
-    console.log("MessageItem:", message);
+  console.log("MessageItem:", message);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   useEffect(() => {
     fetchUserDetails(message.userid)
@@ -471,9 +475,9 @@ function MessageItem({
         <div className="w-8 h-8 bg-gray-500 rounded-full"></div>
       )}
       <div>
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-2 items-center">
           <p className="text-sm font-semibold">{userDetails?.displayName}</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-400/60">
             {(() => {
               const messageDate = new Date(message.timestamp);
               const now = new Date();
@@ -484,7 +488,7 @@ function MessageItem({
                 } else if (isYesterday) {
                 return `Yesterday at ${messageDate.toLocaleTimeString('en-UK', { hour: '2-digit', minute: '2-digit' })}`;
                 } else {
-                return messageDate.toLocaleTimeString('en-UK', { day: "2-digit", month: "2-digit", year: "2-digit", hour: '2-digit', minute: '2-digit' });
+                return messageDate.toLocaleTimeString('en-UK', { day: "2-digit", month: "2-digit", year: "numeric", hour: '2-digit', minute: '2-digit' });
                 }
             })()}
             </p>
