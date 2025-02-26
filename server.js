@@ -46,7 +46,6 @@ io.on("connection", (socket) => {
     }
     console.log(`Broadcasting message to ${roomClients.size} clients in channel ${channel}`);
     console.log("Message:", { userId, message, channel });
-    const timestamp = new Date().toISOString();
     io.to(channel).emit("messageReceiver", { userId, message, channel, timestamp });
   });
 
