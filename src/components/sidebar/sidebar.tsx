@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { AlertOctagonIcon, Bell, Calendar, ChevronDown, Clock, Columns3, Command, Home, MessageCircle, OctagonAlert, PersonStanding, Settings, Ticket } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Bell, Calendar, ChevronDown, Clock, Columns3, Command, Home, MessageCircle, OctagonAlert, PersonStanding, Settings, Ticket } from "lucide-react";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
@@ -108,7 +107,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
     const fetchedUsersRef = useRef(new Set<string>());
     const db = getFirestore();
     const [showProfile, setShowProfile] = useState(false);
-    const pathname = usePathname(); // Get the current URL path
+    const pathname = usePathname();
 
     const getUserProfile = async (uid: string): Promise<{ displayName: string; pictureURL: string, hdevstaff: boolean }> => {
         try {
@@ -157,90 +156,89 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
         });
     }, []);
 
-    // Define the navigation items with their base paths
     const navItems = [
         { path: `/${orgID}/dashboard`, icon: Home, text: "Dashboard" },
         { path: `/${orgID}/messages`, icon: MessageCircle, text: "Messages" },
-        { path: `/${orgID}/tickets`, icon: Ticket, text: "Tickets" }, // Assuming a path
-        { path: `/${orgID}/alerts`, icon: OctagonAlert, text: "Alerts" }, // Assuming a path
-        { path: `/${orgID}/shifts`, icon: Clock, text: "Shifts" }, // Assuming a path
-        { path: `/${orgID}/calendar`, icon: Calendar, text: "Calendar" }, // Assuming a path
-        { path: `/${orgID}/status`, icon: Columns3, text: "Status Page" }, // Assuming a path
+        { path: `/${orgID}/tickets`, icon: Ticket, text: "Tickets" },
+        { path: `/${orgID}/alerts`, icon: OctagonAlert, text: "Alerts" }, 
+        { path: `/${orgID}/shifts`, icon: Clock, text: "Shifts" }, 
+        { path: `/${orgID}/calendar`, icon: Calendar, text: "Calendar" },
+        { path: `/${orgID}/status`, icon: Columns3, text: "Status Page" },
     ];
 
     return (
-        <div id="sidebarmain" className="w-16 border-r border-[#fff]/15 h-full flex flex-col items-center justify-start">
-            <div className="w-full h-full flex flex-col items-center justify-center">
-                <div className="mx-4 w-full mt-4 flex items-center justify-center">
+        <div id="sidebarmain" className="w-16 border-r border-[#fff]/15 h-full flex flex-col items-center">
+            <div className="w-full flex-shrink-0">
+                <div className="mx-4 w-8 h-8 mt-4 flex items-center justify-center">
                     <img src="/trackitlogo/light/logo.png" alt="Trackit Logo" className="w-8 h-8" />
                 </div>
-                <div className="w-1/2 border-t my-4 border-[#fff]/10" />
-                <div className="justify-between w-full h-full flex flex-col items-center gap-4">
-                    <div className="w-full h-full flex flex-col mt-2 items-center justify-start gap-2">
-                        {navItems.map(({ path, icon: Icon, text }) => (
-                            <Tooltip key={text} text={text}>
-                                <Link
-                                    href={path}
-                                    className={`hover:bg-white/10 cursor-pointer transition-all flex items-center justify-center rounded-lg relative ${
-                                        pathname.startsWith(path) ? "bg-green-500/50" : "bg-red-500/50"
-                                    }`}
-                                >
-                                    {pathname.startsWith(path) && (
-                                        <span className="absolute -left-2.5 rounded-r-lg h-1/2 bg-indigo-400 w-[2px]" />
-                                    )}
-                                    <Icon className="h-full w-5 mx-2 py-2" />
-                                </Link>
-                            </Tooltip>
-                        ))}
-                    </div>
-                    <div className="w-full h-auto flex flex-col items-center justify-start gap-2">
-                        <div className="flex flex-col gap-2 mt-4 items-center justify-center">
-                            <Tooltip text="Notifications">
-                                <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition-all flex items-center justify-center rounded-lg relative">
-                                    <Bell className="h-full w-4 mx-2 py-2" />
-                                </div>
-                            </Tooltip>
-                            <Tooltip text="Commands">
-                                <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition-all flex items-center justify-center rounded-lg relative">
-                                    <Command className="h-full w-4 mx-2 py-2" />
-                                </div>
-                            </Tooltip>
-                        </div>
-                        <div className="w-1/2 mt-2 border-t border-[#fff]/10" />
-                        <div className="mt-2 flex relative flex-col gap-2 mb-4 items-center justify-center">
-                            <div id="showmoreprofile" className={`${showProfile ? "innerset" : "deployer"} transition-all duration-500 bottom-0 bg-black border rounded-md pt-6 z-50 flex flex-col w-[30rem]`}>
-                                <div className="flex px-4 flex-col items-start mb-4 justify-between w-full">
-                                    <div className="relative flex flex-row items-center justify-center mb-2 gap-2">
-                                        <img src={user?.photoURL} className="w-12 h-12 rounded-full" />
-                                        <Status type="icon" size="md" position={{ left: "right-0", bottom: "bottom-0" }} profile={true} />
-                                    </div>
-                                    <div className="flex flex-col items-start justify-start">
-                                        <div className="flex flex-row items-center justify-center gap-2">
-                                            <span className="text-lg font-semibold text-white/80">{user?.displayName}</span>
-                                            {users.some(user => user.hdevstaff === true) && (
-                                                <Tooltip text="HDev Staff">
-                                                    <div className="px-2 py-0.5 bg-muted-foreground/10 rounded-md">
-                                                        <img src="/staffbadge/hdevstaff.png" className="h-6" />
-                                                    </div>
-                                                </Tooltip>
-                                            )}
-                                        </div>
-                                        <span className="text-sm font-light text-white/50">{user?.email}</span>
-                                    </div>
-                                </div>
-                                <div className="border-t flex flex-row gap-2 hover:bg-muted-foreground/10 transition-all cursor-pointer items-center justify-start w-full px-2 py-2">
-                                    <Settings className="h-5 w-5 text-muted-foreground" />
-                                    <p className="text-muted-foreground text-sm font-normal">Settings</p>
-                                </div>
-                                <StatusPicker userid={user?.uid} />
+            </div>
+            <div className="w-1/2 border-t my-4 border-[#fff]/10 flex-shrink-0" />
+            <div className="w-full h-full flex flex-col items-center justify-between gap-10 overflow-visible">
+                <div className="w-full flex flex-col mt-2 items-center justify-start gap-2">
+                    {navItems.map(({ path, icon: Icon, text }) => (
+                        <Tooltip key={text} text={text}>
+                            <Link
+                                href={path}
+                                className={`hover:bg-white/10 cursor-pointer transition-all flex items-center justify-center rounded-lg relative ${
+                                    pathname.startsWith(path) ? "bg-muted-foreground/10" : "hover:bg-muted-foreground/5"
+                                }`}
+                            >
+                                {pathname.startsWith(path) && (
+                                    <span className="absolute -left-2.5 rounded-r-lg h-1/2 bg-indigo-400 w-[2px]" />
+                                )}
+                                <Icon className="h-full w-5 mx-2 py-2" />
+                            </Link>
+                        </Tooltip>
+                    ))}
+                </div>
+                <div className="w-full flex flex-col items-center justify-start gap-2">
+                    <div className="flex flex-col gap-2 mt-4 items-center justify-center">
+                        <Tooltip text="Notifications">
+                            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition-all flex items-center justify-center rounded-lg relative">
+                                <Bell className="h-full w-4 mx-2 py-2" />
                             </div>
-                            <Tooltip text="Team & Profile">
-                                <div onClick={() => setShowProfile(!showProfile)} className="bg-yellow-100 w-9 h-9 flex items-center relative justify-center rounded-lg">
-                                    <PersonStanding className="h-5 w-5 mx-2 py-2" />
-                                    <img src={user?.photoURL} className="absolute -bottom-1 -right-1 bg-red-500 w-4 border border-[#101218] h-4 rounded-full" />
+                        </Tooltip>
+                        <Tooltip text="Commands">
+                            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition-all flex items-center justify-center rounded-lg relative">
+                                <Command className="h-full w-4 mx-2 py-2" />
+                            </div>
+                        </Tooltip>
+                    </div>
+                    <div className="w-1/2 mt-2 border-t border-[#fff]/10" />
+                    <div className="mt-2 flex relative flex-col gap-2 mb-4 items-center justify-center">
+                        <div id="showmoreprofile" className={`${showProfile ? "innerset" : "deployer"} transition-all duration-500 bottom-0 bg-black border rounded-md pt-6 z-50 flex flex-col w-[30rem]`}>
+                            <div className="flex px-4 flex-col items-start mb-4 justify-between w-full">
+                                <div className="relative flex flex-row items-center justify-center mb-2 gap-2">
+                                    <img src={user?.photoURL} className="w-12 h-12 rounded-full" />
+                                    <Status type="icon" size="md" position={{ left: "right-0", bottom: "bottom-0" }} profile={true} />
                                 </div>
-                            </Tooltip>
+                                <div className="flex flex-col items-start justify-start">
+                                    <div className="flex flex-row items-center justify-center gap-2">
+                                        <span className="text-lg font-semibold text-white/80">{user?.displayName}</span>
+                                        {users.some(user => user.hdevstaff === true) && (
+                                            <Tooltip text="HDev Staff">
+                                                <div className="px-2 py-0.5 bg-muted-foreground/10 rounded-md">
+                                                    <img src="/staffbadge/hdevstaff.png" className="h-6" />
+                                                </div>
+                                            </Tooltip>
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-light text-white/50">{user?.email}</span>
+                                </div>
+                            </div>
+                            <div className="border-t flex flex-row gap-2 hover:bg-muted-foreground/10 transition-all cursor-pointer items-center justify-start w-full px-2 py-2">
+                                <Settings className="h-5 w-5 text-muted-foreground" />
+                                <p className="text-muted-foreground text-sm font-normal">Settings</p>
+                            </div>
+                            <StatusPicker userid={user?.uid} />
                         </div>
+                        <Tooltip text="Team & Profile">
+                            <div onClick={() => setShowProfile(!showProfile)} className="bg-yellow-100 w-9 h-9 flex items-center relative justify-center rounded-lg">
+                                <PersonStanding className="h-5 w-5 mx-2 py-2" />
+                                <img src={user?.photoURL} className="absolute -bottom-1 -right-1 bg-red-500 w-4 border border-[#101218] h-4 rounded-full" />
+                            </div>
+                        </Tooltip>
                     </div>
                 </div>
             </div>

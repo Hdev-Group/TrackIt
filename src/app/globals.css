@@ -5,7 +5,9 @@
 body {
   font-family: Rubik, sans-serif;
 }
-
+* {
+  box-sizing: border-box;
+}
 .textgradientmovetransition {
   background: linear-gradient(    90deg,
   rgba(255, 255, 255, 1) 20%, 

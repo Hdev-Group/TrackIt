@@ -129,15 +129,15 @@ export default function Home() {
               <img src="/trackitlogo/light/logo.png" alt="TrackIt" className="w-10 h-10" />
               </div>
               <div className="text-6xl flex flex-col font-semibold text-transparent leading-tight z-20 bg-clip-text textgradientmovetransition">
-              <p>Making SaaS</p><p>Simpler With TrackIt</p>
+                <p>Making SaaS</p><p>Simpler With TrackIt</p>
               </div>
               <p className="text-md md:max-w-[34rem] w-full text-white text-wrap flex-wrap z-20">
-              TrackIt, an all-in-one platform for start-ups to manage their teams, support requests, shifts and projects.
+                TrackIt, an all-in-one platform for start-ups to manage their teams, support requests, shifts and projects.
               </p>
               <div className="flex mt-8 justify-between z-20 gap-5 w-full">
-                <Button variant="slide-fill" className="md:w-1/3 !rounded-full flex flex-row items-center justify-center" type="button" href="/auth/signin">
-                  <span className="flex flex-row gap-1 items-center justify-center">
-                  TRY IT FREE <ArrowRightIcon className="h-4" />
+                <Button variant="slide-fill" className="md:w-1/3 group !rounded-full flex flex-row items-center justify-center" type="button" href="/auth/signin">
+                  <span className="flex flex-row gap-1  items-center justify-center">
+                  TRY IT FREE <ArrowRightIcon className="h-4 group-hover:translate-x-2 transition-all" />
                   </span>
                 </Button>
               </div>

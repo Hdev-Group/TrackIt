@@ -8,7 +8,7 @@ import ActiveUsers from "@/components/activeUsers/activeUsers";
 import LockedSidebar from "@/components/sidebar/sidebar";
 import { useAuth } from "../../firebase/AuthContext";
 import React from "react"; // Import React for React.use
-import Mobileheader from "@/components/mobile/mobileheader";
+import ApplicationHeader from "@/components/headerapplication/applicationheader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,7 +43,9 @@ export default function RootLayout({
                 user={user as any}
                 orgID={resolvedParams._orgid}
               />
-              {children}
+              <div className="flex flex-col w-full">
+                {children}
+              </div>
               <div className="w-auto h-full border-l">
                 <ActiveUsers />
               </div>
