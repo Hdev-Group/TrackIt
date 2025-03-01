@@ -77,7 +77,7 @@ export default function ActiveUsers() {
     };
 
     return (
-        <div className={`w-[4rem] lg:w-[${isSidebarOpen ? "15" : "4"}rem] h-full flex flex-col z-10 transition-all duration-300`}>
+        <div className={`w-[${isSidebarOpen ? "20" : "4"}rem] min-w-[4rem] h-full flex flex-col z-10 transition-all duration-300`}>
             <div className="flex flex-col items-start w-full h-full">
                 <div className="flex flex-col justify-between h-full w-full">
                     <div className="flex flex-col w-full select-none">
@@ -149,11 +149,11 @@ export default function ActiveUsers() {
                                     )}
                                     {users.filter(user => user.status === "Offline").length > 0 && (
                                         <>
-                                            <h3 className="text-gray-500 text-sm mt-4">Offline</h3>
+                                        <p className="text-white/20 border-t pt-2 px-2">Offline</p>
                                             {users.filter(user => user.status === "Offline").map((user) => (
                                                 <li
                                                     key={user.userId}
-                                                    className="flex hover:bg-muted-foreground/10 rounded-md px-2 py-1 flex-row gap-1 items-center space-x-2"
+                                                    className={`flex hover:bg-muted-foreground/10 rounded-md ${isSidebarOpen ? "mx-2 px-2  space-x-2": "px-2 mr-4 justify-center w-full"} cursor-pointer py-1 flex-row gap-1 items-center`}
                                                 >
                                                     <div className="flex relative items-center justify-center w-8 h-8">
                                                         <img
@@ -164,7 +164,7 @@ export default function ActiveUsers() {
                                                         />
                                                         <Status status={user.status} />
                                                     </div>
-                                                    <div className="flex flex-col items-start justify-start h-full">
+                                                    <div className={`${isSidebarOpen ? "flex" : "hidden"} flex-col items-start justify-start h-full`}>
                                                         <span className="text-sm font-medium text-white/20">{user.displayName}</span>
                                                     </div>
                                                 </li>

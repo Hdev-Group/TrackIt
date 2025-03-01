@@ -134,7 +134,7 @@ function SiteMonitoring() {
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 justify-between border-muted-foreground/20 border items-center overflow-hidden w-full rounded-lg'>
+            <div className='flex flex-col bg-muted-foreground/5 justify-between border-muted-foreground/20 border items-center overflow-hidden w-full rounded-lg'>
                 <div onClick={() => setShowMore(!showMore)} className='flex items-center border-b justify-start px-4 w-full h-10 gap-2 cursor-pointer'>
                     <ChartSpline className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>
@@ -185,7 +185,7 @@ function AssignedTickets() {
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
+            <div className='flex flex-col bg-muted-foreground/5 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
             <div onClick={() => setShowMore(!showMore)} className='flex items-center border-b justify-start px-4 w-full h-10 gap-2 cursor-pointer'>
                     <Ticket className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>
@@ -240,7 +240,7 @@ function TicketStats() {
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
+            <div className='flex flex-col bg-muted-foreground/5 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
                 <div onClick={() => setShowMore(!showMore)} className='flex items-center border-b justify-start px-4 w-full h-10 gap-2'>
                     <LucideTickets className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>
@@ -359,7 +359,7 @@ function RecentActivities() {
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
+            <div className='flex flex-col bg-muted-foreground/5 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
                 <div onClick={() => setShowMore(!showMore)} className='flex border-b items-center justify-start px-4 w-full h-10 gap-2'>
                     <Glasses className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>
@@ -437,7 +437,7 @@ function DepartmentsAssignedTo(){
                 </div>
             </div>
         </div>
-        <div className='flex flex-col bg-muted-foreground/10 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
+        <div className='flex flex-col bg-muted-foreground/5 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
                 <div onClick={() => setShowMore(!showMore)} className='flex border-b items-center justify-start px-4 w-full h-10 gap-2'>
                     <Building2Icon className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>

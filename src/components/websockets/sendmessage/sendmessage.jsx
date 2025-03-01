@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { getSocket } from "../../../lib/socket"
 
-export default function useSendMessage(userId, channel, onMessageReceived) {
+export default function useSendMessage(userId, channel, onMessageReceived, timestamp) {
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -54,8 +54,8 @@ export default function useSendMessage(userId, channel, onMessageReceived) {
 
   const sendMessage = (newMessage) => {
     if (socketRef.current?.connected) {
-      console.log("Emitting 'sendMessage':", { userId, message: newMessage, channel });
-      socketRef.current.emit("sendMessage", { userId, message: newMessage, channel });
+      console.log("Emitting 'sendMessage':", { userId, message: newMessage, channel, timestamp });
+      socketRef.current.emit("sendMessage", { userId, message: newMessage, channel, timestamp });
     } else {
       console.error("Socket not connected! Cannot emit 'sendMessage'.");
     }

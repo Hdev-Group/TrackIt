@@ -36,7 +36,7 @@ io.on("connection", (socket) => {
 
   socket.emit("onlineUsers", Array.from(onlineUsers.values()));
 
-  socket.on("sendMessage", ({ userId, message, channel }) => {
+  socket.on("sendMessage", ({ userId, message, channel, timestamp }) => {
     const roomClients = io.sockets.adapter.rooms.get(channel);
     console.log(`Sending message from ${userId} to channel ${channel}`);
     console.log(`Channel ${channel} has ${roomClients?.size || 0} clients`);
@@ -45,7 +45,8 @@ io.on("connection", (socket) => {
       return;
     }
     console.log(`Broadcasting message to ${roomClients.size} clients in channel ${channel}`);
-    io.to(channel).emit("messageReceiver", { userId, message, channel });
+    console.log("Message:", { userId, message, channel });
+    io.to(channel).emit("messageReceiver", { userId, message, channel, timestamp });
   });
 
   socket.on("channelTyping", ({ userId, channel }) => {
@@ -62,6 +63,21 @@ io.on("connection", (socket) => {
     console.log(`User ${userId} left channel: ${channel}`);
     socket.leave(channel);
     socket.to(channel).emit("userLeftChannel", { userId, channel });
+  });
+
+  socket.on("offer", ({ offer, channel, fromUserId, toUserId }) => {
+    console.log(`Offer from ${fromUserId} to ${toUserId} in channel ${channel}:`, offer);
+    io.to(channel).emit("offer", { offer, fromUserId, toUserId });
+  });
+  
+  socket.on("answer", ({ answer, channel, fromUserId, toUserId }) => {
+    console.log(`Answer from ${fromUserId} to ${toUserId} in channel ${channel}:`, answer);
+    io.to(channel).emit("answer", { answer, fromUserId, toUserId });
+  });
+  
+  socket.on("ice-candidate", ({ candidate, channel, fromUserId, toUserId }) => {
+    console.log(`ICE candidate from ${fromUserId} to ${toUserId} in channel ${channel}:`, candidate);
+    io.to(channel).emit("ice-candidate", { candidate, fromUserId, toUserId });
   });
 
   socket.on("changeStatus", ({ userId, status }) => {
