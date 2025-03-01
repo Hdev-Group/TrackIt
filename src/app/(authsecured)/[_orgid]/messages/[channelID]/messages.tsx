@@ -60,59 +60,67 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   useEffect(() => {
     const initStream = async () => {
       try {
-        let mediaStream: MediaStream | undefined
-        let audioAvailable = false
-        let videoAvailable = false
+        let mediaStream;
+        let audioAvailable = false;
+        let videoAvailable = false;
 
         try {
-          mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-          audioAvailable = true
-          videoAvailable = true
-          console.log("Initialized stream with audio and video")
+          mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          audioAvailable = true;
+          videoAvailable = true;
+          console.log("Initialized stream with audio and video");
         } catch (err) {
           try {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            audioAvailable = true
-            console.log("Video not available, using audio only")
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioAvailable = true;
+            console.log("Video not available, using audio only");
           } catch (audioErr) {
             try {
-              mediaStream = await navigator.mediaDevices.getUserMedia({ video: true })
-              videoAvailable = true
-              console.log("Audio not available, using video only")
+              mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+              videoAvailable = true;
+              console.log("Audio not available, using video only");
             } catch (videoErr) {
-              console.error("Neither video nor audio is available:", videoErr)
-              setStream(null)
-              setHasAudio(false)
-              setHasVideo(false)
-              return
+              console.error("Neither video nor audio is available:", videoErr);
+              setStream(null);
+              setHasAudio(false);
+              setHasVideo(false);
+              return;
             }
           }
         }
 
-        setStream(mediaStream)
-        setHasAudio(audioAvailable)
-        setHasVideo(videoAvailable)
+        setStream(mediaStream);
+        setHasAudio(audioAvailable);
+        setHasVideo(videoAvailable);
         if (userVideoRef.current && mediaStream) {
-          userVideoRef.current.srcObject = mediaStream
-          console.log("Set local video stream to userVideoRef")
-        }
-        if (user?.uid) {
-          socket.emit("userJoinedChannel", { userId: user.uid, channel: activeChannel.id })
-          console.log(`Emitted userJoinedChannel: User ${user.uid} joined channel ${activeChannel.id}`)
+          userVideoRef.current.srcObject = mediaStream;
+          console.log("Set local video stream to userVideoRef");
         }
       } catch (err) {
-        console.error("Failed to initialize media stream:", err)
+        console.error("Failed to initialize media stream:", err);
       }
-    }
-    initStream()
+    };
+    initStream();
 
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop())
-        console.log("Stopped local media stream tracks")
+        stream.getTracks().forEach(track => track.stop());
+        console.log("Stopped local media stream tracks");
       }
-    }
-  }, [activeChannel.id, user?.uid])
+    };
+  }, [activeChannel.id, user?.uid]);
+
+  useEffect(() => {
+    if (!stream || !user?.uid) return;
+
+    socket.emit("userJoinedChannel", { userId: user.uid, channel: activeChannel.id });
+    console.log(`Emitted userJoinedChannel: User ${user.uid} joined channel ${activeChannel.id}`);
+
+    return () => {
+      socket.emit("leaveChannel", { userId: user.uid, channel: activeChannel.id });
+      console.log(`Emitted leaveChannel: User ${user.uid} left channel ${activeChannel.id}`);
+    };
+  }, [stream, activeChannel.id, user?.uid]);
 
   // Set dominant color for local user
   useEffect(() => {
@@ -127,145 +135,145 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   // Peer connection setup
   useEffect(() => {
     if (!stream || !user?.uid) {
-      console.log("Skipping peer connection setup: Stream or user ID missing")
-      return
+      console.log("Skipping peer connection setup: Stream or user ID missing");
+      return;
     }
 
-    const createPeer = (toUserId: string, initiator: boolean) => {
-      console.log(`Creating peer for ${toUserId}, initiator: ${initiator}`)
+    const createPeer = (toUserId, initiator) => {
+      console.log(`Creating peer for ${toUserId}, initiator: ${initiator}`);
       const peer = new Peer({
         initiator,
         trickle: false,
         stream,
-      })
+      });
 
       peer.on("signal", (data) => {
         if (initiator) {
-          console.log(`Sending offer from ${user.uid} to ${toUserId}`)
-          socket.emit("offer", { offer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId })
+          console.log(`Sending offer from ${user.uid} to ${toUserId}`);
+          socket.emit("offer", { offer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
         } else {
-          console.log(`Sending answer from ${user.uid} to ${toUserId}`)
-          socket.emit("answer", { answer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId })
+          console.log(`Sending answer from ${user.uid} to ${toUserId}`);
+          socket.emit("answer", { answer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
         }
-      })
+      });
 
       peer.on("stream", (peerStream) => {
-        console.log(`Received stream from peer ${toUserId}`)
-        setPeers(prev => new Map(prev).set(toUserId, peerStream))
+        console.log(`Received stream from peer ${toUserId}`);
+        setPeers(prev => new Map(prev).set(toUserId, peerStream));
         fetchUserProfilePic(toUserId).then(photoURL => {
-          setPeerProfiles(prev => new Map(prev).set(toUserId, photoURL))
+          setPeerProfiles(prev => new Map(prev).set(toUserId, photoURL));
           getDominantColor(photoURL).then(color => {
-            setDominantColors(prev => new Map(prev).set(toUserId, color))
-          })
-        })
-      })
+            setDominantColors(prev => new Map(prev).set(toUserId, color));
+          });
+        });
+      });
 
-      peer.on("error", (err) => console.error(`Peer error with ${toUserId}:`, err))
+      peer.on("error", (err) => console.error(`Peer error with ${toUserId}:`, err));
       peer.on("close", () => {
-        console.log(`Peer ${toUserId} closed`)
-        peersRef.current.delete(toUserId)
+        console.log(`Peer ${toUserId} closed`);
+        peersRef.current.delete(toUserId);
         setPeers(prev => {
-          const newPeers = new Map(prev)
-          newPeers.delete(toUserId)
-          return newPeers
-        })
+          const newPeers = new Map(prev);
+          newPeers.delete(toUserId);
+          return newPeers;
+        });
         setPeerProfiles(prev => {
-          const newProfiles = new Map(prev)
-          newProfiles.delete(toUserId)
-          return newProfiles
-        })
+          const newProfiles = new Map(prev);
+          newProfiles.delete(toUserId);
+          return newProfiles;
+        });
         setDominantColors(prev => {
-          const newColors = new Map(prev)
-          newColors.delete(toUserId)
-          return newColors
-        })
-      })
+          const newColors = new Map(prev);
+          newColors.delete(toUserId);
+          return newColors;
+        });
+      });
 
-      return peer
-    }
+      return peer;
+    };
 
-    socket.on("channelParticipants", (usersInChannel: { socketId: string; userId: string }[]) => {
-      console.log(`Received channelParticipants for channel ${activeChannel.id}:`, usersInChannel)
+    socket.on("channelParticipants", (usersInChannel) => {
+      console.log(`Received channelParticipants for channel ${activeChannel.id}:`, usersInChannel);
       usersInChannel.forEach(({ userId }) => {
-        if (userId === user.uid || peersRef.current.has(userId)) return
-        const peer = createPeer(userId, true)
-        peersRef.current.set(userId, { peer, userId })
-      })
-    })
+        if (userId === user.uid || peersRef.current.has(userId)) return;
+        const peer = createPeer(userId, true);
+        peersRef.current.set(userId, { peer, userId });
+      });
+    });
 
     socket.on("offer", ({ offer, fromUserId, toUserId }) => {
-      if (toUserId !== user.uid) return
-      console.log(`Received offer from ${fromUserId}`)
-      const peer = createPeer(fromUserId, false)
-      peer.signal(offer)
-      peersRef.current.set(fromUserId, { peer, userId: fromUserId })
-    })
+      if (toUserId !== user.uid) return;
+      console.log(`Received offer from ${fromUserId}`);
+      const peer = createPeer(fromUserId, false);
+      peer.signal(offer);
+      peersRef.current.set(fromUserId, { peer, userId: fromUserId });
+    });
 
     socket.on("answer", ({ answer, fromUserId, toUserId }) => {
-      if (toUserId !== user.uid) return
-      console.log(`Received answer from ${fromUserId}`)
-      const peerData = peersRef.current.get(fromUserId)
+      if (toUserId !== user.uid) return;
+      console.log(`Received answer from ${fromUserId}`);
+      const peerData = peersRef.current.get(fromUserId);
       if (!peerData) {
-        console.warn(`No peer found for ${fromUserId}, possibly already cleaned up`)
-        return
+        console.warn(`No peer found for ${fromUserId}, possibly already cleaned up`);
+        return;
       }
       if (peerData.peer.destroyed) {
-        console.warn(`Peer for ${fromUserId} is destroyed, skipping signal`)
-        return
+        console.warn(`Peer for ${fromUserId} is destroyed, skipping signal`);
+        return;
       }
       try {
-        peerData.peer.signal(answer)
-        console.log(`Signaled answer for peer ${fromUserId}`)
+        peerData.peer.signal(answer);
+        console.log(`Signaled answer for peer ${fromUserId}`);
       } catch (err) {
-        console.error(`Failed to signal answer for ${fromUserId}:`, err)
+        console.error(`Failed to signal answer for ${fromUserId}:`, err);
       }
-    })
+    });
 
     socket.on("ice-candidate", ({ candidate, fromUserId, toUserId }) => {
-      if (toUserId !== user.uid) return
-      console.log(`Received ICE candidate from ${fromUserId}`)
-      const peerData = peersRef.current.get(fromUserId)
+      if (toUserId !== user.uid) return;
+      console.log(`Received ICE candidate from ${fromUserId}`);
+      const peerData = peersRef.current.get(fromUserId);
       if (!peerData) {
-        console.warn(`No peer found for ${fromUserId} for ICE candidate`)
-        return
+        console.warn(`No peer found for ${fromUserId} for ICE candidate`);
+        return;
       }
       if (peerData.peer.destroyed) {
-        console.warn(`Peer for ${fromUserId} is destroyed, skipping ICE candidate`)
-        return
+        console.warn(`Peer for ${fromUserId} is destroyed, skipping ICE candidate`);
+        return;
       }
       try {
-        peerData.peer.signal(candidate)
-        console.log(`Signaled ICE candidate for peer ${fromUserId}`)
+        peerData.peer.signal(candidate);
+        console.log(`Signaled ICE candidate for peer ${fromUserId}`);
       } catch (err) {
-        console.error(`Failed to signal ICE candidate for ${fromUserId}:`, err)
+        console.error(`Failed to signal ICE candidate for ${fromUserId}:`, err);
       }
-    })
+    });
 
     socket.on("userLeftChannel", ({ userId, channel }) => {
-      if (channel !== activeChannel.id) return
-      console.log(`User ${userId} left channel ${channel}`)
-      const peerData = peersRef.current.get(userId)
+      if (channel !== activeChannel.id) return;
+      console.log(`User ${userId} left channel ${channel}`);
+      const peerData = peersRef.current.get(userId);
       if (peerData && !peerData.peer.destroyed) {
-        peerData.peer.destroy()
-        console.log(`Initiated destruction of peer ${userId}`)
+        peerData.peer.destroy();
+        console.log(`Initiated destruction of peer ${userId}`);
       }
-    })
+    });
 
     return () => {
-      console.log("Cleaning up socket listeners and peers")
-      socket.off("channelParticipants")
-      socket.off("offer")
-      socket.off("answer")
-      socket.off("ice-candidate")
-      socket.off("userLeftChannel")
+      console.log("Cleaning up socket listeners and peers");
+      socket.off("channelParticipants");
+      socket.off("offer");
+      socket.off("answer");
+      socket.off("ice-candidate");
+      socket.off("userLeftChannel");
       peersRef.current.forEach(({ peer }, userId) => {
         if (!peer.destroyed) {
-          console.log(`Destroying peer for ${userId} during cleanup`)
-          peer.destroy()
+          console.log(`Destroying peer for ${userId} during cleanup`);
+          peer.destroy();
         }
-      })
-    }
-  }, [stream, activeChannel.id, user?.uid])
+      });
+    };
+  }, [stream, activeChannel.id, user?.uid]);
 
   // Toggle microphone
   const toggleMic = () => {
