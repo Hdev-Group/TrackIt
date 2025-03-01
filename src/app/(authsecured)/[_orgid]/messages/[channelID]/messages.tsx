@@ -13,240 +13,379 @@ import { getFirestore, doc, getDoc } from "firebase/firestore";
 import useUserJoinedChannel from "@/components/websockets/userjoiningchannel/userjoiningchannel"
 import { getSocket } from "../../../../../lib/socket"
 import Peer from "simple-peer";
+import { Vibrant } from "node-vibrant/browser";
+
 interface Channel {
   id: number
   name: string
   type: string
 }
 
+
 export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; user: User | null }) {
-  const [peers, setPeers] = useState<Map<string, MediaStream>>(new Map());
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [isMicOn, setIsMicOn] = useState(true);
-  const [isVideoOn, setIsVideoOn] = useState(true);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [speakingUsers, setSpeakingUsers] = useState<string[]>([]);
-  const [peerProfiles, setPeerProfiles] = useState<Map<string, string>>(new Map());
-  const userVideoRef = useRef<HTMLVideoElement>(null);
-  const peersRef = useRef<Map<string, { peer: Peer.Instance; userId: string }>>(new Map());
-  const socket = getSocket();
+  const [peers, setPeers] = useState<Map<string, MediaStream>>(new Map())
+  const [stream, setStream] = useState<MediaStream | null>(null)
+  const [isMicOn, setIsMicOn] = useState(true)
+  const [isVideoOn, setIsVideoOn] = useState(true)
+  const [isScreenSharing, setIsScreenSharing] = useState(false)
+  const [speakingUsers, setSpeakingUsers] = useState<string[]>([])
+  const [peerProfiles, setPeerProfiles] = useState<Map<string, string>>(new Map())
+  const [dominantColors, setDominantColors] = useState<Map<string, string>>(new Map())
+  const [hasAudio, setHasAudio] = useState(true)
+  const [hasVideo, setHasVideo] = useState(true)
+  const userVideoRef = useRef<HTMLVideoElement>(null)
+  const peersRef = useRef<Map<string, { peer: Peer.Instance; userId: string }>>(new Map())
+  const socket = getSocket()
 
+  // Fetch user profile picture from Firestore
   const fetchUserProfilePic = async (userId: string): Promise<string> => {
-    const db = getFirestore();
-    const userRef = doc(db, "users", userId);
-    const docSnap = await getDoc(userRef);
-    return docSnap.exists() ? docSnap.data().photoURL || "/default-profile.png" : "/default-profile.png";
-  };
+    const db = getFirestore()
+    const userRef = doc(db, "users", userId)
+    const docSnap = await getDoc(userRef)
+    return docSnap.exists() ? docSnap.data().photoURL || "/default-profile.png" : "/default-profile.png"
+  }
 
+  // Extract dominant color from profile picture
+  const getDominantColor = async (imageUrl: string): Promise<string> => {
+    try {
+      const palette = await Vibrant.from(imageUrl).getPalette()
+      return palette.Vibrant ? palette.Vibrant.hex : "#000000"
+    } catch (error) {
+      console.error("Error extracting dominant color:", error)
+      return "#000000"
+    }
+  }
+
+  // Initialize local media stream
   useEffect(() => {
     const initStream = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        setStream(mediaStream);
-        if (userVideoRef.current) {
-          userVideoRef.current.srcObject = mediaStream;
+        let mediaStream: MediaStream | undefined
+        let audioAvailable = false
+        let videoAvailable = false
+
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+          audioAvailable = true
+          videoAvailable = true
+          console.log("Initialized stream with audio and video")
+        } catch (err) {
+          try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            audioAvailable = true
+            console.log("Video not available, using audio only")
+          } catch (audioErr) {
+            try {
+              mediaStream = await navigator.mediaDevices.getUserMedia({ video: true })
+              videoAvailable = true
+              console.log("Audio not available, using video only")
+            } catch (videoErr) {
+              console.error("Neither video nor audio is available:", videoErr)
+              setStream(null)
+              setHasAudio(false)
+              setHasVideo(false)
+              return
+            }
+          }
+        }
+
+        setStream(mediaStream)
+        setHasAudio(audioAvailable)
+        setHasVideo(videoAvailable)
+        if (userVideoRef.current && mediaStream) {
+          userVideoRef.current.srcObject = mediaStream
+          console.log("Set local video stream to userVideoRef")
         }
         if (user?.uid) {
-          socket.emit("userJoinedChannel", { userId: user.uid, channel: activeChannel.id });
-          console.log(`User ${user.uid} joined channel ${activeChannel.id}`);
+          socket.emit("userJoinedChannel", { userId: user.uid, channel: activeChannel.id })
+          console.log(`Emitted userJoinedChannel: User ${user.uid} joined channel ${activeChannel.id}`)
         }
       } catch (err) {
-        console.error("Failed to initialize media stream:", err);
+        console.error("Failed to initialize media stream:", err)
       }
-    };
-    initStream();
+    }
+    initStream()
 
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(track => track.stop())
+        console.log("Stopped local media stream tracks")
       }
-    };
-  }, [activeChannel.id, user?.uid]);
+    }
+  }, [activeChannel.id, user?.uid])
 
+  // Set dominant color for local user
   useEffect(() => {
-    if (!stream || !user?.uid) return;
+    if (user?.uid && user?.photoURL) {
+      getDominantColor(user.photoURL).then(color => {
+        setDominantColors(prev => new Map(prev).set(user.uid, color))
+        console.log(`Set dominant color for user ${user.uid}: ${color}`)
+      })
+    }
+  }, [user?.uid, user?.photoURL])
+
+  // Peer connection setup
+  useEffect(() => {
+    if (!stream || !user?.uid) {
+      console.log("Skipping peer connection setup: Stream or user ID missing")
+      return
+    }
 
     const createPeer = (toUserId: string, initiator: boolean) => {
+      console.log(`Creating peer for ${toUserId}, initiator: ${initiator}`)
       const peer = new Peer({
         initiator,
         trickle: false,
         stream,
-      });
+      })
 
       peer.on("signal", (data) => {
         if (initiator) {
-          socket.emit("offer", { offer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
-          console.log(`Sent offer from ${user.uid} to ${toUserId}`);
+          console.log(`Sending offer from ${user.uid} to ${toUserId}`)
+          socket.emit("offer", { offer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId })
         } else {
-          socket.emit("answer", { answer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
-          console.log(`Sent answer from ${user.uid} to ${toUserId}`);
+          console.log(`Sending answer from ${user.uid} to ${toUserId}`)
+          socket.emit("answer", { answer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId })
         }
-      });
+      })
 
       peer.on("stream", (peerStream) => {
-        console.log(`Received stream from ${toUserId}`);
-        setPeers(prev => new Map(prev).set(toUserId, peerStream));
+        console.log(`Received stream from peer ${toUserId}`)
+        setPeers(prev => new Map(prev).set(toUserId, peerStream))
         fetchUserProfilePic(toUserId).then(photoURL => {
-          setPeerProfiles(prev => new Map(prev).set(toUserId, photoURL));
-        });
-      });
+          setPeerProfiles(prev => new Map(prev).set(toUserId, photoURL))
+          getDominantColor(photoURL).then(color => {
+            setDominantColors(prev => new Map(prev).set(toUserId, color))
+          })
+        })
+      })
 
-      peer.on("error", (err) => console.error(`Peer error with ${toUserId}:`, err));
+      peer.on("error", (err) => console.error(`Peer error with ${toUserId}:`, err))
+      peer.on("close", () => {
+        console.log(`Peer ${toUserId} closed`)
+        peersRef.current.delete(toUserId)
+        setPeers(prev => {
+          const newPeers = new Map(prev)
+          newPeers.delete(toUserId)
+          return newPeers
+        })
+        setPeerProfiles(prev => {
+          const newProfiles = new Map(prev)
+          newProfiles.delete(toUserId)
+          return newProfiles
+        })
+        setDominantColors(prev => {
+          const newColors = new Map(prev)
+          newColors.delete(toUserId)
+          return newColors
+        })
+      })
 
-      return peer;
-    };
+      return peer
+    }
 
     socket.on("channelParticipants", (usersInChannel: { socketId: string; userId: string }[]) => {
-      console.log("Channel participants:", usersInChannel);
+      console.log(`Received channelParticipants for channel ${activeChannel.id}:`, usersInChannel)
       usersInChannel.forEach(({ userId }) => {
-        if (userId === user.uid || peersRef.current.has(userId)) return;
-        const peer = createPeer(userId, true);
-        peersRef.current.set(userId, { peer, userId });
-      });
-    });
+        if (userId === user.uid || peersRef.current.has(userId)) return
+        const peer = createPeer(userId, true)
+        peersRef.current.set(userId, { peer, userId })
+      })
+    })
 
     socket.on("offer", ({ offer, fromUserId, toUserId }) => {
-      if (toUserId !== user.uid) return;
-      console.log(`Received offer from ${fromUserId}`);
-      const peer = createPeer(fromUserId, false);
-      peer.signal(offer);
-      peersRef.current.set(fromUserId, { peer, userId: fromUserId });
-    });
+      if (toUserId !== user.uid) return
+      console.log(`Received offer from ${fromUserId}`)
+      const peer = createPeer(fromUserId, false)
+      peer.signal(offer)
+      peersRef.current.set(fromUserId, { peer, userId: fromUserId })
+    })
 
     socket.on("answer", ({ answer, fromUserId, toUserId }) => {
-      if (toUserId !== user.uid) return;
-      console.log(`Received answer from ${fromUserId}`);
-      const peerData = peersRef.current.get(fromUserId);
-      if (peerData) peerData.peer.signal(answer);
-    });
+      if (toUserId !== user.uid) return
+      console.log(`Received answer from ${fromUserId}`)
+      const peerData = peersRef.current.get(fromUserId)
+      if (!peerData) {
+        console.warn(`No peer found for ${fromUserId}, possibly already cleaned up`)
+        return
+      }
+      if (peerData.peer.destroyed) {
+        console.warn(`Peer for ${fromUserId} is destroyed, skipping signal`)
+        return
+      }
+      try {
+        peerData.peer.signal(answer)
+        console.log(`Signaled answer for peer ${fromUserId}`)
+      } catch (err) {
+        console.error(`Failed to signal answer for ${fromUserId}:`, err)
+      }
+    })
 
     socket.on("ice-candidate", ({ candidate, fromUserId, toUserId }) => {
-      if (toUserId !== user.uid) return;
-      console.log(`Received ICE candidate from ${fromUserId}`);
-      const peerData = peersRef.current.get(fromUserId);
-      if (peerData) peerData.peer.signal(candidate);
-    });
+      if (toUserId !== user.uid) return
+      console.log(`Received ICE candidate from ${fromUserId}`)
+      const peerData = peersRef.current.get(fromUserId)
+      if (!peerData) {
+        console.warn(`No peer found for ${fromUserId} for ICE candidate`)
+        return
+      }
+      if (peerData.peer.destroyed) {
+        console.warn(`Peer for ${fromUserId} is destroyed, skipping ICE candidate`)
+        return
+      }
+      try {
+        peerData.peer.signal(candidate)
+        console.log(`Signaled ICE candidate for peer ${fromUserId}`)
+      } catch (err) {
+        console.error(`Failed to signal ICE candidate for ${fromUserId}:`, err)
+      }
+    })
 
     socket.on("userLeftChannel", ({ userId, channel }) => {
-      if (channel === activeChannel.id) {
-        const peerData = peersRef.current.get(userId);
-        if (peerData) {
-          peerData.peer.destroy();
-          peersRef.current.delete(userId);
-          setPeers(prev => {
-            const newPeers = new Map(prev);
-            newPeers.delete(userId);
-            return newPeers;
-          });
-          setPeerProfiles(prev => {
-            const newProfiles = new Map(prev);
-            newProfiles.delete(userId);
-            return newProfiles;
-          });
-        }
+      if (channel !== activeChannel.id) return
+      console.log(`User ${userId} left channel ${channel}`)
+      const peerData = peersRef.current.get(userId)
+      if (peerData && !peerData.peer.destroyed) {
+        peerData.peer.destroy()
+        console.log(`Initiated destruction of peer ${userId}`)
       }
-    });
+    })
 
     return () => {
-      socket.off("channelParticipants");
-      socket.off("offer");
-      socket.off("answer");
-      socket.off("ice-candidate");
-      socket.off("userLeftChannel");
-      peersRef.current.forEach(({ peer }) => peer.destroy());
-    };
-  }, [stream, activeChannel.id, user?.uid]);
-
-  const toggleMic = () => {
-    if (stream) {
-      stream.getAudioTracks().forEach(track => (track.enabled = !track.enabled));
-      setIsMicOn(prev => !prev);
+      console.log("Cleaning up socket listeners and peers")
+      socket.off("channelParticipants")
+      socket.off("offer")
+      socket.off("answer")
+      socket.off("ice-candidate")
+      socket.off("userLeftChannel")
+      peersRef.current.forEach(({ peer }, userId) => {
+        if (!peer.destroyed) {
+          console.log(`Destroying peer for ${userId} during cleanup`)
+          peer.destroy()
+        }
+      })
     }
-  };
+  }, [stream, activeChannel.id, user?.uid])
 
+  // Toggle microphone
+  const toggleMic = () => {
+    if (stream && hasAudio) {
+      stream.getAudioTracks().forEach(track => (track.enabled = !track.enabled))
+      setIsMicOn(prev => !prev)
+      console.log(`Toggled mic: ${!isMicOn ? "ON" : "OFF"}`)
+    }
+  }
+
+  // Toggle video
   const toggleVideo = async () => {
-    if (!stream) return;
+    if (!stream || !hasVideo) {
+      console.log("Cannot toggle video: No stream or video unavailable")
+      return
+    }
 
     if (isVideoOn) {
-      stream.getVideoTracks().forEach(track => track.stop());
-      const audioOnlyStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setStream(audioOnlyStream);
-      if (userVideoRef.current) userVideoRef.current.srcObject = audioOnlyStream;
-      peersRef.current.forEach(({ peer }) => peer.removeStream(stream));
-      peersRef.current.forEach(({ peer }) => peer.addStream(audioOnlyStream));
+      stream.getVideoTracks().forEach(track => track.stop())
+      const audioOnlyStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      setStream(audioOnlyStream)
+      if (userVideoRef.current) userVideoRef.current.srcObject = audioOnlyStream
+      peersRef.current.forEach(({ peer }) => peer.removeStream(stream))
+      peersRef.current.forEach(({ peer }) => peer.addStream(audioOnlyStream))
+      console.log("Turned video OFF, switched to audio-only stream")
     } else {
-      const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      stream.getAudioTracks().forEach(track => track.stop()); 
-      setStream(newStream);
-      if (userVideoRef.current) userVideoRef.current.srcObject = newStream;
-      peersRef.current.forEach(({ peer }) => peer.removeStream(stream));
-      peersRef.current.forEach(({ peer }) => peer.addStream(newStream));
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        stream.getAudioTracks().forEach(track => track.stop())
+        setStream(newStream)
+        if (userVideoRef.current) userVideoRef.current.srcObject = newStream
+        peersRef.current.forEach(({ peer }) => peer.removeStream(stream))
+        peersRef.current.forEach(({ peer }) => peer.addStream(newStream))
+        console.log("Turned video ON, switched to video+audio stream")
+      } catch (err) {
+        console.error("Failed to get video stream:", err)
+      }
     }
-    setIsVideoOn(prev => !prev);
-  };
+    setIsVideoOn(prev => !prev)
+  }
 
+  // Toggle screen sharing
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
-      stream?.getVideoTracks().forEach(track => track.stop());
-      const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      setStream(newStream);
-      if (userVideoRef.current) userVideoRef.current.srcObject = newStream;
-      peersRef.current.forEach(({ peer }) => peer.replaceTrack(stream!.getVideoTracks()[0], newStream.getVideoTracks()[0], stream!));
-      setIsScreenSharing(false);
+      stream?.getVideoTracks().forEach(track => track.stop())
+      const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      setStream(newStream)
+      if (userVideoRef.current) userVideoRef.current.srcObject = newStream
+      peersRef.current.forEach(({ peer }) =>
+        peer.replaceTrack(stream!.getVideoTracks()[0], newStream.getVideoTracks()[0], stream!)
+      )
+      setIsScreenSharing(false)
+      console.log("Stopped screen sharing, reverted to camera stream")
     } else {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      setStream(screenStream);
-      if (userVideoRef.current) userVideoRef.current.srcObject = screenStream;
-      peersRef.current.forEach(({ peer }) => peer.replaceTrack(stream!.getVideoTracks()[0], screenStream.getVideoTracks()[0], stream!));
-      screenStream.getVideoTracks()[0].onended = () => toggleScreenShare();
-      setIsScreenSharing(true);
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true })
+      setStream(screenStream)
+      if (userVideoRef.current) userVideoRef.current.srcObject = screenStream
+      peersRef.current.forEach(({ peer }) =>
+        peer.replaceTrack(stream!.getVideoTracks()[0], screenStream.getVideoTracks()[0], stream!)
+      )
+      screenStream.getVideoTracks()[0].onended = () => toggleScreenShare()
+      setIsScreenSharing(true)
+      console.log("Started screen sharing")
     }
-  };
+  }
 
-
-
+  // Speaking detection
   useEffect(() => {
-    if (!stream || !user?.uid) return;
+    if (!stream || !user?.uid) {
+      console.log("Skipping speaking detection: Stream or user ID missing")
+      return
+    }
 
-    const audioContext = new AudioContext();
-    const analyser = audioContext.createAnalyser();
-    const source = audioContext.createMediaStreamSource(stream);
-    source.connect(analyser);
+    const audioContext = new AudioContext()
+    const analyser = audioContext.createAnalyser()
+    const source = audioContext.createMediaStreamSource(stream)
+    source.connect(analyser)
 
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
+    analyser.fftSize = 256
+    const bufferLength = analyser.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
 
     const detectSpeaking = () => {
-      analyser.getByteFrequencyData(dataArray);
-      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+      analyser.getByteFrequencyData(dataArray)
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength
       if (average > 20) {
         if (!speakingUsers.includes(user.uid)) {
-          setSpeakingUsers(prev => [...prev, user.uid]);
-          socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: true });
+          setSpeakingUsers(prev => [...prev, user.uid])
+          socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: true })
+          console.log(`User ${user.uid} is speaking`)
         }
       } else {
-        setSpeakingUsers(prev => prev.filter(uid => uid !== user.uid));
-        socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: false });
+        setSpeakingUsers(prev => prev.filter(uid => uid !== user.uid))
+        socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: false })
+        console.log(`User ${user.uid} stopped speaking`)
       }
-      requestAnimationFrame(detectSpeaking);
-    };
+      requestAnimationFrame(detectSpeaking)
+    }
 
-    detectSpeaking();
+    detectSpeaking()
 
     socket.on("speaking", ({ userId, isSpeaking }) => {
+      console.log(`Received speaking update: ${userId} is ${isSpeaking ? "speaking" : "not speaking"}`)
       setSpeakingUsers(prev => {
-        if (isSpeaking && !prev.includes(userId)) return [...prev, userId];
-        if (!isSpeaking) return prev.filter(uid => uid !== userId);
-        return prev;
-      });
-    });
+        if (isSpeaking && !prev.includes(userId)) return [...prev, userId]
+        if (!isSpeaking) return prev.filter(uid => uid !== userId)
+        return prev
+      })
+    })
 
     return () => {
-      socket.off("speaking");
-      audioContext.close();
-    };
-  }, [stream, user?.uid, activeChannel.id]);
+      console.log("Cleaning up speaking detection")
+      socket.off("speaking")
+      audioContext.close()
+    }
+  }, [stream, user?.uid, activeChannel.id])
+
+  useEffect(() => {
+    console.log("Peers state updated:", Array.from(peers.entries()))
+  }, [peers])
 
   return (
     <div className="flex-grow overflow-hidden flex flex-col">
@@ -260,52 +399,56 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
       </header>
       <div className="flex-grow overflow-y-auto bg-black h-full relative border-t border-l rounded-tl-xl p-4">
         <div className="grid grid-cols-2 h-full gap-4">
+          {/* Current User's Video */}
           <div
             className={`relative w-full h-1/2 rounded-lg ${
               speakingUsers.includes(user?.uid || "") ? "border-2 border-green-500" : ""
             }`}
+            style={{
+              backgroundColor: dominantColors.get(user?.uid || "") || "#000000",
+            }}
           >
-            <video
-              ref={userVideoRef}
-              autoPlay
-              muted
-              className="w-full h-full rounded-lg"
-              style={{ display: stream && stream.getVideoTracks().length > 0 && isVideoOn ? "block" : "none" }}
-            />
-            {(!stream || stream.getVideoTracks().length === 0 || !isVideoOn) && (
-              <div className="flex items-center justify-center h-full bg-blue-800 rounded-lg">
+            {stream && stream.getVideoTracks().length > 0 && isVideoOn ? (
+              <video
+                ref={userVideoRef}
+                autoPlay
+                muted
+                className="w-full h-full rounded-lg"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
                 <img
-                  src={user?.photoURL}
+                  src={user?.photoURL || "/default-profile.png"}
                   alt="User Profile"
-                  className="w-24 h-24 rounded-full "
+                  className="w-24 h-24 rounded-full border-2 border-muted/20"
                 />
               </div>
             )}
           </div>
+
+          {/* Peer Videos */}
           {Array.from(peers.entries()).map(([peerId, peerStream]) => (
             <div
               key={peerId}
-              className={`relative w-full rounded-lg ${
+              className={`relative w-full h-1/2 rounded-lg ${
                 speakingUsers.includes(peerId) ? "ring-2 ring-green-500" : ""
               }`}
+              style={{
+                backgroundColor: dominantColors.get(peerId) || "#000000",
+              }}
             >
-              <video
-                ref={ref => {
-                  if (ref && !ref.srcObject) ref.srcObject = peerStream;
-                }}
-                autoPlay
-                className="w-full h-24 rounded-lg"
-                style={{
-                  display:
-                    peerStream.getVideoTracks().length > 0 && peerStream.getVideoTracks()[0].enabled
-                      ? "block"
-                      : "none",
-                }}
-              />
-              {(peerStream.getVideoTracks().length === 0 || !peerStream.getVideoTracks()[0].enabled) && (
-                <div className="flex items-center justify-center bg-black rounded-lg h-full">
+              {peerStream.getVideoTracks().length > 0 && peerStream.getVideoTracks()[0].enabled ? (
+                <video
+                  ref={ref => {
+                    if (ref && !ref.srcObject) ref.srcObject = peerStream
+                  }}
+                  autoPlay
+                  className="w-full h-full rounded-lg"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
                   <img
-                    src={peerProfiles.get(peerId)}
+                    src={peerProfiles.get(peerId) || "/default-profile.png"}
                     alt="Peer Profile"
                     className="w-24 h-24 rounded-full"
                   />
@@ -314,11 +457,23 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
             </div>
           ))}
         </div>
+
+        {/* Controls */}
         <div className="flex absolute bottom-10 left-1/2 transform -translate-x-1/2 gap-4 mt-4 justify-center">
-          <button onClick={toggleMic} className="p-2 bg-gray-700 rounded-full">
+          <button
+            onClick={toggleMic}
+            className="p-2 bg-gray-700 rounded-full"
+            disabled={!hasAudio}
+            title={!hasAudio ? "Microphone not available" : ""}
+          >
             {isMicOn ? <Mic /> : <MicOff />}
           </button>
-          <button onClick={toggleVideo} className="p-2 bg-gray-700 rounded-full">
+          <button
+            onClick={toggleVideo}
+            className="p-2 bg-gray-700 rounded-full"
+            disabled={!hasVideo}
+            title={!hasVideo ? "Camera not available" : ""}
+          >
             {isVideoOn ? <Video /> : <VideoOff />}
           </button>
           <button onClick={toggleScreenShare} className="p-2 bg-gray-700 rounded-full">
@@ -327,7 +482,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export default function Messages() {
