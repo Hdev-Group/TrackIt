@@ -65,6 +65,21 @@ io.on("connection", (socket) => {
     socket.to(channel).emit("userLeftChannel", { userId, channel });
   });
 
+  socket.on("offer", ({ offer, channel, fromUserId, toUserId }) => {
+    console.log(`Offer from ${fromUserId} to ${toUserId} in channel ${channel}:`, offer);
+    io.to(channel).emit("offer", { offer, fromUserId, toUserId });
+  });
+  
+  socket.on("answer", ({ answer, channel, fromUserId, toUserId }) => {
+    console.log(`Answer from ${fromUserId} to ${toUserId} in channel ${channel}:`, answer);
+    io.to(channel).emit("answer", { answer, fromUserId, toUserId });
+  });
+  
+  socket.on("ice-candidate", ({ candidate, channel, fromUserId, toUserId }) => {
+    console.log(`ICE candidate from ${fromUserId} to ${toUserId} in channel ${channel}:`, candidate);
+    io.to(channel).emit("ice-candidate", { candidate, fromUserId, toUserId });
+  });
+
   socket.on("changeStatus", ({ userId, status }) => {
     console.log("Status change received from:", userId, "New status:", status);
     let user = Array.from(onlineUsers.values()).find(user => user.userId === userId);

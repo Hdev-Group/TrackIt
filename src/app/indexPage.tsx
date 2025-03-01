@@ -331,14 +331,16 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex flex-col items-center mt-20 justify-center w-full gap-5">
-              <div className="md:grid flex flex-col md:grid-cols-2 grid-rows-2 h-full gap-5 w-full">
-                <div className="bg-green-500/80 rounded-xl col-span-1 px-8 py-4 h-64 flex flex-col items-start justify-end">
+              <div className="md:grid flex flex-col relative md:grid-cols-2 grid-rows-2 h-fullw-full">
+                <div className="bg-green-500/80 rounded-xl col-span-1 px-8 mr-5 py-4 h-64 flex flex-col items-start justify-end">
                   <h2><b>Real-Time Status</b> with TrackIt – Keep everyone up to date with TrackIt’s Status Page.</h2>
                 </div>
-                <div className="bg-green-500/80 rounded-xl rounded-l-3xl col-span-1 row-span-2 px-8 py-4 h-full flex flex-col items-start justify-end">
+                <div className="bg-green-500/80 rounded-xl rounded-l-3xl rounded-bl-none col-span-1 row-span-2 px-8 py-4 h-full flex flex-col items-start justify-end">
                   <h2><b>Instant Notifications</b> – Get instant notifications when an incident occurs.</h2>
                 </div>
-                <div className="bg-green-500/80 rounded-xl col-span-1 px-8 py-4 h-64 flex flex-col items-start justify-end">
+                <div className="bg-green-500/80 relative rounded-xl rounded-r-none col-span-1 mt-2.5 px-8 py-4 h-64 flex flex-col items-start justify-end">
+                    <div className="right-0 invertedcorner">
+                    </div>
                   <h2><b>Secure Access</b> – Access to your data is secure and protected.</h2>
                 </div>
               </div>

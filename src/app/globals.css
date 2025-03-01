@@ -21,6 +21,19 @@ body {
   -webkit-text-fill-color: transparent; 
 }
 
+.invertedcorner {
+  content: '';
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  z-index: 50;
+  border-radius: 100%;
+  top: -30px;
+  box-shadow: 0 0 0 16px #1ea250;
+  clip-path: inset(50% -1px -1px 50%);
+  transform: scale(1);
+}
+
 .linedgrid{
   background-size: 59px 60px;
   background-image:
