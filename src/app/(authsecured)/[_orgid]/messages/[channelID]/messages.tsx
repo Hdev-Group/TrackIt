@@ -48,12 +48,32 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   // Extract dominant color from profile picture
   const getDominantColor = async (imageUrl: string): Promise<string> => {
     try {
-      const palette = await Vibrant.from(imageUrl).getPalette()
-      return palette.Vibrant ? palette.Vibrant.hex : "#000000"
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = imageUrl;
+
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const palette = await Vibrant.from(img).getPalette();
+      return palette.Vibrant ? palette.Vibrant.hex : getRandomColor();
     } catch (error) {
-      console.error("Error extracting dominant color:", error)
-      return "#000000"
+      console.error("Error extracting dominant color:", error);
+      return getRandomColor();
     }
+  }
+
+  // Generate a random color
+  const getRandomColor = (): string => {
+
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
   }
 
   // Initialize local media stream
@@ -138,7 +158,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
       console.log("Skipping peer connection setup: Stream or user ID missing");
       return;
     }
-
+  
     const createPeer = (toUserId, initiator) => {
       console.log(`Creating peer for ${toUserId}, initiator: ${initiator}`);
       const peer = new Peer({
@@ -146,69 +166,133 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
         trickle: false,
         stream,
       });
-
+  
       peer.on("signal", (data) => {
-        if (initiator) {
+        if (data.type === "offer") {
           console.log(`Sending offer from ${user.uid} to ${toUserId}`);
-          socket.emit("offer", { offer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
-        } else {
+          socket.emit("offer", {
+            offer: data,
+            channel: activeChannel.id,
+            fromUserId: user.uid,
+            toUserId,
+          });
+        } else if (data.type === "answer") {
           console.log(`Sending answer from ${user.uid} to ${toUserId}`);
-          socket.emit("answer", { answer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
+          socket.emit("answer", {
+            answer: data,
+            channel: activeChannel.id,
+            fromUserId: user.uid,
+            toUserId,
+          });
+        } else if (data.candidate) {
+          console.log(`Sending ICE candidate from ${user.uid} to ${toUserId}`);
+          socket.emit("ice-candidate", {
+            candidate: data,
+            channel: activeChannel.id,
+            fromUserId: user.uid,
+            toUserId,
+          });
         }
       });
-
+  
       peer.on("stream", (peerStream) => {
         console.log(`Received stream from peer ${toUserId}`);
-        setPeers(prev => new Map(prev).set(toUserId, peerStream));
-        fetchUserProfilePic(toUserId).then(photoURL => {
-          setPeerProfiles(prev => new Map(prev).set(toUserId, photoURL));
-          getDominantColor(photoURL).then(color => {
-            setDominantColors(prev => new Map(prev).set(toUserId, color));
+        setPeers((prev) => new Map(prev).set(toUserId, peerStream));
+        fetchUserProfilePic(toUserId).then((photoURL) => {
+          setPeerProfiles((prev) => new Map(prev).set(toUserId, photoURL));
+          getDominantColor(photoURL).then((color) => {
+            setDominantColors((prev) => new Map(prev).set(toUserId, color));
           });
         });
       });
-
+  
       peer.on("error", (err) => console.error(`Peer error with ${toUserId}:`, err));
       peer.on("close", () => {
         console.log(`Peer ${toUserId} closed`);
         peersRef.current.delete(toUserId);
-        setPeers(prev => {
+        setPeers((prev) => {
           const newPeers = new Map(prev);
           newPeers.delete(toUserId);
           return newPeers;
         });
-        setPeerProfiles(prev => {
+        setPeerProfiles((prev) => {
           const newProfiles = new Map(prev);
           newProfiles.delete(toUserId);
           return newProfiles;
         });
-        setDominantColors(prev => {
+        setDominantColors((prev) => {
           const newColors = new Map(prev);
           newColors.delete(toUserId);
           return newColors;
         });
       });
-
+  
       return peer;
     };
-
+  
     socket.on("channelParticipants", (usersInChannel) => {
       console.log(`Received channelParticipants for channel ${activeChannel.id}:`, usersInChannel);
+      // Clean up peers for users no longer in the channel
+      const currentPeerIds = new Set(usersInChannel.map((u) => u.userId));
+      peersRef.current.forEach((peerData, userId) => {
+        if (!currentPeerIds.has(userId)) {
+          if (!peerData.peer.destroyed) {
+            peerData.peer.destroy();
+            console.log(`Destroyed peer for ${userId} not in channel`);
+          }
+          peersRef.current.delete(userId);
+          setPeers((prev) => {
+            const newPeers = new Map(prev);
+            newPeers.delete(userId);
+            return newPeers;
+          });
+          setPeerProfiles((prev) => {
+            const newProfiles = new Map(prev);
+            newProfiles.delete(userId);
+            return newProfiles;
+          });
+          setDominantColors((prev) => {
+            const newColors = new Map(prev);
+            newColors.delete(userId);
+            return newColors;
+          });
+        }
+      });
+  
+      // Create peers for new users
       usersInChannel.forEach(({ userId }) => {
         if (userId === user.uid || peersRef.current.has(userId)) return;
-        const peer = createPeer(userId, true);
+        // Use lexicographical order to decide initiator
+        const initiator = user.uid < userId;
+        const peer = createPeer(userId, initiator);
         peersRef.current.set(userId, { peer, userId });
       });
     });
-
+  
     socket.on("offer", ({ offer, fromUserId, toUserId }) => {
       if (toUserId !== user.uid) return;
       console.log(`Received offer from ${fromUserId}`);
-      const peer = createPeer(fromUserId, false);
-      peer.signal(offer);
-      peersRef.current.set(fromUserId, { peer, userId: fromUserId });
+      let peerData = peersRef.current.get(fromUserId);
+      if (!peerData) {
+        console.warn(`No peer found for ${fromUserId}, creating one with initiator=false`);
+        const peer = createPeer(fromUserId, false);
+        peersRef.current.set(fromUserId, { peer, userId: fromUserId });
+        peerData = { peer, userId: fromUserId };
+      }
+      if (peerData.peer.destroyed) {
+        console.warn(`Peer for ${fromUserId} is destroyed, recreating`);
+        const peer = createPeer(fromUserId, false);
+        peersRef.current.set(fromUserId, { peer, userId: fromUserId });
+        peerData = { peer, userId: fromUserId };
+      }
+      try {
+        peerData.peer.signal(offer);
+        console.log(`Signaled offer to peer ${fromUserId}`);
+      } catch (err) {
+        console.error(`Failed to signal offer for ${fromUserId}:`, err);
+      }
     });
-
+  
     socket.on("answer", ({ answer, fromUserId, toUserId }) => {
       if (toUserId !== user.uid) return;
       console.log(`Received answer from ${fromUserId}`);
@@ -223,12 +307,12 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
       }
       try {
         peerData.peer.signal(answer);
-        console.log(`Signaled answer for peer ${fromUserId}`);
+        console.log(`Signaled answer to peer ${fromUserId}`);
       } catch (err) {
         console.error(`Failed to signal answer for ${fromUserId}:`, err);
       }
     });
-
+  
     socket.on("ice-candidate", ({ candidate, fromUserId, toUserId }) => {
       if (toUserId !== user.uid) return;
       console.log(`Received ICE candidate from ${fromUserId}`);
@@ -243,12 +327,12 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
       }
       try {
         peerData.peer.signal(candidate);
-        console.log(`Signaled ICE candidate for peer ${fromUserId}`);
+        console.log(`Signaled ICE candidate to peer ${fromUserId}`);
       } catch (err) {
         console.error(`Failed to signal ICE candidate for ${fromUserId}:`, err);
       }
     });
-
+  
     socket.on("userLeftChannel", ({ userId, channel }) => {
       if (channel !== activeChannel.id) return;
       console.log(`User ${userId} left channel ${channel}`);
@@ -258,7 +342,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
         console.log(`Initiated destruction of peer ${userId}`);
       }
     });
-
+  
     return () => {
       console.log("Cleaning up socket listeners and peers");
       socket.off("channelParticipants");
@@ -272,6 +356,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
           peer.destroy();
         }
       });
+      peersRef.current.clear();
     };
   }, [stream, activeChannel.id, user?.uid]);
 
@@ -396,100 +481,103 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   }, [peers])
 
   return (
-    <div className="flex-grow overflow-hidden flex flex-col">
-      <header className="h-16 flex items-center justify-between px-4">
-        <h1 className="text-xl font-bold flex items-center gap-1">
-          <Megaphone /> {activeChannel.name}
-        </h1>
-        <button className="text-gray-400 hover:text-white" aria-label="More options">
-          <MoreHorizontal className="h-5 w-5" />
-        </button>
-      </header>
-      <div className="flex-grow overflow-y-auto bg-black h-full relative border-t border-l rounded-tl-xl p-4">
-        <div className="grid grid-cols-2 h-full gap-4">
-          {/* Current User's Video */}
-          <div
-            className={`relative w-full h-1/2 rounded-lg ${
-              speakingUsers.includes(user?.uid || "") ? "border-2 border-green-500" : ""
-            }`}
-            style={{
-              backgroundColor: dominantColors.get(user?.uid || "") || "#000000",
-            }}
-          >
-            {stream && stream.getVideoTracks().length > 0 && isVideoOn ? (
-              <video
-                ref={userVideoRef}
-                autoPlay
-                muted
-                className="w-full h-full rounded-lg"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <img
-                  src={user?.photoURL || "/default-profile.png"}
-                  alt="User Profile"
-                  className="w-24 h-24 rounded-full border-2 border-muted/20"
-                />
-              </div>
-            )}
+<div className="flex-grow overflow-hidden flex flex-col">
+  <header className="h-16 flex items-center justify-between px-4">
+    <h1 className="text-xl font-bold flex items-center gap-1">
+      <Megaphone /> {activeChannel.name}
+    </h1>
+    <button className="text-gray-400 hover:text-white" aria-label="More options">
+      <MoreHorizontal className="h-5 w-5" />
+    </button>
+  </header>
+  <div className="flex-grow overflow-y-auto bg-black h-full relative border-t border-l rounded-tl-xl p-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr h-full">
+      {/* Current User's Video */}
+      <div
+        className={`relative rounded-lg aspect-video ${
+          speakingUsers.includes(user?.uid || "") ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
+        } ${speakingUsers.includes(user?.uid || "") ? "col-span-2 row-span-2" : ""}`}
+        style={{
+          backgroundColor: dominantColors.get(user?.uid || "") || "#000000",
+        }}
+      >
+        {stream && stream.getVideoTracks().length > 0 && isVideoOn ? (
+          <video
+            ref={userVideoRef}
+            autoPlay
+            muted
+            className="w-full h-full rounded-lg object-cover"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <img
+              src={user?.photoURL || "/default-profile.png"}
+              alt="User Profile"
+              className="w-24 h-24 rounded-full border-2 border-muted/20"
+            />
           </div>
-
-          {/* Peer Videos */}
-          {Array.from(peers.entries()).map(([peerId, peerStream]) => (
-            <div
-              key={peerId}
-              className={`relative w-full h-1/2 rounded-lg ${
-                speakingUsers.includes(peerId) ? "ring-2 ring-green-500" : ""
-              }`}
-              style={{
-                backgroundColor: dominantColors.get(peerId) || "#000000",
-              }}
-            >
-              {peerStream.getVideoTracks().length > 0 && peerStream.getVideoTracks()[0].enabled ? (
-                <video
-                  ref={ref => {
-                    if (ref && !ref.srcObject) ref.srcObject = peerStream
-                  }}
-                  autoPlay
-                  className="w-full h-full rounded-lg"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <img
-                    src={peerProfiles.get(peerId) || "/default-profile.png"}
-                    alt="Peer Profile"
-                    className="w-24 h-24 rounded-full"
-                  />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Controls */}
-        <div className="flex absolute bottom-10 left-1/2 transform -translate-x-1/2 gap-4 mt-4 justify-center">
-          <button
-            onClick={toggleMic}
-            className="p-2 bg-gray-700 rounded-full"
-            disabled={!hasAudio}
-            title={!hasAudio ? "Microphone not available" : ""}
-          >
-            {isMicOn ? <Mic /> : <MicOff />}
-          </button>
-          <button
-            onClick={toggleVideo}
-            className="p-2 bg-gray-700 rounded-full"
-            disabled={!hasVideo}
-            title={!hasVideo ? "Camera not available" : ""}
-          >
-            {isVideoOn ? <Video /> : <VideoOff />}
-          </button>
-          <button onClick={toggleScreenShare} className="p-2 bg-gray-700 rounded-full">
-            <Monitor />
-          </button>
-        </div>
+        )}
       </div>
+
+      {/* Peer Videos */}
+      {Array.from(peers.entries()).map(([peerId, peerStream]) => (
+        <div
+          key={peerId}
+          className={`relative rounded-lg aspect-video ${
+            speakingUsers.includes(peerId) ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
+          } ${speakingUsers.includes(peerId) ? "col-span-2 row-span-2" : ""}`}
+          style={{
+            backgroundColor: dominantColors.get(peerId) || "#000000",
+          }}
+        >
+          {peerStream.getVideoTracks().length > 0 && peerStream.getVideoTracks()[0].enabled ? (
+            <video
+              ref={ref => {
+                if (ref && !ref.srcObject) ref.srcObject = peerStream;
+              }}
+              autoPlay
+              className="w-full h-full rounded-lg object-cover"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <img
+                src={peerProfiles.get(peerId) || "/default-profile.png"}
+                alt="Peer Profile"
+                className="w-24 h-24 rounded-full"
+              />
+            </div>
+          )}
+        </div>
+      ))}
     </div>
+
+    {/* Controls */}
+    <div className="flex absolute bottom-10 left-1/2 transform -translate-x-1/2 gap-4 mt-4 justify-center">
+      <button
+        onClick={toggleMic}
+        className="p-3 bg-gray-700 rounded-full hover:bg-gray-600 transition"
+        disabled={!hasAudio}
+        title={!hasAudio ? "Microphone not available" : ""}
+      >
+        {isMicOn ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
+      </button>
+      <button
+        onClick={toggleVideo}
+        className="p-3 bg-gray-700 rounded-full hover:bg-gray-600 transition"
+        disabled={!hasVideo}
+        title={!hasVideo ? "Camera not available" : ""}
+      >
+        {isVideoOn ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
+      </button>
+      <button
+        onClick={toggleScreenShare}
+        className="p-3 bg-gray-700 rounded-full hover:bg-gray-600 transition"
+      >
+        <Monitor className="h-6 w-6" />
+      </button>
+    </div>
+  </div>
+</div>
   )
 }
 
