@@ -15,7 +15,7 @@ const io = new Server(server, {
 });
 
 const onlineUsers = new Map();
-const channelUsers = new Map(); // Track users per channel
+const channelUsers = new Map();
 
 io.on("connection", (socket) => {
   console.log("New client connected! Socket ID:", socket.id);
