@@ -7,22 +7,24 @@ import type React from "react"
 import AuthChecks from "../../authchecks"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-import Channels from "@/components/channels/channels"
+import { Channels } from "./[channelID]/messages"
 
 interface Channel {
   id: number
   name: string
+  type: "text" | "voice"
 }
 
 export default function Messages() {
   const [message, setMessage] = useState("")
   const [user, setUser] = useState<User | null>(null)
   const [channels, setChannels] = useState<Channel[]>([
-    { id: 1, name: "general" },
-    { id: 2, name: "random" },
-    { id: 3, name: "help" },
-    { id: 4, name: "announcements" },
-  ])
+    { id: 1, name: "general", type: "text" },
+    { id: 2, name: "random", type: "text" },
+    { id: 3, name: "help", type: "text" },
+    { id: 4, name: "announcements", type: "text" },
+    { id: 5, name: "development", type: "voice" },
+  ]);
   const [activeChannel, setActiveChannel] = useState<Channel>(channels[0])
   const [newChannelName, setNewChannelName] = useState("")
   const auth = getAuth()

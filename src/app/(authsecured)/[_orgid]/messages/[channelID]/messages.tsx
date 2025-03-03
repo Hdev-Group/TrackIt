@@ -30,7 +30,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [speakingUsers, setSpeakingUsers] = useState<string[]>([])
-  const [peerProfiles, setPeerProfiles] = useState<Map<string, string>>(new Map())
+  const [peerProfiles, setPeerProfiles] = useState<Map<string, { photoURL: string, displayName: string }>>(new Map());
   const [dominantColors, setDominantColors] = useState<Map<string, string>>(new Map())
   const [hasAudio, setHasAudio] = useState(true)
   const [hasVideo, setHasVideo] = useState(true)
@@ -39,11 +39,11 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   const socket = getSocket()
 
   // Fetch user profile picture from Firestore
-  const fetchUserProfilePic = async (userId: string): Promise<string> => {
+  const fetchUserProfilePic = async (userId: string): Promise<any> => {
     const db = getFirestore()
     const userRef = doc(db, "users", userId)
     const docSnap = await getDoc(userRef)
-    return docSnap.exists() ? docSnap.data().photoURL || "/default-profile.png" : "/default-profile.png"
+    return docSnap.exists() ? { photoURL: docSnap.data().photoURL || "/default-profile.png", displayName: docSnap.data().displayName || "Unknown" } : { photoURL: "/default-profile.png", displayName: "Unknown" }
   }
 
   // Extract dominant color from profile picture
@@ -143,12 +143,10 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
     };
   }, [stream, activeChannel.id, user?.uid]);
 
-  // Set dominant color for local user
   useEffect(() => {
     if (user?.uid && user?.photoURL) {
       getDominantColor(user.photoURL).then(color => {
         setDominantColors(prev => new Map(prev).set(user.uid, color))
-        console.log(`Set dominant color for user ${user.uid}: ${color}`)
       })
     }
   }, [user?.uid, user?.photoURL])
@@ -171,8 +169,8 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
 
       peer.on("stream", peerStream => {
         setPeers(prev => new Map(prev).set(toUserId, peerStream));
-        fetchUserProfilePic(toUserId).then(photoURL => {
-          setPeerProfiles(prev => new Map(prev).set(toUserId, photoURL));
+        fetchUserProfilePic(toUserId).then(({ photoURL, displayName }) => {
+          setPeerProfiles(prev => new Map(prev).set(toUserId, { photoURL, displayName }));
           getDominantColor(photoURL).then(color => {
             setDominantColors(prev => new Map(prev).set(toUserId, color));
           });
@@ -191,6 +189,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
       return peer;
     };
 
+
     const handleChannelParticipants = (usersInChannel: { userId: string }[]) => {
       const currentPeerIds = new Set(usersInChannel.map(u => u.userId));
       peersRef.current.forEach((peerData, userId) => {
@@ -199,7 +198,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
           peersRef.current.delete(userId);
         }
       });
-
+  
       usersInChannel.forEach(({ userId }) => {
         if (userId === user.uid || peersRef.current.has(userId)) return;
         const initiator = user.uid < userId;
@@ -235,20 +234,36 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
       }
     };
 
-    const handleUserLeft = ({ userId, channel }: any) => {
-      if (channel !== activeChannel.id) return;
+    const handleUserLeft = ({ userId, channel }: { userId: string; channel: string }) => {
       const peerData = peersRef.current.get(userId);
       if (peerData && !peerData.peer.destroyed) {
-        peerData.peer.destroy();
+        peerData.peer.destroy(); 
+        peersRef.current.delete(userId); 
+        setPeers(prev => {
+          const newPeers = new Map(prev);
+          newPeers.delete(userId); 
+          return newPeers;
+        });
+        setPeerProfiles(prev => {
+          const newProfiles = new Map(prev);
+          newProfiles.delete(userId); 
+          return newProfiles;
+        });
+        setDominantColors(prev => {
+          const newColors = new Map(prev);
+          newColors.delete(userId); 
+          return newColors;
+        });
+        setSpeakingUsers(prev => prev.filter(uid => uid !== userId)); 
       }
     };
-
+  
     socket.on("channelParticipants", handleChannelParticipants);
     socket.on("offer", handleOffer);
     socket.on("answer", handleAnswer);
     socket.on("ice-candidate", handleIceCandidate);
     socket.on("userLeftChannel", handleUserLeft);
-
+  
     return () => {
       socket.off("channelParticipants", handleChannelParticipants);
       socket.off("offer", handleOffer);
@@ -302,7 +317,6 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
     setIsVideoOn(prev => !prev)
   }
 
-  // Toggle screen sharing
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
       stream?.getVideoTracks().forEach(track => track.stop())
@@ -327,7 +341,6 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
     }
   }
 
-  // Speaking detection
   useEffect(() => {
     if (!stream || !user?.uid) {
       console.log("Skipping speaking detection: Stream or user ID missing")
@@ -345,11 +358,12 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
 
     const detectSpeaking = () => {
       analyser.getByteFrequencyData(dataArray)
-      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
       if (average > 20) {
         if (!speakingUsers.includes(user.uid)) {
-          setSpeakingUsers(prev => [...prev, user.uid])
-          socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: true })
+          console.log(`Local user ${user.uid} is speaking, emitting event`);
+          setSpeakingUsers(prev => [...prev, user.uid]);
+          socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: true });
         }
       } else {
         setSpeakingUsers(prev => prev.filter(uid => uid !== user.uid))
@@ -361,13 +375,14 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
     detectSpeaking()
 
     socket.on("speaking", ({ userId, isSpeaking }) => {
-      console.log(`Received speaking update: ${userId} is ${isSpeaking ? "speaking" : "not speaking"}`)
+      console.log(`Received speaking update: ${userId} is ${isSpeaking ? "speaking" : "not speaking"}`);
       setSpeakingUsers(prev => {
-        if (isSpeaking && !prev.includes(userId)) return [...prev, userId]
-        if (!isSpeaking) return prev.filter(uid => uid !== userId)
-        return prev
-      })
-    })
+        if (isSpeaking && !prev.includes(userId)) return [...prev, userId];
+        if (!isSpeaking) return prev.filter(uid => uid !== userId);
+        setSpeakingUsers(prev => prev.filter(uid => uid !== userId)); 
+        return prev;
+      });
+    });
 
     return () => {
       console.log("Cleaning up speaking detection")
@@ -392,63 +407,65 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   </header>
   <div className="flex-grow overflow-y-auto bg-black h-full relative border-t border-l rounded-tl-xl p-4">
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr h-full">
-      {/* Current User's Video */}
       <div
-        className={`relative rounded-lg aspect-video ${
-          speakingUsers.includes(user?.uid || "") ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
-        } ${speakingUsers.includes(user?.uid || "") ? "col-span-2 row-span-2" : ""}`}
-        style={{
-          backgroundColor: dominantColors.get(user?.uid || "") || "#000000",
-        }}
+      className={`relative rounded-lg aspect-video ${
+        speakingUsers.includes(user?.uid || "") ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
+      }`}
+      style={{
+        backgroundColor: dominantColors.get(user?.uid || "") || "#000000",
+      }}
       >
-        {stream && stream.getVideoTracks().length > 0 && isVideoOn ? (
-          <video
-            ref={userVideoRef}
-            autoPlay
-            muted
-            className="w-full h-full rounded-lg object-cover"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <img
-              src={user?.photoURL || "/default-profile.png"}
-              alt="User Profile"
-              className="w-24 h-24 rounded-full border-2 border-muted/20"
-            />
-          </div>
-        )}
+      {stream && stream.getVideoTracks().length > 0 && isVideoOn ? (
+        <video
+        ref={userVideoRef}
+        autoPlay
+        muted
+        className="w-full h-full rounded-lg object-cover"
+        />
+      ) : (
+        <div className="flex items-center justify-center h-full">
+        <img
+          src={user?.photoURL || "/default-profile.png"}
+          alt="User Profile"
+          className="w-24 h-24 rounded-full border-2 border-muted/20"
+        />
+        </div>
+      )}
+      <div className="absolute bottom-0 right-0 p-1 bg-black bg-opacity-50 rounded-tl-lg rounded-br-lg">
+        <p className="text-white text-xs font-semibold">{user?.displayName}</p>
+      </div>
       </div>
 
       {/* Peer Videos */}
       {Array.from(peers.entries()).map(([peerId, peerStream]) => (
-        <div
-          key={peerId}
-          className={`relative rounded-lg aspect-video ${
-            speakingUsers.includes(peerId) ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
-          } ${speakingUsers.includes(peerId) ? "col-span-2 row-span-2" : ""}`}
-          style={{
-            backgroundColor: dominantColors.get(peerId) || "#000000",
-          }}
-        >
-          {peerStream.getVideoTracks().length > 0 && peerStream.getVideoTracks()[0].enabled ? (
-            <video
-              ref={ref => {
-                if (ref && !ref.srcObject) ref.srcObject = peerStream;
-              }}
-              autoPlay
-              className="w-full h-full rounded-lg object-cover"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <img
-                src={peerProfiles.get(peerId) || "/default-profile.png"}
-                alt="Peer Profile"
-                className="w-24 h-24 rounded-full"
-              />
-            </div>
-          )}
-        </div>
-      ))}
+  <div
+    key={peerId}
+    className={`relative rounded-lg aspect-video ${
+      speakingUsers.includes(peerId) ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
+    }`}
+    style={{ backgroundColor: dominantColors.get(peerId) || "#000000" }}
+  >
+    <video
+      ref={ref => { if (ref && !ref.srcObject) ref.srcObject = peerStream; }}
+      autoPlay
+      className={`w-full h-full rounded-lg object-cover ${
+        peerStream.getVideoTracks().length > 0 && peerStream.getVideoTracks()[0].enabled ? "block" : "hidden"
+      }`}
+    />
+    {peerStream.getVideoTracks().length === 0 || !peerStream.getVideoTracks()[0].enabled ? (
+      <div className="flex items-center justify-center h-full absolute inset-0">
+        <img
+          src={peerProfiles.get(peerId)?.photoURL || "/default-profile.png"}
+          alt="Peer Profile"
+          className="w-24 h-24 rounded-full"
+        />
+      </div>
+    ) : null}
+    <div className="absolute bottom-0 right-0 p-1 bg-black bg-opacity-50 rounded-tl-lg rounded-br-lg">
+      <p className="text-white text-xs font-semibold">{peerProfiles.get(peerId)?.displayName}</p>
+    </div>
+  </div>
+))}
     </div>
 
     {/* Controls */}
@@ -754,7 +771,7 @@ interface ChannelsProps {
   AddNewChannel: () => void
 }
 
-function Channels({
+export function Channels({
   channels,
   activeChannel,
   setActiveChannel,
