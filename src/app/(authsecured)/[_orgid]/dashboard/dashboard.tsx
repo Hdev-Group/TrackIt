@@ -87,8 +87,6 @@ export default function Dashboard() {
 function Draggable({ id, children }: { id: string, children: React.ReactNode }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
-
-
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -293,6 +291,7 @@ function TicketStats() {
 
 
 function RecentActivities() {
+    
     interface ActivityItem {
         id: number
         user: string
@@ -369,20 +368,22 @@ function RecentActivities() {
                         </h2>
                     </div>
                 </div>
-                <div className='flex flex-col gap-2 px-4 py-4 w-full justify-between border-muted-foreground/20 border-t'>
-                    {recentActivities.map((activity) => (
-                        <div key={activity.id} className="flex flex-row h-full justify-between items-center w-full">
-                            <div className="flex flex-row h-full justify-center items-start gap-6">
-                                <div className={`w-3 h-3 rounded-full mt-1.5 bg-${activity.color}`}>
-                                    {activity.emoji}
-                                </div>
-                                <div className="flex flex-col">
-                                    <p className="text-muted-foreground text-[13px] font-medium">{activity.user} {activity.action} {activity.target}</p>
-                                    <p className="text-muted-foreground text-[13px]">{timeAgo(activity.timestamp)}</p>
+                <div className={`flex flex-col gap-2 w-full justify-between overflow-hidden transition-all duration-300 ease-in-out border-muted-foreground/20 border-t ${showMore ? "max-h-[500px]" : "max-h-0"}`}>
+                    <div className='px-4 py-4 flex flex-col w-full'>
+                        {recentActivities.map((activity) => (
+                            <div key={activity.id} className="flex flex-row h-full justify-between items-center w-full">
+                                <div className="flex flex-row h-full justify-center items-start gap-6">
+                                    <div className={`w-3 h-3 rounded-full mt-1.5 bg-${activity.color}`}>
+                                        {activity.emoji}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <p className="text-muted-foreground text-[13px] font-medium">{activity.user} {activity.action} {activity.target}</p>
+                                        <p className="text-muted-foreground text-[13px]">{timeAgo(activity.timestamp)}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
@@ -418,7 +419,7 @@ function DepartmentsAssignedTo(){
 
     function Departments({ name, color }: { name: string, color: string }) {
         return(
-            <div className={`flex items-start px-4 py-4 gap-4 justify-center flex-col w-1/2 h-full rounded-lg ${color} hover:bg-opacity-100 transition-all bg-opacity-25`}>
+            <div className={`flex items-start  px-4 py-4 gap-4 justify-center flex-col w-1/2 h-full rounded-lg ${color} hover:bg-opacity-100 transition-all bg-opacity-25`}>
                 <div className={`bg-muted-foreground/20 font-semibold h-7 w-7 rounded-full flex items-center justify-center`}>
                     {name.split('')[0]}
                 </div>
@@ -438,7 +439,7 @@ function DepartmentsAssignedTo(){
             </div>
         </div>
         <div className='flex flex-col bg-muted-foreground/5 overflow-hidden justify-between items-center w-full border-muted-foreground/20 border rounded-lg cursor-default'>
-                <div onClick={() => setShowMore(!showMore)} className='flex border-b items-center justify-start px-4 w-full h-10 gap-2'>
+            <div onClick={() => setShowMore(!showMore)} className='flex border-b items-center justify-start px-4 w-full h-10 gap-2'>
                     <Building2Icon className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
                     <div className='flex flex-row items-center gap-1'>
                         <ChevronDown className={`${showMore ? "rotate-0" : "-rotate-90"} text-foreground h-4 w-4 -translate-x-7 group-hover:translate-x-0 transition-all`} />
@@ -447,12 +448,14 @@ function DepartmentsAssignedTo(){
                         </h2>
                     </div>
                 </div>
-            <div className='flex flex-row gap-2 px-4 py-4 w-full border-muted-foreground/20 border-t'>
-                {
-                    departments.map((department, index) => (
-                        <Departments key={index} name={department.name} color={department.color}/>
-                    ))
-                }
+                <div className={`w-full overflow-hidden flex flex-row gap-2 transition-all duration-300 ease-in-out ${showMore ? "max-h-[500px]" : "max-h-0"}`}>
+                    <div className='p-2 flex flex-row gap-2 w-full'>
+                    {
+                        departments.map((department, index) => (
+                            <Departments key={index} name={department.name} color={department.color}/>
+                        ))
+                    }
+                    </div>
             </div>
         </div>
         </div>

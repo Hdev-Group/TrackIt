@@ -8,6 +8,8 @@ import { Input } from "../ui/input"
 import { useRouter } from 'next/navigation'
 import { useAuth } from "@/app/firebase/AuthContext"
 import { fetchSignInMethodsForEmail } from "firebase/auth"
+import { doc, setDoc, getDoc } from "firebase/firestore"
+import { auth, db } from "@/app/firebase/firebase"
 
 async function callGoogleSignIn() {
     const provider = new GoogleAuthProvider();
@@ -25,7 +27,15 @@ async function callGoogleSignIn() {
             throw new Error("User email is null");
         }
         if (signInMethods.length === 0) {
-            console.log("No existing account, proceeding with sign-in");
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || "",
+                photoURL: user.photoURL || "",
+                provider: "google",
+                createdAt: new Date()
+            }, { merge: true });
         } else {
             console.log("Existing account found, signing in");
         }

@@ -163,7 +163,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
         { path: `/${orgID}/alerts`, icon: OctagonAlert, text: "Alerts" }, 
         { path: `/${orgID}/shifts`, icon: Clock, text: "Shifts" }, 
         { path: `/${orgID}/calendar`, icon: Calendar, text: "Calendar" },
-        { path: `/${orgID}/status`, icon: Columns3, text: "Status Page" },
+        { path: `/${orgID}/status-page`, icon: Columns3, text: "Status Page" },
     ];
 
     return (

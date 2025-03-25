@@ -77,7 +77,7 @@ export default function ActiveUsers() {
     };
 
     return (
-        <div className={`w-[${isSidebarOpen ? "20" : "4"}rem] min-w-[4rem] h-full flex flex-col z-10 transition-all duration-300`}>
+        <div className={`w-[${isSidebarOpen ? "20rem" : "4rem"}] min-w-[${isSidebarOpen ? "20rem" : "4rem"}] h-full flex flex-col z-10 transition-all duration-300`}>
             <div className="flex flex-col items-start w-full h-full">
                 <div className="flex flex-col justify-between h-full w-full">
                     <div className="flex flex-col w-full select-none">
@@ -138,7 +138,7 @@ export default function ActiveUsers() {
                                                         <Status status={user.status} />
                                                     </div>
                                                     <div className={`${isSidebarOpen ? "flex" : "hidden"} hidden flex-col lg:flex`}>
-                                                        <span className={`${isSidebarOpen ? "flex" : "hidden"} text-sm font-medium`}>{user.displayName}</span>
+                                                        <span className={`${isSidebarOpen ? "flex" : "hidden"} text-sm font-medium text-nowrap`}>{user.displayName}</span>
                                                         <span className={`${isSidebarOpen ? "flex" : "hidden"} text-xs font-light -mt-[0.3rem] text-gray-400`}>
                                                             {user.status}
                                                         </span>
