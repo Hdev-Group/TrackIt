@@ -106,7 +106,7 @@ export default function ActiveUsers() {
                             }}
                         />
                         <div className="flex flex-col w-full h-full">
-                            <div className={`${isSidebarOpen ? "" : "items-center justify-center"} py-4 px-2 flex border-b`}>
+                            <div className={`${isSidebarOpen ? "" : "items-center justify-center"} py-3 px-2 flex border-b`}>
                                 {
                                     isSidebarOpen ? (
                                         <SidebarOpen 
@@ -149,7 +149,7 @@ export default function ActiveUsers() {
                                     )}
                                     {users.filter(user => user.status === "Offline").length > 0 && (
                                         <>
-                                        <p className="text-white/20 border-t pt-2 px-2">Offline</p>
+                                        <p className={`text-white/20 text-sm px-2`}>Offline</p>
                                             {users.filter(user => user.status === "Offline").map((user) => (
                                                 <li
                                                     key={user.userId}
@@ -159,13 +159,12 @@ export default function ActiveUsers() {
                                                         <img
                                                             src={user.pictureURL}
                                                             alt="User Profile"
-                                                            className="w-8 h-8 rounded-full"
+                                                            className="w-8 h-8 rounded-full grayscale-[50%]"
                                                             referrerPolicy="no-referrer"
                                                         />
-                                                        <Status status={user.status} />
                                                     </div>
                                                     <div className={`${isSidebarOpen ? "flex" : "hidden"} flex-col items-start justify-start h-full`}>
-                                                        <span className="text-sm font-medium text-white/20">{user.displayName}</span>
+                                                        <span className="text-sm font-medium text-nowrap text-white/20">{user.displayName}</span>
                                                     </div>
                                                 </li>
                                             ))}

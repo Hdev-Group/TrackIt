@@ -123,34 +123,54 @@ export default function Home() {
       <main className="flex flex-col bg-[#101218] items-center relative justify-center overflow-hidden  min-h-screen">
       <Header />
         <div className="flex flex-col items-start justify-start w-full h-full">
-          <section className="container mx-auto h-auto relative flex mt-24 flex-col items-start justify-start">
-            <div className="relative flex flex-col items-start justify-start max-w-full overflow-hidden">
-              <div className="w-[10rem] z-40 py-1 rounded-full flex items-start justify-start">
-              <img src="/trackitlogo/light/logo.png" alt="TrackIt" className="w-10 h-10" />
-              </div>
-              <div className="text-6xl flex flex-col font-semibold text-transparent leading-tight z-20 bg-clip-text textgradientmovetransition">
-                <p>Making SaaS</p><p>Simpler With TrackIt</p>
-              </div>
-              <p className="text-md md:max-w-[34rem] w-full text-white text-wrap flex-wrap z-20">
-                TrackIt, an all-in-one platform for start-ups to manage their teams, support requests, shifts and projects.
-              </p>
-              <div className="flex mt-8 justify-between z-20 gap-5 w-full">
-                <Button variant="slide-fill" className="md:w-1/3 group !rounded-full flex flex-row items-center justify-center" type="button" href="/auth/signin">
-                  <span className="flex flex-row gap-1  items-center justify-center">
-                  TRY IT FREE <ArrowRightIcon className="h-4 group-hover:translate-x-2 transition-all" />
-                  </span>
-                </Button>
-              </div>
-            </div>
-            <motion.div 
-              className="absolute top-0 flex rounded-xl items-center justify-center -left-32 -rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
-              initial={{height: "0rem", top: "0rem"}}
-              animate={{height: "90rem", top: "-50rem"}}
-              transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
+        <section className="container mx-auto px-4 md:px-8 h-auto relative flex mt-16 md:mt-24 flex-col items-center justify-center">
+        <div className="relative flex flex-col items-center text-center max-w-4xl w-full z-40">
+          {/* Logo */}
+          <div className="w-20 h-20 mb-6 bg-white/10 rounded-full flex items-center justify-center">
+            <img 
+              src="/trackitlogo/light/logo.png" 
+              alt="TrackIt" 
+              className="w-12 h-12 object-contain" 
             />
-          </section>
-        <section className="container mx-auto h-auto relative mt-24 z-40 flex flex-col items-center justify-start">
-          <div className="flex flex-col items-start justify-start w-full">
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 leading-tight mb-6 text-center">
+            Making SaaS Simpler <br />With TrackIt
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-8 text-center">
+            TrackIt is an all-in-one platform empowering start-ups to seamlessly manage teams, 
+            support requests, shifts, and projects with unparalleled efficiency.
+          </p>
+
+          {/* CTA Button */}
+          <div className="flex justify-center w-full">
+            <Button 
+              variant="slide-fill" 
+              className="px-8 py-3 text-base rounded-full group flex items-center gap-2" 
+              href="/auth/signin"
+            >
+              <div className="flex flex-row gap-2 items-center">
+                Try It Free
+                <ArrowRightIcon 
+                  className="h-5 w-5 transition-transform group-hover:translate-x-1" 
+                />
+              </div>
+            </Button>
+          </div>
+        </div>
+
+        <motion.div 
+          className="absolute top-0 flex rounded-xl items-center justify-center -left-32 -rotate-45 h-[40rem] bg-gradient-to-t from-[#0099ff]/35 to-cyan-500/30 blur-[4rem] backdrop-blur-md z-10 w-44 transform-gpu skew-y-12" 
+          initial={{height: "0rem", top: "0rem"}}
+          animate={{height: "90rem", top: "-50rem"}}
+          transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
+        />
+      </section>
+        <section className="container mx-auto h-auto relative mt-24 z-40 flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center justify-center w-full">
             <div className="bg-gradient-to-r w-full h-4 z-0 flex items-start justify-start backdrop-blur-md blur-[3rem]"/>
             <div className="spinnercard borderspincard w-auto rounded-2xl z-10  flex flex-col outerzoomer items-start justify-start">
                 <div className="inner  w-auto relative">

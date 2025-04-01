@@ -10,10 +10,15 @@ import { useAuth } from "@/app/firebase/AuthContext"
 import { fetchSignInMethodsForEmail } from "firebase/auth"
 import { doc, setDoc, getDoc } from "firebase/firestore"
 import { auth, db } from "@/app/firebase/firebase"
+import { DotsLoader } from "../loaders/mainloader"
+
+var loadinggoogle = false;
+var loadingsignin = false;
 
 async function callGoogleSignIn() {
     const provider = new GoogleAuthProvider();
     const auth = getAuth();
+    loadinggoogle = true;
 
     try {
         const result = await signInWithPopup(auth, provider);
@@ -23,6 +28,8 @@ async function callGoogleSignIn() {
 
         if (user.email) {
             signInMethods = await fetchSignInMethodsForEmail(auth, user.email);
+            loadinggoogle = false;
+            localStorage.setItem("provider", "Google");
         } else {
             throw new Error("User email is null");
         }
@@ -36,80 +43,100 @@ async function callGoogleSignIn() {
                 provider: "google",
                 createdAt: new Date()
             }, { merge: true });
+            localStorage.setItem("provider", "Google");
         } else {
             console.log("Existing account found, signing in");
+            loadinggoogle = false;
         }
     } catch (error) {
         console.error("Google sign-in error:", error);
+        loadinggoogle = false;
+    } finally {
+        loadinggoogle = false; 
     }
 }
+
 export default function SignIn() {
     const auth = useAuth()
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [error, setError] = useState("")
     const router = useRouter()
+
+    const provider = localStorage.getItem("provider");
 
     useEffect(() => {
         if (auth.currentUser || getAuth().currentUser) {
+            loadingsignin = true;
             router.push('/1/dashboard')
         }
     }, [auth, router])
 
-    function handleEmailSignIn() {
-        const auth = getAuth()
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                console.log("Signed in successfully:", userCredential.user)
-            })
-            .catch((error) => {
-                setError(error.message)
-            })
-    }
-
     return (
-        <div className="flex flex-col items-center w-full justify-start min-h-screen text-white">
+        <div className="flex flex-col items-center w-full mt-3 justify-start text-white">
             <div className="px-8 rounded-lg w-full text-center">
-                <div className="space-y-4">
-                    <Button
-                        variant="ghost-heavy"
-                        className="w-full flex items-center justify-center border border-gray-600 p-2 rounded-md hover:bg-gray-800"
-                        onClick={callGoogleSignIn}
-                    >
-                        <div className="flex flex-row gap-2 items-center justify-between">
-                            <div className="h-5 w-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3.06364 7.50914C4.70909 4.24092 8.09084 2 12 2C14.6954 2 16.959 2.99095 18.6909 4.60455L15.8227 7.47274C14.7864 6.48185 13.4681 5.97727 12 5.97727C9.39542 5.97727 7.19084 7.73637 6.40455 10.1C6.2045 10.7 6.09086 11.3409 6.09086 12C6.09086 12.6591 6.2045 13.3 6.40455 13.9C7.19084 16.2636 9.39542 18.0227 12 18.0227C13.3454 18.0227 14.4909 17.6682 15.3864 17.0682C16.4454 16.3591 17.15 15.3 17.3818 14.05H12V10.1818H21.4181C21.5364 10.8363 21.6 11.5182 21.6 12.2273C21.6 15.2727 20.5091 17.8363 18.6181 19.5773C16.9636 21.1046 14.7 22 12 22C8.09084 22 4.70909 19.7591 3.06364 16.4909C2.38638 15.1409 2 13.6136 2 12C2 10.3864 2.38638 8.85911 3.06364 7.50914Z"></path></svg>
+                {
+                    loadingsignin ? (
+                        <DotsLoader color="#ffffff" />
+                    ) : (
+                        <div className="space-y-4 w-full">
+                            <div
+                                className={`w-full min-w-full bg-white text-black hover:bg-white/90 transition-all font-semibold flex items-center relative justify-center p-2 rounded-md ${provider === "Google" ? "shadow-md shadow-cyan-50" : "border-gray-600 hover:bg-gray-800 border"} ${loadinggoogle ? 'bg-muted-foreground/40 text-white border-white' : ''}`}
+                                onClick={callGoogleSignIn}
+                            >
+                                <div className="w-full flex gap-2 items-center justify-between inset-0 flex-col">
+                                    {provider === "Google" && (
+                                        <div className="w-full absolute right-1">
+                                            <PreviouslySignedInWith providercookie={provider} />
+                                        </div>
+                                    )}
+                                    <div className="flex flex-row gap-2 text-black items-center justify-between">
+                                        <div className="h-5 w-5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 326667 333333" shapeRendering="geometricPrecision" textRendering="geometricPrecision" imageRendering="optimizeQuality" fillRule="evenodd" clipRule="evenodd">
+                                                <path d="M326667 170370c0-13704-1112-23704-3518-34074H166667v61851h91851c-1851 15371-11851 38519-34074 54074l-311 2071 49476 38329 3428 342c31481-29074 49630-71852 49630-122593m0 0z" fill="#4285f4" />
+                                                <path d="M166667 333333c44999 0 82776-14815 110370-40370l-52593-40742c-14074 9815-32963 16667-57777 16667-44074 0-81481-29073-94816-69258l-1954 166-51447 39815-673 1870c27407 54444 83704 91852 148890 91852z" fill="#34a853" />
+                                                <path d="M71851 199630c-3518-10370-5555-21482-5555-32963 0-11482 2036-22593 5370-32963l-93-2209-52091-40455-1704 811C6482 114444 1 139814 1 166666s6482 52221 17777 74814l54074-41851m0 0z" fill="#fbbc04" />
+                                                <path d="M166667 64444c31296 0 52406 13519 64444 24816l47037-45926C249260 16482 211666 1 166667 1 101481 1 45185 37408 17777 91852l53889 41853c13520-40185 50927-69260 95001-69260m0 0z" fill="#ea4335" />
+                                            </svg>
+                                        </div>
+                                        {loadinggoogle ? 'Signing in...' : 'Sign in with Google'}
+                                    </div>
+                                </div>
                             </div>
-                            Continue with Google
+                            <div
+                                className={`w-full min-w-full bg-white text-black hover:bg-white/90 transition-all font-semibold flex items-center relative justify-center p-2 rounded-md ${provider === "Microsoft" ? "shadow-md shadow-cyan-50" : "border-gray-600 hover:bg-gray-800 border"}`}
+                            >
+                                <div className="w-full flex gap-2 items-center justify-between inset-0 flex-col">
+                                    {provider === "Microsoft" && (
+                                        <div className="w-full absolute right-1">
+                                            <PreviouslySignedInWith providercookie={provider} />
+                                        </div>
+                                    )}
+                                    <div className="flex flex-row gap-2 items-center justify-between">
+                                        <div className="h-5 w-5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" className="shrink-0 size-[20px] mr-[12px]">
+                                                <title>MS-SymbolLockup</title>
+                                                <path fill="#f25022" d="M1 1h9v9H1z"></path>
+                                                <path fill="#00a4ef" d="M1 11h9v9H1z"></path>
+                                                <path fill="#7fba00" d="M11 1h9v9h-9z"></path>
+                                                <path fill="#ffb900" d="M11 11h9v9h-9z"></path>
+                                            </svg>
+                                        </div>
+                                        Sign in with Microsoft
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </Button>
-                </div>
-                <div className="my-6 text-muted-foreground">or</div>
-                <div>
-                    <Input
-                        type="email"
-                        placeholder="Email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="mb-4"
-                    />
-                    <Input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="mb-4"
-                    />
-                    {error && <div className="text-red-500 text-sm">{error}</div>}
-                    <Button
-                        variant="fill"
-                        className="w-full mt-4 p-2 border-muted rounded-md text-white font-semibold hover:bg-muted"
-                        onClick={handleEmailSignIn}
-                    >
-                        Continue
-                    </Button>
-                </div>
+                    )
+                }
             </div>
+        </div>
+    )
+}
+
+function PreviouslySignedInWith({providercookie}){
+    if (!providercookie) return null;
+
+    return(
+        <div className="flex flex-col absolute rounded-md -top-2 right-0 bg-cyan-600 font-medium text-sm items-center mb-5 -mt-2 w-auto justify-start text-white px-2">
+            Last signed in
         </div>
     )
 }

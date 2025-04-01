@@ -58,7 +58,7 @@ const footerLinks = [
   },
 ]
 
-function FooterLinks() {
+export function FooterLinks() {
   return (
     <>
       {footerLinks.map((section, index) => (

@@ -35,6 +35,13 @@ io.on("connection", (socket) => {
     if (!channelUsers.has(channel)) {
       channelUsers.set(channel, new Set());
     }
+
+    channelUsers.get(channel)?.forEach((user) => {
+      if (user.userId === userId) {
+        channelUsers.get(channel).delete(user);
+      }
+    });
+
     channelUsers.get(channel)?.add({ userId, socketId: socket.id });
     const usersInChannel = Array.from(channelUsers.get(channel)).map(({ userId, socketId }) => ({
       userId,

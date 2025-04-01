@@ -14,6 +14,7 @@ import useUserJoinedChannel from "@/components/websockets/userjoiningchannel/use
 import { getSocket } from "../../../../../lib/socket"
 import Peer from "simple-peer";
 import { Vibrant } from "node-vibrant/browser";
+import ProfilePopup from "@/components/userprofile/profilepopup"
 
 interface Channel {
   id: number
@@ -635,7 +636,7 @@ export default function Messages() {
 
   return (
     <AuthChecks>
-      <main className="bg-[#16181c] text-white w-full min-h-screen overflow-hidden">
+      <main className="bg-[#16181c] text-white w-full h-full overflow-hidden">
         {openChannel && (
           <div className="bg-black bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center">
             <div className="bg-[#111216] mx-auto md:w-1/3 container px-6 py-4 h-full md:h-[30%] rounded-md flex flex-col gap-4">
@@ -690,7 +691,7 @@ export default function Messages() {
             </div>
           </div>
         )}
-        <div className="flex w-full h-screen">
+        <div className="flex h-[100%] w-full">
           <div className="w-64">
           <Channels
             channels={channels}
@@ -707,7 +708,7 @@ export default function Messages() {
           </div>
           {
             activeChannel.type === "text" && (
-              <div className="flex-grow overflow-hidden flex flex-col">
+            <div className="flex-grow overflow-hidden flex flex-col">
               <header className="h-16 flex items-center justify-between px-4">
                 <h1 className="text-xl font-bold">#{activeChannel.name}</h1>
                 <button className="text-gray-400 hover:text-white" aria-label="More options">
@@ -968,7 +969,7 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
   }
 
   return (
-    <div className="pt-2 pb-5 min-h-full flex-col overflow-y-auto w-full flex items-start justify-end">
+    <div className="pt-2 pb-2 min-h-full flex-col overflow-y-auto w-full flex items-start justify-end">
       <div className="flex px-3  flex-col gap-1 border-b overflow-y-auto border-muted-foreground/20 w-full mb-5 pb-5">
         <div className="w-12 h-12 text-3xl bg-gray-500/20 rounded-full items-center justify-center flex">#</div>
         <h2 className="text-xl font-bold">Welcome to the start of #{channelDetails.name}</h2>
@@ -989,7 +990,7 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
             return (
               <div key={message._id || index} className=" w-full">
                 {showSeparator && (
-                  <div className="relative w-full my-4 flex items-center justify-center">
+                  <div className="relative w-full my-2 flex items-center justify-center">
                     <hr className="w-full border-t  border-muted-foreground/30" />
                     <span className="absolute backdrop-blur-3xl px-2 text-xs text-gray-400">
                       {new Date(message.timestamp).toLocaleDateString("en-UK", {
@@ -1032,6 +1033,8 @@ function MessageItem({
         console.error("Failed to fetch user details", err);
       });
   }, [message.userid]);
+  
+  const [showProfile, setShowProfile] = useState(false);
 
   return (
     <div key={message._id} className="flex gap-2 text-wrap w-full break-words whitespace-break-spaces hover:bg-muted/20 px-2 py-1 rounded-md">
@@ -1041,8 +1044,16 @@ function MessageItem({
         <div className="w-8 h-8 bg-gray-500 rounded-full"></div>
       )}
       <div>
-        <div className="flex flex-row gap-2 items-center">
-          <p className="text-sm font-semibold">{userDetails?.displayName}</p>
+        <div className="flex flex-col sm:flex-row sm:mb-0 mb-1 sm:gap-2 sm:items-center">
+          <div className="relative flex flex-row">
+              <p
+                className="text-sm font-semibold hover:underline cursor-pointer"
+                onClick={() => setShowProfile(!showProfile)}
+              >
+                {userDetails?.displayName}
+                {showProfile && <ProfilePopup userid={message.userid} />}
+              </p>
+            </div>
             <p className="text-xs text-gray-400/60">
             {(() => {
               const messageDate = new Date(message.timestamp);
@@ -1059,7 +1070,7 @@ function MessageItem({
             })()}
             </p>
         </div>
-        <p className="text-sm break-all">{message.message}</p>
+        <p className="text-sm">{message.message}</p>
       </div>
     </div>
   );
