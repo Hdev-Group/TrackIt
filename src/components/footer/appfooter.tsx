@@ -3,15 +3,15 @@
 import { Github, Linkedin } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function AppFooter() {
+export default function AppFooter({ className }: { className?: string }) {
   const currentYear = new Date().getFullYear()
   
   return (
     <footer className="w-full bg-[#101218] border-t border-gray-800 py-4">
-      <div className="container mx-auto px-4">
+      <div className={`container ${className || ''} mx-auto px-4`}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-500">
-            &copy; {currentYear} TrackIt is a Hdev group product
+            &copy; {currentYear} TrackIt by the Hdev group - All rights reserved. 
           </p>
           
           <div className="flex items-center gap-4">

@@ -38,13 +38,8 @@ export default function Messages() {
     return () => unsubscribe()
   }, [auth])
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Implement send message functionality
-    console.log("Sending message:", message)
-    setMessage("")
-  }
    const [openChannel, setOpenChannel] = useState(false);
+
 
   return (
     <AuthChecks>

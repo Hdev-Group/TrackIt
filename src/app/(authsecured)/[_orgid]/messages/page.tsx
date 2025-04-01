@@ -1,4 +1,5 @@
 import Messages from "./homemessage";
+import ClientRedirect from "@/components/clientredirect/redirect";
 
 export async function generateMetadata() {
   return {
@@ -8,7 +9,10 @@ export async function generateMetadata() {
 }
 
 export default function Page() {
-  return(
-    <Messages />
-  )
+  return (
+    <>
+      <ClientRedirect />
+      <Messages />
+    </>
+  );
 }

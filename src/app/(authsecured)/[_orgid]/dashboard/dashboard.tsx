@@ -8,6 +8,8 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
+import AppFooter from '@/components/footer/appfooter';
+
 
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
@@ -19,6 +21,7 @@ export default function Dashboard() {
         { id: "departments-assigned-to", component: <DepartmentsAssignedTo /> },
         { id: "recent-activities", component: <RecentActivities /> },
     ]);
+
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -56,9 +59,9 @@ export default function Dashboard() {
     return (
         <AuthChecks>
             <div className='bg-[#101218] w-full h-full overflow-y-scroll changedscrollbar'>
-                <div className="flex flex-col items-start mb-[20vh] mt-10 justify-start w-full h-full">
-                    <div className="container mx-auto px-2 lg:px-10 flex flex-col justify-start items-start w-full h-full">
-                        <div className="flex flex-row items-center justify-start w-full mb-2">
+                <div className="flex flex-col items-start  mt-10 justify-start w-full h-full">
+                    <div className="container mx-auto px-2 lg:px-10 flex flex-col justify-start items-start w-full h-screen">
+                        <div className="flex flex-row items-center justify-start w-full">
                             <h1 className="text-[26px] ml-4 text-foreground font-medium">
                                 Good {getGreetingTime()},
                             </h1>
@@ -68,6 +71,7 @@ export default function Dashboard() {
                         </div>
                         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                             <SortableContext items={widgets.map((w) => w.id)} strategy={verticalListSortingStrategy}>
+
                                 <div className='flex flex-col w-full '>
                                     {widgets.map((widget) => (
                                         <Draggable key={widget.id} id={widget.id}>
@@ -80,6 +84,7 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+            <AppFooter className={"px-6 lg:px-14"} />
         </AuthChecks>
     );
 }

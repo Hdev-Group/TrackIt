@@ -24,21 +24,21 @@ export default function Teams() {
   }, [])
 
   const spaces = [
-    // {
-    //   id: 1,
-    //   name: "Marketing Team",
-    //   description: "Collaboration space for marketing campaigns and assets",
-    // },
-    // {
-    //   id: 2,
-    //   name: "Product Development",
-    //   description: "Planning and tracking product features and roadmap",
-    // },
-    // {
-    //   id: 3,
-    //   name: "Design System",
-    //   description: "Central repository for design guidelines and components",
-    // },
+    {
+      id: 1,
+      name: "Marketing Team",
+      description: "Collaboration space for marketing campaigns and assets",
+    },
+    {
+      id: 2,
+      name: "Product Development",
+      description: "Planning and tracking product features and roadmap",
+    },
+    {
+      id: 3,
+      name: "Design System",
+      description: "Central repository for design guidelines and components",
+    },
   ]
 
   return (

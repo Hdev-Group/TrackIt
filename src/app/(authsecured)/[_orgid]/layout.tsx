@@ -54,15 +54,15 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} flex flex-col antialiased overflow-hidden`}
         >
           <main className="bg-[#101218] text-foreground w-full overflow-hidden">
-          <div className="flex flex-col h-screen">
-            <WarningBanner type={warnings} />
+          <div className="flex flex-col h-screen overflow-hidden">
+            <WarningBanner type={warnings} /> 
             <div className="flex flex-row flex-1 overflow-hidden">
             <LockedSidebar
                 hide={false}
                 user={user as any}
                 orgID={resolvedParams._orgid}
               />
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col w-full overflow-hidden">
                 {children}
               </div>
               <div className="w-auto h-full border-l">

@@ -22,8 +22,6 @@ interface Channel {
   type: string
 }
 
-
-
 export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; user: User | null }) {
   const [peers, setPeers] = useState<Map<string, MediaStream>>(new Map())
   const [stream, setStream] = useState<MediaStream | null>(null)
@@ -513,6 +511,8 @@ export default function Messages() {
   const [activeChannel, setActiveChannel] = useState<Channel>(channels[0]);
 
   const auth = getAuth();
+
+  localStorage.setItem("activeChannel", JSON.stringify(activeChannel.id));
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
