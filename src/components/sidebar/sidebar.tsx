@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Bell, Calendar, ChevronDown, Clock, Columns3, Command, Home, MessageCircle, OctagonAlert, PersonStanding, Settings, Ticket } from "lucide-react";
+import { Bell, Calendar, ChevronDown, Clock, Columns3, Command, Home, MessageCircle, OctagonAlert, Pen, PersonStanding, Settings, Ticket } from "lucide-react";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
@@ -163,11 +163,11 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
         { path: `/${orgID}/alerts`, icon: OctagonAlert, text: "Alerts" }, 
         { path: `/${orgID}/shifts`, icon: Clock, text: "Shifts" }, 
         { path: `/${orgID}/calendar`, icon: Calendar, text: "Calendar" },
-        { path: `/${orgID}/status`, icon: Columns3, text: "Status Page" },
+        { path: `/${orgID}/status-page`, icon: Columns3, text: "Status Page" },
     ];
 
     return (
-        <div id="sidebarmain" className="w-16 border-r border-[#fff]/15 h-full flex flex-col items-center">
+        <div id="sidebarmain" className="w-16 border-r border-[#fff]/15  flex flex-col items-center">
             <div className="w-full flex-shrink-0">
                 <div className="mx-4 w-8 h-8 mt-4 flex items-center justify-center">
                     <img src="/trackitlogo/light/logo.png" alt="Trackit Logo" className="w-8 h-8" />
@@ -207,7 +207,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                     </div>
                     <div className="w-1/2 mt-2 border-t border-[#fff]/10" />
                     <div className="mt-2 flex relative flex-col gap-2 mb-4 items-center justify-center">
-                        <div id="showmoreprofile" className={`${showProfile ? "innerset" : "deployer"} transition-all duration-500 bottom-0 bg-black border rounded-md pt-6 z-50 flex flex-col w-[30rem]`}>
+                        <div id="showmoreprofile" className={`${showProfile ? "innerset" : "deployer"} transition-all duration-500 bottom-0 bg-black border rounded-md pt-6 z-50 flex flex-col h-auto w-auto max-w-[20rem]`}>
                             <div className="flex px-4 flex-col items-start mb-4 justify-between w-full">
                                 <div className="relative flex flex-row items-center justify-center mb-2 gap-2">
                                     <img src={user?.photoURL} className="w-12 h-12 rounded-full" />
@@ -226,15 +226,32 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                                     </div>
                                     <span className="text-sm font-light text-white/50">{user?.email}</span>
                                 </div>
+                                <div className="flex flex-col w-full">
+                                        <p className="text-sm font-light text-white mt-2 break-words">Hi This is an about me thing aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</p>
+                                </div>
+                                <div className="flex flex-col gap-4 w-full mt-2">
+                                    <div className="rounded-sm flex-col gap-2 bg-white/5 text-white/70 py-2 px-3 transition-all flex items-center justify-start w-full relative">
+                                        <div className="px-2 py-1.5 w-full flex flex-row items-center transition-all cursor-pointer justify-start gap-2 hover:bg-white/5 rounded-md">
+                                            <Pen className="h-full w-3.5" />
+                                            <span className="text-sm font-medium">Edit Profile</span>
+                                        </div>
+                                        <div className="w-full border-b border-white/5 rounded-md" />
+                                        <div className="px-2 py-1.5 w-full flex flex-row items-center transition-all cursor-pointer justify-start gap-2 hover:bg-white/5 rounded-md">
+                                            <Status type="icon" size="md" position={{ left: "left-0", bottom: "bottom-0" }} profile={false} />
+                                            <span className="text-sm font-medium"><Status type="text" className="text-sm font-medium text-white/70"/></span>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-sm flex-col gap-2 bg-white/5 text-white/70 py-2 px-3 transition-all flex items-center justify-start w-full relative">
+                                        <div className="px-2 py-1.5 w-full flex flex-row items-center transition-all cursor-pointer justify-start gap-2 hover:bg-white/5 rounded-md">
+                                            <Settings className="h-full w-3.5" />
+                                            <span className="text-sm font-medium">Settings</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="border-t flex flex-row gap-2 hover:bg-muted-foreground/10 transition-all cursor-pointer items-center justify-start w-full px-2 py-2">
-                                <Settings className="h-5 w-5 text-muted-foreground" />
-                                <p className="text-muted-foreground text-sm font-normal">Settings</p>
-                            </div>
-                            <StatusPicker userid={user?.uid} />
                         </div>
                         <Tooltip text="Team & Profile">
-                            <div onClick={() => setShowProfile(!showProfile)} className="bg-yellow-100 w-9 h-9 flex items-center relative justify-center rounded-lg">
+                            <div onClick={() => setShowProfile(!showProfile)} className="bg-yellow-100 cursor-pointer w-9 h-9 flex items-center relative justify-center rounded-lg">
                                 <PersonStanding className="h-5 w-5 mx-2 py-2" />
                                 <img src={user?.photoURL} className="absolute -bottom-1 -right-1 bg-red-500 w-4 border border-[#101218] h-4 rounded-full" />
                             </div>

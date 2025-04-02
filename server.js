@@ -15,7 +15,7 @@ const io = new Server(server, {
 });
 
 const onlineUsers = new Map();
-const channelUsers = new Map(); // Track users per channel
+const channelUsers = new Map();
 
 io.on("connection", (socket) => {
   console.log("New client connected! Socket ID:", socket.id);
@@ -35,6 +35,13 @@ io.on("connection", (socket) => {
     if (!channelUsers.has(channel)) {
       channelUsers.set(channel, new Set());
     }
+
+    channelUsers.get(channel)?.forEach((user) => {
+      if (user.userId === userId) {
+        channelUsers.get(channel).delete(user);
+      }
+    });
+
     channelUsers.get(channel)?.add({ userId, socketId: socket.id });
     const usersInChannel = Array.from(channelUsers.get(channel)).map(({ userId, socketId }) => ({
       userId,

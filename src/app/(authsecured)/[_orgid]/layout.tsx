@@ -9,6 +9,8 @@ import LockedSidebar from "@/components/sidebar/sidebar";
 import { useAuth } from "../../firebase/AuthContext";
 import React from "react"; // Import React for React.use
 import ApplicationHeader from "@/components/headerapplication/applicationheader";
+import OverHeadBanner from "@/components/OverHeadBanner/overhead";
+import WarningBanner from "@/components/OverHeadBanner/WarningBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,25 +32,43 @@ export default function RootLayout({
   const { user } = useAuth();
   const resolvedParams = React.use(params);
 
+  const [warnings, setWarnings] = React.useState<"no-internet" | "error" | "maintenance">(null);
+
+  React.useEffect(() => {
+    const handleOffline = () => setWarnings("no-internet");
+    const handleOnline = () => setWarnings(null);
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <StatusProvider>
         <div
-          className={`${geistSans.variable} ${geistMono.variable} flex flex-row antialiased overflow-x-hidden`}
+          className={`${geistSans.variable} ${geistMono.variable} flex flex-col antialiased overflow-hidden`}
         >
-          <main className="bg-[#101218] text-foreground w-full min-h-screen overflow-hidden">
-            <div className="flex h-screen">
-              <LockedSidebar
+          <main className="bg-[#101218] text-foreground w-full overflow-hidden">
+          <div className="flex flex-col h-screen overflow-hidden">
+            <WarningBanner type={warnings} /> 
+            <div className="flex flex-row flex-1 overflow-hidden">
+            <LockedSidebar
                 hide={false}
                 user={user as any}
                 orgID={resolvedParams._orgid}
               />
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col w-full overflow-hidden">
                 {children}
               </div>
               <div className="w-auto h-full border-l">
                 <ActiveUsers />
               </div>
+            </div>
             </div>
           </main>
         </div>

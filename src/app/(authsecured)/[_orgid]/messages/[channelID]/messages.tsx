@@ -14,13 +14,13 @@ import useUserJoinedChannel from "@/components/websockets/userjoiningchannel/use
 import { getSocket } from "../../../../../lib/socket"
 import Peer from "simple-peer";
 import { Vibrant } from "node-vibrant/browser";
+import ProfilePopup from "@/components/userprofile/profilepopup"
 
 interface Channel {
   id: number
   name: string
   type: string
 }
-
 
 export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; user: User | null }) {
   const [peers, setPeers] = useState<Map<string, MediaStream>>(new Map())
@@ -29,7 +29,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [speakingUsers, setSpeakingUsers] = useState<string[]>([])
-  const [peerProfiles, setPeerProfiles] = useState<Map<string, string>>(new Map())
+  const [peerProfiles, setPeerProfiles] = useState<Map<string, { photoURL: string, displayName: string }>>(new Map());
   const [dominantColors, setDominantColors] = useState<Map<string, string>>(new Map())
   const [hasAudio, setHasAudio] = useState(true)
   const [hasVideo, setHasVideo] = useState(true)
@@ -38,11 +38,11 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   const socket = getSocket()
 
   // Fetch user profile picture from Firestore
-  const fetchUserProfilePic = async (userId: string): Promise<string> => {
+  const fetchUserProfilePic = async (userId: string): Promise<any> => {
     const db = getFirestore()
     const userRef = doc(db, "users", userId)
     const docSnap = await getDoc(userRef)
-    return docSnap.exists() ? docSnap.data().photoURL || "/default-profile.png" : "/default-profile.png"
+    return docSnap.exists() ? { photoURL: docSnap.data().photoURL || "/default-profile.png", displayName: docSnap.data().displayName || "Unknown" } : { photoURL: "/default-profile.png", displayName: "Unknown" }
   }
 
   // Extract dominant color from profile picture
@@ -142,223 +142,139 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
     };
   }, [stream, activeChannel.id, user?.uid]);
 
-  // Set dominant color for local user
   useEffect(() => {
     if (user?.uid && user?.photoURL) {
       getDominantColor(user.photoURL).then(color => {
         setDominantColors(prev => new Map(prev).set(user.uid, color))
-        console.log(`Set dominant color for user ${user.uid}: ${color}`)
       })
     }
   }, [user?.uid, user?.photoURL])
 
   // Peer connection setup
-  useEffect(() => {
-    if (!stream || !user?.uid) {
-      console.log("Skipping peer connection setup: Stream or user ID missing");
-      return;
-    }
-  
-    const createPeer = (toUserId, initiator) => {
-      console.log(`Creating peer for ${toUserId}, initiator: ${initiator}`);
-      const peer = new Peer({
-        initiator,
-        trickle: false,
-        stream,
-      });
-  
-      peer.on("signal", (data) => {
+   useEffect(() => {
+    if (!stream || !user?.uid) return;
+
+    const createPeer = (toUserId: string, initiator: boolean) => {
+      const peer = new Peer({ initiator, trickle: false, stream });
+      peer.on("signal", data => {
         if (data.type === "offer") {
-          console.log(`Sending offer from ${user.uid} to ${toUserId}`);
-          socket.emit("offer", {
-            offer: data,
-            channel: activeChannel.id,
-            fromUserId: user.uid,
-            toUserId,
-          });
+          socket.emit("offer", { offer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
         } else if (data.type === "answer") {
-          console.log(`Sending answer from ${user.uid} to ${toUserId}`);
-          socket.emit("answer", {
-            answer: data,
-            channel: activeChannel.id,
-            fromUserId: user.uid,
-            toUserId,
-          });
+          socket.emit("answer", { answer: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
         } else if (data.candidate) {
-          console.log(`Sending ICE candidate from ${user.uid} to ${toUserId}`);
-          socket.emit("ice-candidate", {
-            candidate: data,
-            channel: activeChannel.id,
-            fromUserId: user.uid,
-            toUserId,
-          });
+          socket.emit("ice-candidate", { candidate: data, channel: activeChannel.id, fromUserId: user.uid, toUserId });
         }
       });
-  
-      peer.on("stream", (peerStream) => {
-        console.log(`Received stream from peer ${toUserId}`);
-        setPeers((prev) => new Map(prev).set(toUserId, peerStream));
-        fetchUserProfilePic(toUserId).then((photoURL) => {
-          setPeerProfiles((prev) => new Map(prev).set(toUserId, photoURL));
-          getDominantColor(photoURL).then((color) => {
-            setDominantColors((prev) => new Map(prev).set(toUserId, color));
+
+      peer.on("stream", peerStream => {
+        setPeers(prev => new Map(prev).set(toUserId, peerStream));
+        fetchUserProfilePic(toUserId).then(({ photoURL, displayName }) => {
+          setPeerProfiles(prev => new Map(prev).set(toUserId, { photoURL, displayName }));
+          getDominantColor(photoURL).then(color => {
+            setDominantColors(prev => new Map(prev).set(toUserId, color));
           });
         });
       });
-  
-      peer.on("error", (err) => console.error(`Peer error with ${toUserId}:`, err));
+
       peer.on("close", () => {
-        console.log(`Peer ${toUserId} closed`);
         peersRef.current.delete(toUserId);
-        setPeers((prev) => {
+        setPeers(prev => {
           const newPeers = new Map(prev);
           newPeers.delete(toUserId);
           return newPeers;
         });
-        setPeerProfiles((prev) => {
-          const newProfiles = new Map(prev);
-          newProfiles.delete(toUserId);
-          return newProfiles;
-        });
-        setDominantColors((prev) => {
-          const newColors = new Map(prev);
-          newColors.delete(toUserId);
-          return newColors;
-        });
       });
-  
+
       return peer;
     };
-  
-    socket.on("channelParticipants", (usersInChannel) => {
-      console.log(`Received channelParticipants for channel ${activeChannel.id}:`, usersInChannel);
-      // Clean up peers for users no longer in the channel
-      const currentPeerIds = new Set(usersInChannel.map((u) => u.userId));
+
+
+    const handleChannelParticipants = (usersInChannel: { userId: string }[]) => {
+      const currentPeerIds = new Set(usersInChannel.map(u => u.userId));
       peersRef.current.forEach((peerData, userId) => {
-        if (!currentPeerIds.has(userId)) {
-          if (!peerData.peer.destroyed) {
-            peerData.peer.destroy();
-            console.log(`Destroyed peer for ${userId} not in channel`);
-          }
+        if (!currentPeerIds.has(userId) && !peerData.peer.destroyed) {
+          peerData.peer.destroy();
           peersRef.current.delete(userId);
-          setPeers((prev) => {
-            const newPeers = new Map(prev);
-            newPeers.delete(userId);
-            return newPeers;
-          });
-          setPeerProfiles((prev) => {
-            const newProfiles = new Map(prev);
-            newProfiles.delete(userId);
-            return newProfiles;
-          });
-          setDominantColors((prev) => {
-            const newColors = new Map(prev);
-            newColors.delete(userId);
-            return newColors;
-          });
         }
       });
   
-      // Create peers for new users
       usersInChannel.forEach(({ userId }) => {
         if (userId === user.uid || peersRef.current.has(userId)) return;
-        // Use lexicographical order to decide initiator
         const initiator = user.uid < userId;
         const peer = createPeer(userId, initiator);
         peersRef.current.set(userId, { peer, userId });
       });
-    });
-  
-    socket.on("offer", ({ offer, fromUserId, toUserId }) => {
+    };
+
+    const handleOffer = ({ offer, fromUserId, toUserId }: any) => {
       if (toUserId !== user.uid) return;
-      console.log(`Received offer from ${fromUserId}`);
       let peerData = peersRef.current.get(fromUserId);
       if (!peerData) {
-        console.warn(`No peer found for ${fromUserId}, creating one with initiator=false`);
         const peer = createPeer(fromUserId, false);
         peersRef.current.set(fromUserId, { peer, userId: fromUserId });
-        peerData = { peer, userId: fromUserId };
+        peerData = peersRef.current.get(fromUserId)!;
       }
-      if (peerData.peer.destroyed) {
-        console.warn(`Peer for ${fromUserId} is destroyed, recreating`);
-        const peer = createPeer(fromUserId, false);
-        peersRef.current.set(fromUserId, { peer, userId: fromUserId });
-        peerData = { peer, userId: fromUserId };
-      }
-      try {
-        peerData.peer.signal(offer);
-        console.log(`Signaled offer to peer ${fromUserId}`);
-      } catch (err) {
-        console.error(`Failed to signal offer for ${fromUserId}:`, err);
-      }
-    });
-  
-    socket.on("answer", ({ answer, fromUserId, toUserId }) => {
+      peerData.peer.signal(offer);
+    };
+
+    const handleAnswer = ({ answer, fromUserId, toUserId }: any) => {
       if (toUserId !== user.uid) return;
-      console.log(`Received answer from ${fromUserId}`);
       const peerData = peersRef.current.get(fromUserId);
-      if (!peerData) {
-        console.warn(`No peer found for ${fromUserId}, possibly already cleaned up`);
-        return;
-      }
-      if (peerData.peer.destroyed) {
-        console.warn(`Peer for ${fromUserId} is destroyed, skipping signal`);
-        return;
-      }
-      try {
+      if (peerData && !peerData.peer.destroyed) {
         peerData.peer.signal(answer);
-        console.log(`Signaled answer to peer ${fromUserId}`);
-      } catch (err) {
-        console.error(`Failed to signal answer for ${fromUserId}:`, err);
       }
-    });
-  
-    socket.on("ice-candidate", ({ candidate, fromUserId, toUserId }) => {
+    };
+
+    const handleIceCandidate = ({ candidate, fromUserId, toUserId }: any) => {
       if (toUserId !== user.uid) return;
-      console.log(`Received ICE candidate from ${fromUserId}`);
       const peerData = peersRef.current.get(fromUserId);
-      if (!peerData) {
-        console.warn(`No peer found for ${fromUserId} for ICE candidate`);
-        return;
-      }
-      if (peerData.peer.destroyed) {
-        console.warn(`Peer for ${fromUserId} is destroyed, skipping ICE candidate`);
-        return;
-      }
-      try {
+      if (peerData && !peerData.peer.destroyed) {
         peerData.peer.signal(candidate);
-        console.log(`Signaled ICE candidate to peer ${fromUserId}`);
-      } catch (err) {
-        console.error(`Failed to signal ICE candidate for ${fromUserId}:`, err);
       }
-    });
-  
-    socket.on("userLeftChannel", ({ userId, channel }) => {
-      if (channel !== activeChannel.id) return;
-      console.log(`User ${userId} left channel ${channel}`);
+    };
+
+    const handleUserLeft = ({ userId, channel }: { userId: string; channel: string }) => {
       const peerData = peersRef.current.get(userId);
       if (peerData && !peerData.peer.destroyed) {
-        peerData.peer.destroy();
-        console.log(`Initiated destruction of peer ${userId}`);
+        peerData.peer.destroy(); 
+        peersRef.current.delete(userId); 
+        setPeers(prev => {
+          const newPeers = new Map(prev);
+          newPeers.delete(userId); 
+          return newPeers;
+        });
+        setPeerProfiles(prev => {
+          const newProfiles = new Map(prev);
+          newProfiles.delete(userId); 
+          return newProfiles;
+        });
+        setDominantColors(prev => {
+          const newColors = new Map(prev);
+          newColors.delete(userId); 
+          return newColors;
+        });
+        setSpeakingUsers(prev => prev.filter(uid => uid !== userId)); 
       }
-    });
+    };
+  
+    socket.on("channelParticipants", handleChannelParticipants);
+    socket.on("offer", handleOffer);
+    socket.on("answer", handleAnswer);
+    socket.on("ice-candidate", handleIceCandidate);
+    socket.on("userLeftChannel", handleUserLeft);
   
     return () => {
-      console.log("Cleaning up socket listeners and peers");
-      socket.off("channelParticipants");
-      socket.off("offer");
-      socket.off("answer");
-      socket.off("ice-candidate");
-      socket.off("userLeftChannel");
-      peersRef.current.forEach(({ peer }, userId) => {
-        if (!peer.destroyed) {
-          console.log(`Destroying peer for ${userId} during cleanup`);
-          peer.destroy();
-        }
+      socket.off("channelParticipants", handleChannelParticipants);
+      socket.off("offer", handleOffer);
+      socket.off("answer", handleAnswer);
+      socket.off("ice-candidate", handleIceCandidate);
+      socket.off("userLeftChannel", handleUserLeft);
+      peersRef.current.forEach(({ peer }) => {
+        if (!peer.destroyed) peer.destroy();
       });
       peersRef.current.clear();
     };
-  }, [stream, activeChannel.id, user?.uid]);
+  }, [stream, activeChannel.id, user?.uid, socket]);
 
   // Toggle microphone
   const toggleMic = () => {
@@ -400,7 +316,6 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
     setIsVideoOn(prev => !prev)
   }
 
-  // Toggle screen sharing
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
       stream?.getVideoTracks().forEach(track => track.stop())
@@ -425,7 +340,6 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
     }
   }
 
-  // Speaking detection
   useEffect(() => {
     if (!stream || !user?.uid) {
       console.log("Skipping speaking detection: Stream or user ID missing")
@@ -443,17 +357,16 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
 
     const detectSpeaking = () => {
       analyser.getByteFrequencyData(dataArray)
-      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
       if (average > 20) {
         if (!speakingUsers.includes(user.uid)) {
-          setSpeakingUsers(prev => [...prev, user.uid])
-          socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: true })
-          console.log(`User ${user.uid} is speaking`)
+          console.log(`Local user ${user.uid} is speaking, emitting event`);
+          setSpeakingUsers(prev => [...prev, user.uid]);
+          socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: true });
         }
       } else {
         setSpeakingUsers(prev => prev.filter(uid => uid !== user.uid))
         socket.emit("speaking", { userId: user.uid, channel: activeChannel.id, isSpeaking: false })
-        console.log(`User ${user.uid} stopped speaking`)
       }
       requestAnimationFrame(detectSpeaking)
     }
@@ -461,13 +374,14 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
     detectSpeaking()
 
     socket.on("speaking", ({ userId, isSpeaking }) => {
-      console.log(`Received speaking update: ${userId} is ${isSpeaking ? "speaking" : "not speaking"}`)
+      console.log(`Received speaking update: ${userId} is ${isSpeaking ? "speaking" : "not speaking"}`);
       setSpeakingUsers(prev => {
-        if (isSpeaking && !prev.includes(userId)) return [...prev, userId]
-        if (!isSpeaking) return prev.filter(uid => uid !== userId)
-        return prev
-      })
-    })
+        if (isSpeaking && !prev.includes(userId)) return [...prev, userId];
+        if (!isSpeaking) return prev.filter(uid => uid !== userId);
+        setSpeakingUsers(prev => prev.filter(uid => uid !== userId)); 
+        return prev;
+      });
+    });
 
     return () => {
       console.log("Cleaning up speaking detection")
@@ -492,63 +406,65 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
   </header>
   <div className="flex-grow overflow-y-auto bg-black h-full relative border-t border-l rounded-tl-xl p-4">
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr h-full">
-      {/* Current User's Video */}
       <div
-        className={`relative rounded-lg aspect-video ${
-          speakingUsers.includes(user?.uid || "") ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
-        } ${speakingUsers.includes(user?.uid || "") ? "col-span-2 row-span-2" : ""}`}
-        style={{
-          backgroundColor: dominantColors.get(user?.uid || "") || "#000000",
-        }}
+      className={`relative rounded-lg aspect-video ${
+        speakingUsers.includes(user?.uid || "") ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
+      }`}
+      style={{
+        backgroundColor: dominantColors.get(user?.uid || "") || "#000000",
+      }}
       >
-        {stream && stream.getVideoTracks().length > 0 && isVideoOn ? (
-          <video
-            ref={userVideoRef}
-            autoPlay
-            muted
-            className="w-full h-full rounded-lg object-cover"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <img
-              src={user?.photoURL || "/default-profile.png"}
-              alt="User Profile"
-              className="w-24 h-24 rounded-full border-2 border-muted/20"
-            />
-          </div>
-        )}
+      {stream && stream.getVideoTracks().length > 0 && isVideoOn ? (
+        <video
+        ref={userVideoRef}
+        autoPlay
+        muted
+        className="w-full h-full rounded-lg object-cover"
+        />
+      ) : (
+        <div className="flex items-center justify-center h-full">
+        <img
+          src={user?.photoURL || "/default-profile.png"}
+          alt="User Profile"
+          className="w-24 h-24 rounded-full border-2 border-muted/20"
+        />
+        </div>
+      )}
+      <div className="absolute bottom-0 right-0 p-1 bg-black bg-opacity-50 rounded-tl-lg rounded-br-lg">
+        <p className="text-white text-xs font-semibold">{user?.displayName}</p>
+      </div>
       </div>
 
       {/* Peer Videos */}
       {Array.from(peers.entries()).map(([peerId, peerStream]) => (
-        <div
-          key={peerId}
-          className={`relative rounded-lg aspect-video ${
-            speakingUsers.includes(peerId) ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
-          } ${speakingUsers.includes(peerId) ? "col-span-2 row-span-2" : ""}`}
-          style={{
-            backgroundColor: dominantColors.get(peerId) || "#000000",
-          }}
-        >
-          {peerStream.getVideoTracks().length > 0 && peerStream.getVideoTracks()[0].enabled ? (
-            <video
-              ref={ref => {
-                if (ref && !ref.srcObject) ref.srcObject = peerStream;
-              }}
-              autoPlay
-              className="w-full h-full rounded-lg object-cover"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <img
-                src={peerProfiles.get(peerId) || "/default-profile.png"}
-                alt="Peer Profile"
-                className="w-24 h-24 rounded-full"
-              />
-            </div>
-          )}
-        </div>
-      ))}
+  <div
+    key={peerId}
+    className={`relative rounded-lg aspect-video ${
+      speakingUsers.includes(peerId) ? "border-4 border-green-500 shadow-lg" : "border-2 border-gray-700"
+    }`}
+    style={{ backgroundColor: dominantColors.get(peerId) || "#000000" }}
+  >
+    <video
+      ref={ref => { if (ref && !ref.srcObject) ref.srcObject = peerStream; }}
+      autoPlay
+      className={`w-full h-full rounded-lg object-cover ${
+        peerStream.getVideoTracks().length > 0 && peerStream.getVideoTracks()[0].enabled ? "block" : "hidden"
+      }`}
+    />
+    {peerStream.getVideoTracks().length === 0 || !peerStream.getVideoTracks()[0].enabled ? (
+      <div className="flex items-center justify-center h-full absolute inset-0">
+        <img
+          src={peerProfiles.get(peerId)?.photoURL || "/default-profile.png"}
+          alt="Peer Profile"
+          className="w-24 h-24 rounded-full"
+        />
+      </div>
+    ) : null}
+    <div className="absolute bottom-0 right-0 p-1 bg-black bg-opacity-50 rounded-tl-lg rounded-br-lg">
+      <p className="text-white text-xs font-semibold">{peerProfiles.get(peerId)?.displayName}</p>
+    </div>
+  </div>
+))}
     </div>
 
     {/* Controls */}
@@ -582,6 +498,7 @@ export function VoiceChat({ activeChannel, user }: { activeChannel: Channel; use
 }
 
 export default function Messages() {
+  const socket = getSocket();
   const [message, setMessage] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [channels, setChannels] = useState<Channel[]>([
@@ -594,6 +511,8 @@ export default function Messages() {
   const [activeChannel, setActiveChannel] = useState<Channel>(channels[0]);
 
   const auth = getAuth();
+
+  localStorage.setItem("activeChannel", JSON.stringify(activeChannel.id));
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -625,7 +544,6 @@ export default function Messages() {
 
   // Debounced typing handler
   const handleTyping = useCallback(() => {
-    const socket = getSocket();
     if (socket.connected && user?.uid && activeChannel.id) {
       socket.emit("channelTyping", { userId: user.uid, channel: activeChannel.id });
     }
@@ -718,7 +636,7 @@ export default function Messages() {
 
   return (
     <AuthChecks>
-      <main className="bg-[#16181c] text-white w-full min-h-screen overflow-hidden">
+      <main className="bg-[#16181c] text-white w-full h-full overflow-hidden">
         {openChannel && (
           <div className="bg-black bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center">
             <div className="bg-[#111216] mx-auto md:w-1/3 container px-6 py-4 h-full md:h-[30%] rounded-md flex flex-col gap-4">
@@ -773,7 +691,7 @@ export default function Messages() {
             </div>
           </div>
         )}
-        <div className="flex w-full h-screen">
+        <div className="flex h-[100%] w-full">
           <div className="w-64">
           <Channels
             channels={channels}
@@ -790,7 +708,7 @@ export default function Messages() {
           </div>
           {
             activeChannel.type === "text" && (
-              <div className="flex-grow overflow-hidden flex flex-col">
+            <div className="flex-grow overflow-hidden flex flex-col">
               <header className="h-16 flex items-center justify-between px-4">
                 <h1 className="text-xl font-bold">#{activeChannel.name}</h1>
                 <button className="text-gray-400 hover:text-white" aria-label="More options">
@@ -854,12 +772,62 @@ interface ChannelsProps {
   AddNewChannel: () => void
 }
 
-function Channels({
+export function Channels({
   channels,
   activeChannel,
   setActiveChannel,
   AddNewChannel,
 }: ChannelsProps) {
+
+  const socket = getSocket();
+
+  const [usersInChannel, setUsersInChannel] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+
+  socket.on("channelParticipants", (usersInChannel) => {
+    const uniqueUsers = usersInChannel.filter((user, index, self) => 
+      index === self.findIndex((u) => u.userId === user.userId)
+    );
+    setUsersInChannel(uniqueUsers);
+  });
+
+  const db = getFirestore();
+
+  const getUserProfile = async (uid: string): Promise<{ displayName: string; pictureURL: string }> => {
+      try {
+          const userDocRef = doc(db, "users", uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+              const userData = userDocSnap.data() as { displayName: string; photoURL: string };
+              return {
+                  displayName: userData.displayName || "Unknown",
+                  pictureURL: userData.photoURL || "",
+              };
+          }
+      } catch (error) {
+          console.error("Error fetching user data:", error);
+      }
+      return { displayName: "Unknown", pictureURL: "" };
+  };
+
+      useEffect(() => {
+        const fetchUserProfiles = async () => {
+          const userProfiles = await Promise.all(
+            usersInChannel.map(async (user) => {
+              const profile = await getUserProfile(user.userId);
+              return { ...user, ...profile };
+            })
+          );
+          setUsers(userProfiles);
+        };
+
+        fetchUserProfiles();
+      }, [usersInChannel]);
+
+  console.log("Users in channel:", users);
+
+
   return (
     <aside className="w-64">
       <div className="h-screen flex flex-col">
@@ -890,8 +858,26 @@ function Channels({
           channel.id === activeChannel.id && "bg-muted-foreground/10",
             )}
             >
-              <div className="flex gap-1 items-center flex-row">
-          {channel.type === "voice" ? <Megaphone size={16} /> : "#"} {channel.name}
+              <div className="flex flex-col gap-1 ">
+                <div className="flex flex-row gap-1">
+                  {channel.type === "voice" ? <Megaphone size={16} /> : "#"} {channel.name}
+                </div>
+                {
+                  channel.type === "voice" && (
+                    <div className="flex flex-col gap-2 border-t border-muted-foreground/20 pt-1 w-full">
+                      {users?.map((user) => (
+                      <div key={user.userId} className="text-sm text-white flex items-center flex-row gap-1">
+                        <img
+                          src={user.pictureURL || "/default-profile.png"}
+                          alt="User Profile"
+                          className="w-5 h-5 rounded-full"
+                        />
+                        {user.displayName}
+                      </div>
+                      ))}
+                    </div>
+                  )
+                }
               </div>
             </Link>
           ))}
@@ -983,7 +969,7 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
   }
 
   return (
-    <div className="pt-2 pb-5 min-h-full flex-col overflow-y-auto w-full flex items-start justify-end">
+    <div className="pt-2 pb-2 min-h-full flex-col overflow-y-auto w-full flex items-start justify-end">
       <div className="flex px-3  flex-col gap-1 border-b overflow-y-auto border-muted-foreground/20 w-full mb-5 pb-5">
         <div className="w-12 h-12 text-3xl bg-gray-500/20 rounded-full items-center justify-center flex">#</div>
         <h2 className="text-xl font-bold">Welcome to the start of #{channelDetails.name}</h2>
@@ -1004,7 +990,7 @@ function MessageList({ channelDetails, user }: { channelDetails: any, user: User
             return (
               <div key={message._id || index} className=" w-full">
                 {showSeparator && (
-                  <div className="relative w-full my-4 flex items-center justify-center">
+                  <div className="relative w-full my-2 flex items-center justify-center">
                     <hr className="w-full border-t  border-muted-foreground/30" />
                     <span className="absolute backdrop-blur-3xl px-2 text-xs text-gray-400">
                       {new Date(message.timestamp).toLocaleDateString("en-UK", {
@@ -1047,6 +1033,8 @@ function MessageItem({
         console.error("Failed to fetch user details", err);
       });
   }, [message.userid]);
+  
+  const [showProfile, setShowProfile] = useState(false);
 
   return (
     <div key={message._id} className="flex gap-2 text-wrap w-full break-words whitespace-break-spaces hover:bg-muted/20 px-2 py-1 rounded-md">
@@ -1056,8 +1044,16 @@ function MessageItem({
         <div className="w-8 h-8 bg-gray-500 rounded-full"></div>
       )}
       <div>
-        <div className="flex flex-row gap-2 items-center">
-          <p className="text-sm font-semibold">{userDetails?.displayName}</p>
+        <div className="flex flex-col sm:flex-row sm:mb-0 mb-1 sm:gap-2 sm:items-center">
+          <div className="relative flex flex-row">
+              <p
+                className="text-sm font-semibold hover:underline cursor-pointer"
+                onClick={() => setShowProfile(!showProfile)}
+              >
+                {userDetails?.displayName}
+                {showProfile && <ProfilePopup userid={message.userid} />}
+              </p>
+            </div>
             <p className="text-xs text-gray-400/60">
             {(() => {
               const messageDate = new Date(message.timestamp);
@@ -1074,7 +1070,7 @@ function MessageItem({
             })()}
             </p>
         </div>
-        <p className="text-sm break-all">{message.message}</p>
+        <p className="text-sm">{message.message}</p>
       </div>
     </div>
   );
