@@ -168,11 +168,11 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
 
     return (
         <div id="sidebarmain" className="w-16 border-r border-[#fff]/15  flex flex-col items-center">
-            <div className="w-full flex-shrink-0">
+            <a className="w-full flex-shrink-0" href={`/${orgID}/dashboard`}>
                 <div className="mx-4 w-8 h-8 mt-4 flex items-center justify-center">
                     <img src="/trackitlogo/light/logo.png" alt="Trackit Logo" className="w-8 h-8" />
                 </div>
-            </div>
+            </a>
             <div className="w-1/2 border-t my-4 border-[#fff]/10 flex-shrink-0" />
             <div className="w-full h-full flex flex-col items-center justify-between gap-10 overflow-visible">
                 <div className="w-full flex flex-col mt-2 items-center justify-start gap-2">
