@@ -263,7 +263,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
     );
 }
 
-const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
+export const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
     <div className="relative group z-50">
         {children}
         <span className="absolute z-50 left-12 top-1/2 -translate-y-1/2 bg-black/90 text-white text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">

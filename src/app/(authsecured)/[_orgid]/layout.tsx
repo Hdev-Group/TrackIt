@@ -8,8 +8,6 @@ import ActiveUsers from "@/components/activeUsers/activeUsers";
 import LockedSidebar from "@/components/sidebar/sidebar";
 import { useAuth } from "../../firebase/AuthContext";
 import React from "react"; // Import React for React.use
-import ApplicationHeader from "@/components/headerapplication/applicationheader";
-import OverHeadBanner from "@/components/OverHeadBanner/overhead";
 import WarningBanner from "@/components/OverHeadBanner/WarningBanner";
 
 const geistSans = Geist({

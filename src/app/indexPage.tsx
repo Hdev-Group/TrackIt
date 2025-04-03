@@ -120,8 +120,8 @@ export default function Home() {
 
   return (
     <>
-      <main className="flex flex-col bg-[#101218] items-center relative justify-center overflow-hidden  min-h-screen">
       <Header />
+      <main className="flex flex-col bg-[#101218] items-center pt-16 relative justify-center overflow-hidden  min-h-screen">
         <div className="flex flex-col items-start justify-start w-full h-full">
         <section className="container mx-auto px-4 md:px-8 h-auto relative flex mt-16 md:mt-24 xl:gap-0 gap-10 flex-col xl:flex-row items-center justify-center">
         <div className="relative flex flex-col items-start text-start max-w-4xl w-full z-40">
