@@ -2,6 +2,7 @@
 import AppFooter from '@/components/footer/appfooter';
 import AuthChecks from '../../../authchecks';
 import Breadcrumb from '@/components/breadcrumb/breadcrumb';
+import { Columns3, Home } from 'lucide-react';
 
 
 export default function Configurations({_statuspageid, _orgid}) {
@@ -38,8 +39,8 @@ export default function Configurations({_statuspageid, _orgid}) {
         <AuthChecks>
             <div className='bg-[#101218] w-full h-full overflow-y-scroll changedscrollbar'>
             <Breadcrumb items={[
-                { label: "Home", href: "/" },
-                { label: "Status Pages", href: `/${_orgid}/status-page` },
+                { label: "Home", href: `/${_orgid}/dashboard`, icon: <Home className="w-4 h-4 mr-2" /> },
+                { label: "Status Pages", href: `/${_orgid}/status-page`, icon: <Columns3 className="w-4 h-4 mr-2" /> },
               ]} />
                 <div className="flex flex-col items-start mb-[20vh] mt-10 justify-start w-full h-full">
                     <div className="border-b border-[#fff]/15 px-2 lg:px-10 flex flex-col justify-start items-start w-full pb-5">

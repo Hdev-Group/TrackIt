@@ -55,16 +55,16 @@ function StatusPicker({ userid }: { userid: string }) {
     };
 
     return (
-        <div className="flex flex-col relative">
+        <div className="flex flex-col w-full relative">
             <div
-                className="absolute flex flex-col gap-1 bottom-0 bg-black backdrop-blur-2xl px-2 py-2 h-40 rounded-t-lg z-50"
+                className="absolute flex flex-col w-full gap-1 -bottom-24 left-64 bg-black backdrop-blur-2xl px-2 py-2 h-40 rounded-t-lg z-50"
                 style={{ display: statusPickerShown ? 'block' : 'none', right: '0' }}
             >
                 {["Online", "Idle", "Busy", "Offline"].map((statusOption, index) => (
                     <div
                         key={index}
                         onClick={() => handleChangeStatus(statusOption as "Online" | "Idle" | "Busy" | "Offline")}
-                        className={`w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${status === statusOption ? 'bg-neutral-200/5' : ''}`}
+                        className={`w-full h-9 py-2 px-1.5 flex  cursor-pointer rounded-md items-center ${status === statusOption ? 'bg-neutral-200/5' : ''}`}
                     >
                         <div className="w-7 h-7 rounded-md items-center justify-center flex text-xl relative text-muted-foreground font-semibold">
                             <Status
@@ -83,7 +83,7 @@ function StatusPicker({ userid }: { userid: string }) {
             </div>
             <div
                 onClick={() => setStatusPickerShown(!statusPickerShown)}
-                className={`${statusPickerShown ? "rounded-b-lg" : ""} border-y w-full justify-between hover:bg-muted-foreground/10 cursor-pointer transition-all text-center items-center px-3 py-2.5 flex flex-row`}
+                className={`${statusPickerShown ? "rounded-b-lg" : ""} w-full justify-between cursor-pointer transition-all text-center items-center flex flex-row`}
             >
                 <div className="flex flex-row items-center gap-2">
                     {["Online", "Idle", "Busy", "Offline"].map((statusOption) => (
@@ -95,7 +95,7 @@ function StatusPicker({ userid }: { userid: string }) {
                         )
                     ))}
                 </div>
-                <ChevronDown className={`${statusPickerShown ? "rotate-180" : ""} transition-all w-4 h-4 text-muted-foreground ml-2`} />
+                <ChevronDown className={`${statusPickerShown ? "-rotate-90" : ""} transition-all w-4 h-4 text-muted-foreground ml-2`} />
             </div>
         </div>
     );
@@ -237,8 +237,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                                         </div>
                                         <div className="w-full border-b border-white/5 rounded-md" />
                                         <div className="px-2 py-1.5 w-full flex flex-row items-center transition-all cursor-pointer justify-start gap-2 hover:bg-white/5 rounded-md">
-                                            <Status type="icon" size="md" position={{ left: "left-0", bottom: "bottom-0" }} profile={false} />
-                                            <span className="text-sm font-medium"><Status type="text" className="text-sm font-medium text-white/70"/></span>
+                                            <StatusPicker userid={user?.uid} />
                                         </div>
                                     </div>
                                     <div className="rounded-sm flex-col gap-2 bg-white/5 text-white/70 py-2 px-3 transition-all flex items-center justify-start w-full relative">
@@ -250,7 +249,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                                 </div>
                             </div>
                         </div>
-                        <Tooltip text="Team & Profile">
+                        <Tooltip text={`${user?.displayName}`} status={true}>
                             <div onClick={() => setShowProfile(!showProfile)} className="bg-yellow-100 cursor-pointer w-9 h-9 flex items-center relative justify-center rounded-lg">
                                 <PersonStanding className="h-5 w-5 mx-2 py-2" />
                                 <img src={user?.photoURL} className="absolute -bottom-1 -right-1 bg-red-500 w-4 border border-[#101218] h-4 rounded-full" />
@@ -263,11 +262,12 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
     );
 }
 
-export const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
+export const Tooltip = ({ children, text, status }: { children: React.ReactNode; text: string, status?: boolean }) => (
     <div className="relative group z-50">
         {children}
-        <span className="absolute z-50 left-12 top-1/2 -translate-y-1/2 bg-black/90 text-white text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+        <div className={`absolute flex flex-row items-center justify-center z-50 left-12 top-1/2 -translate-y-1/2 bg-black/90 text-white text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${status ? "pr-5" : ""}`}>
             {text}
-        </span>
+            {status && <Status type="icon" profile={false} className="!relative" position={{ left: "left-2", bottom: "bottom-0.2" }} />}
+        </div>
     </div>
 );
