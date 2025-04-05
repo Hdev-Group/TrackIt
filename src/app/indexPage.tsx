@@ -134,7 +134,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold textgradientmovetransition leading-tight mb-6 text-start">
-            Making SaaS Simpler <br />With TrackIt
+            The center for your SaaS.
           </h1>
 
           <p className="text-md md:text-lg text-gray-300  mx-auto mb-8 text-start">

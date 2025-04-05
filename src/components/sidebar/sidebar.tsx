@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Bell, Calendar, ChevronDown, Clock, Columns3, Command, Home, MessageCircle, OctagonAlert, Pen, PersonStanding, Settings, Ticket } from "lucide-react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Bell, Calendar, ChevronDown, Clock, Columns3, Command, Eye, Home, MessageCircle, OctagonAlert, Pen, PersonStanding, Radar, Settings, Ticket } from "lucide-react";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
@@ -88,9 +88,9 @@ function StatusPicker({ userid }: { userid: string }) {
                 <div className="flex flex-row items-center gap-2">
                     {["Online", "Idle", "Busy", "Offline"].map((statusOption) => (
                         status === statusOption && (
-                            <div key={statusOption} className="flex flex-row gap-2 items-center">
+                            <div key={statusOption} className="flex flex-row gap-3 items-center">
                                 <Status type="icon" position={{ left: "left-0", bottom: "bottom-0" }} size="md" status={statusOption as any} />
-                                <Status type="text" status={statusOption as any} className="!text-[14px]" />
+                                <Status type="text" status={statusOption as any} className="!text-[14px] text-white/70" />
                             </div>
                         )
                     ))}
@@ -163,6 +163,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
         { path: `/${orgID}/alerts`, icon: OctagonAlert, text: "Alerts" }, 
         { path: `/${orgID}/shifts`, icon: Clock, text: "Shifts" }, 
         { path: `/${orgID}/calendar`, icon: Calendar, text: "Calendar" },
+        { path: `/${orgID}/monitors`, icon: Radar, text: "Monitors" },
         { path: `/${orgID}/status-page`, icon: Columns3, text: "Status Page" },
     ];
 
@@ -262,12 +263,107 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
     );
 }
 
-export const Tooltip = ({ children, text, status }: { children: React.ReactNode; text: string, status?: boolean }) => (
-    <div className="relative group z-50">
-        {children}
-        <div className={`absolute flex flex-row items-center justify-center z-50 left-12 top-1/2 -translate-y-1/2 bg-black/90 text-white text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${status ? "pr-5" : ""}`}>
-            {text}
-            {status && <Status type="icon" profile={false} className="!relative" position={{ left: "left-2", bottom: "bottom-0.2" }} />}
-        </div>
+type Position = "top" | "left" | "bottom" | "right"
+
+export const Tooltip = ({
+  children,
+  text,
+  status,
+  position = "right",
+}: {
+  children: React.ReactNode
+  text: string
+  status?: boolean
+  position?: Position
+}) => {
+  const tooltipRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [actualPosition, setActualPosition] = useState<Position>(position)
+  const [isVisible, setIsVisible] = useState(false)
+
+  useLayoutEffect(() => {
+    if (!tooltipRef.current || !containerRef.current || !isVisible) return
+
+    const tooltipRect = tooltipRef.current.getBoundingClientRect()
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    let newPosition = position
+
+    if (position === "right" && tooltipRect.right > viewportWidth) {
+      newPosition = "left"
+    } else if (position === "left" && tooltipRect.left < 0) {
+      newPosition = "right"
+    } else if (position === "top" && tooltipRect.top < 0) {
+      newPosition = "bottom"
+    } else if (position === "bottom" && tooltipRect.bottom > viewportHeight) {
+      newPosition = "top"
+    }
+
+    if (newPosition !== position) {
+      const positions: Position[] = ["right", "left", "top", "bottom"]
+      for (const pos of positions) {
+        if (pos !== position && pos !== newPosition) {
+          let wouldBeVisible = true
+
+          if (pos === "right" && containerRect.right + tooltipRect.width > viewportWidth) {
+            wouldBeVisible = false
+          } else if (pos === "left" && containerRect.left - tooltipRect.width < 0) {
+            wouldBeVisible = false
+          } else if (pos === "top" && containerRect.top - tooltipRect.height < 0) {
+            wouldBeVisible = false
+          } else if (pos === "bottom" && containerRect.bottom + tooltipRect.height > viewportHeight) {
+            wouldBeVisible = false
+          }
+
+          if (wouldBeVisible) {
+            newPosition = pos
+            break
+          }
+        }
+      }
+    }
+
+    setActualPosition(newPosition)
+  }, [position, isVisible])
+
+  const getPositionClasses = () => {
+    switch (actualPosition) {
+      case "top":
+        return "bottom-full left-1/2 -translate-x-1/2 mb-1"
+      case "left":
+        return "right-full top-1/2 -translate-y-1/2 mr-1"
+      case "bottom":
+        return "top-full left-1/2 -translate-x-1/2 mt-1"
+      case "right":
+      default:
+        return "left-full top-1/2 -translate-y-1/2 ml-1"
+    }
+  }
+
+  return (
+    <div
+      className="relative inline-flex group z-50"
+      ref={containerRef}
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      <div
+        ref={tooltipRef}
+        className={`absolute flex flex-row items-center justify-center z-50 bg-black/90 text-white text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${status ? "pr-5" : ""} ${getPositionClasses()}`}
+      >
+        {text}
+        {status && (
+          <Status
+            type="icon"
+            profile={false}
+            className="!relative"
+            position={{ left: "left-2", bottom: "bottom-0.2" }}
+          />
+        )}
+      </div>
     </div>
-);
+  )
+}

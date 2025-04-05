@@ -30,20 +30,30 @@ export default function RootLayout({
   const { user } = useAuth();
   const resolvedParams = React.use(params);
 
-  const [warnings, setWarnings] = React.useState<"no-internet" | "error" | "maintenance">(null);
+  const [warnings, setWarnings] = React.useState<"no-internet" | "error" | "maintenance" | "websocket-error">(null);
 
   React.useEffect(() => {
-    const handleOffline = () => setWarnings("no-internet");
-    const handleOnline = () => setWarnings(null);
+    const handleOffline = () => setWarnings((prev) => (prev !== "no-internet" ? "no-internet" : prev));
+    const handleOnline = () => setWarnings((prev) => (prev !== null ? null : prev));
+
+    const interval = setInterval(() => {
+      if (!navigator.onLine) {
+        setWarnings((prev) => (prev !== "no-internet" ? "no-internet" : prev));
+      } else {
+        setWarnings((prev) => (prev !== null ? null : prev));
+      }
+    }, 10000);
 
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
 
     return () => {
+      clearInterval(interval);
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
     };
   }, []);
+
 
   return (
     <AuthProvider>
