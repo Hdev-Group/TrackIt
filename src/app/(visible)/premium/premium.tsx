@@ -46,7 +46,7 @@ export default function Premium() {
         "Priority Email Support",
         "Automated Downtime Alerts",
         "Incident History with Filtering",
-        "Adavanced Integrations (Slack, Discord, etc.)",
+        "Advanced Integrations (Slack, Discord, etc.)",
       ],
       popular: true,
       highlight: true,
