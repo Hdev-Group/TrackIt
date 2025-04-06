@@ -15,7 +15,7 @@ const AuthWrapper = ({ children }) => {
 
         } else {
           setIsUserValid(false);
-          Router.push("/auth/login");
+          Router.push("/auth/signin");
         }
       });
     };

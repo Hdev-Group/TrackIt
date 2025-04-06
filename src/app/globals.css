@@ -8,6 +8,41 @@ body {
 * {
   box-sizing: border-box;
 }
+
+.theme-purple {
+  --status-success: #a855f7; 
+  --status-warning: #f59e0b; 
+  --status-error: #ef4444;
+  --status-success-bg: rgba(168, 85, 247, 0.1);
+  --status-success-border: rgba(168, 85, 247, 0.2);
+  --status-warning-bg: rgba(245, 158, 11, 0.1);
+  --status-warning-border: rgba(245, 158, 11, 0.2);
+  --status-error-bg: rgba(239, 68, 68, 0.1);
+  --status-error-border: rgba(239, 68, 68, 0.2);
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-teal {
+  --status-success: #14b8a6;
+  --status-warning: #f59e0b; 
+  --status-error: #ef4444;
+  --status-success-bg: rgba(20, 184, 166, 0.1);
+  --status-success-border: rgba(20, 184, 166, 0.2);
+  --status-warning-bg: rgba(245, 158, 11, 0.1);
+  --status-warning-border: rgba(245, 158, 11, 0.2);
+  --status-error-bg: rgba(239, 68, 68, 0.1);
+  --status-error-border: rgba(239, 68, 68, 0.2);
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
 .textgradientmovetransition {
   background: linear-gradient(    90deg,
   rgba(255, 255, 255, 1) 20%, 

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Bell, Calendar, ChevronDown, Clock, Columns3, Command, Home, MessageCircle, OctagonAlert, Pen, PersonStanding, Settings, Ticket } from "lucide-react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Bell, Calendar, ChevronDown, Clock, Columns3, Command, Eye, Home, MessageCircle, OctagonAlert, Pen, PersonStanding, Radar, Settings, Ticket } from "lucide-react";
 import useActive from "@/components/websockets/isActive/active";
 import { User } from "firebase/auth";
 import { useStatus } from "@/components/statusProvider/statusProvider";
@@ -55,16 +55,16 @@ function StatusPicker({ userid }: { userid: string }) {
     };
 
     return (
-        <div className="flex flex-col relative">
+        <div className="flex flex-col w-full relative">
             <div
-                className="absolute flex flex-col gap-1 bottom-0 bg-black backdrop-blur-2xl px-2 py-2 h-40 rounded-t-lg z-50"
+                className="absolute flex flex-col w-full gap-1 -bottom-24 left-64 bg-black backdrop-blur-2xl px-2 py-2 h-40 rounded-t-lg z-50"
                 style={{ display: statusPickerShown ? 'block' : 'none', right: '0' }}
             >
                 {["Online", "Idle", "Busy", "Offline"].map((statusOption, index) => (
                     <div
                         key={index}
                         onClick={() => handleChangeStatus(statusOption as "Online" | "Idle" | "Busy" | "Offline")}
-                        className={`w-full h-9 py-2 px-1.5 flex hover:bg-neutral-300/10 cursor-pointer rounded-md items-center ${status === statusOption ? 'bg-neutral-200/5' : ''}`}
+                        className={`w-full h-9 py-2 px-1.5 flex  cursor-pointer rounded-md items-center ${status === statusOption ? 'bg-neutral-200/5' : ''}`}
                     >
                         <div className="w-7 h-7 rounded-md items-center justify-center flex text-xl relative text-muted-foreground font-semibold">
                             <Status
@@ -83,19 +83,19 @@ function StatusPicker({ userid }: { userid: string }) {
             </div>
             <div
                 onClick={() => setStatusPickerShown(!statusPickerShown)}
-                className={`${statusPickerShown ? "rounded-b-lg" : ""} border-y w-full justify-between hover:bg-muted-foreground/10 cursor-pointer transition-all text-center items-center px-3 py-2.5 flex flex-row`}
+                className={`${statusPickerShown ? "rounded-b-lg" : ""} w-full justify-between cursor-pointer transition-all text-center items-center flex flex-row`}
             >
                 <div className="flex flex-row items-center gap-2">
                     {["Online", "Idle", "Busy", "Offline"].map((statusOption) => (
                         status === statusOption && (
-                            <div key={statusOption} className="flex flex-row gap-2 items-center">
+                            <div key={statusOption} className="flex flex-row gap-3 items-center">
                                 <Status type="icon" position={{ left: "left-0", bottom: "bottom-0" }} size="md" status={statusOption as any} />
-                                <Status type="text" status={statusOption as any} className="!text-[14px]" />
+                                <Status type="text" status={statusOption as any} className="!text-[14px] text-white/70" />
                             </div>
                         )
                     ))}
                 </div>
-                <ChevronDown className={`${statusPickerShown ? "rotate-180" : ""} transition-all w-4 h-4 text-muted-foreground ml-2`} />
+                <ChevronDown className={`${statusPickerShown ? "-rotate-90" : ""} transition-all w-4 h-4 text-muted-foreground ml-2`} />
             </div>
         </div>
     );
@@ -163,16 +163,17 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
         { path: `/${orgID}/alerts`, icon: OctagonAlert, text: "Alerts" }, 
         { path: `/${orgID}/shifts`, icon: Clock, text: "Shifts" }, 
         { path: `/${orgID}/calendar`, icon: Calendar, text: "Calendar" },
+        { path: `/${orgID}/monitors`, icon: Radar, text: "Monitors" },
         { path: `/${orgID}/status-page`, icon: Columns3, text: "Status Page" },
     ];
 
     return (
         <div id="sidebarmain" className="w-16 border-r border-[#fff]/15  flex flex-col items-center">
-            <div className="w-full flex-shrink-0">
+            <a className="w-full flex-shrink-0" href={`/${orgID}/dashboard`}>
                 <div className="mx-4 w-8 h-8 mt-4 flex items-center justify-center">
                     <img src="/trackitlogo/light/logo.png" alt="Trackit Logo" className="w-8 h-8" />
                 </div>
-            </div>
+            </a>
             <div className="w-1/2 border-t my-4 border-[#fff]/10 flex-shrink-0" />
             <div className="w-full h-full flex flex-col items-center justify-between gap-10 overflow-visible">
                 <div className="w-full flex flex-col mt-2 items-center justify-start gap-2">
@@ -237,8 +238,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                                         </div>
                                         <div className="w-full border-b border-white/5 rounded-md" />
                                         <div className="px-2 py-1.5 w-full flex flex-row items-center transition-all cursor-pointer justify-start gap-2 hover:bg-white/5 rounded-md">
-                                            <Status type="icon" size="md" position={{ left: "left-0", bottom: "bottom-0" }} profile={false} />
-                                            <span className="text-sm font-medium"><Status type="text" className="text-sm font-medium text-white/70"/></span>
+                                            <StatusPicker userid={user?.uid} />
                                         </div>
                                     </div>
                                     <div className="rounded-sm flex-col gap-2 bg-white/5 text-white/70 py-2 px-3 transition-all flex items-center justify-start w-full relative">
@@ -250,7 +250,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                                 </div>
                             </div>
                         </div>
-                        <Tooltip text="Team & Profile">
+                        <Tooltip text={`${user?.displayName}`} status={true}>
                             <div onClick={() => setShowProfile(!showProfile)} className="bg-yellow-100 cursor-pointer w-9 h-9 flex items-center relative justify-center rounded-lg">
                                 <PersonStanding className="h-5 w-5 mx-2 py-2" />
                                 <img src={user?.photoURL} className="absolute -bottom-1 -right-1 bg-red-500 w-4 border border-[#101218] h-4 rounded-full" />
@@ -263,11 +263,107 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
     );
 }
 
-const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
-    <div className="relative group z-50">
-        {children}
-        <span className="absolute z-50 left-12 top-1/2 -translate-y-1/2 bg-black/90 text-white text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-            {text}
-        </span>
+type Position = "top" | "left" | "bottom" | "right"
+
+export const Tooltip = ({
+  children,
+  text,
+  status,
+  position = "right",
+}: {
+  children: React.ReactNode
+  text: string
+  status?: boolean
+  position?: Position
+}) => {
+  const tooltipRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [actualPosition, setActualPosition] = useState<Position>(position)
+  const [isVisible, setIsVisible] = useState(false)
+
+  useLayoutEffect(() => {
+    if (!tooltipRef.current || !containerRef.current || !isVisible) return
+
+    const tooltipRect = tooltipRef.current.getBoundingClientRect()
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    let newPosition = position
+
+    if (position === "right" && tooltipRect.right > viewportWidth) {
+      newPosition = "left"
+    } else if (position === "left" && tooltipRect.left < 0) {
+      newPosition = "right"
+    } else if (position === "top" && tooltipRect.top < 0) {
+      newPosition = "bottom"
+    } else if (position === "bottom" && tooltipRect.bottom > viewportHeight) {
+      newPosition = "top"
+    }
+
+    if (newPosition !== position) {
+      const positions: Position[] = ["right", "left", "top", "bottom"]
+      for (const pos of positions) {
+        if (pos !== position && pos !== newPosition) {
+          let wouldBeVisible = true
+
+          if (pos === "right" && containerRect.right + tooltipRect.width > viewportWidth) {
+            wouldBeVisible = false
+          } else if (pos === "left" && containerRect.left - tooltipRect.width < 0) {
+            wouldBeVisible = false
+          } else if (pos === "top" && containerRect.top - tooltipRect.height < 0) {
+            wouldBeVisible = false
+          } else if (pos === "bottom" && containerRect.bottom + tooltipRect.height > viewportHeight) {
+            wouldBeVisible = false
+          }
+
+          if (wouldBeVisible) {
+            newPosition = pos
+            break
+          }
+        }
+      }
+    }
+
+    setActualPosition(newPosition)
+  }, [position, isVisible])
+
+  const getPositionClasses = () => {
+    switch (actualPosition) {
+      case "top":
+        return "bottom-full left-1/2 -translate-x-1/2 mb-1"
+      case "left":
+        return "right-full top-1/2 -translate-y-1/2 mr-1"
+      case "bottom":
+        return "top-full left-1/2 -translate-x-1/2 mt-1"
+      case "right":
+      default:
+        return "left-full top-1/2 -translate-y-1/2 ml-1"
+    }
+  }
+
+  return (
+    <div
+      className="relative inline-flex group z-50"
+      ref={containerRef}
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      <div
+        ref={tooltipRef}
+        className={`absolute flex flex-row items-center justify-center z-50 bg-black/90 text-white text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${status ? "pr-5" : ""} ${getPositionClasses()}`}
+      >
+        {text}
+        {status && (
+          <Status
+            type="icon"
+            profile={false}
+            className="!relative"
+            position={{ left: "left-2", bottom: "bottom-0.2" }}
+          />
+        )}
+      </div>
     </div>
-);
+  )
+}

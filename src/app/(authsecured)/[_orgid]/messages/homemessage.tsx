@@ -196,12 +196,3 @@ export function Channels({
     </aside>
   )
 }
-
-function MessageList() {
-  return (
-    <div className="p-4 space-y-4">
-      <p>Message list placeholder</p>
-    </div>
-  )
-}
-

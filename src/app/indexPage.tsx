@@ -120,13 +120,12 @@ export default function Home() {
 
   return (
     <>
-      <main className="flex flex-col bg-[#101218] items-center relative justify-center overflow-hidden  min-h-screen">
       <Header />
+      <main className="flex flex-col bg-[#101218] items-center pt-16 relative justify-center overflow-hidden  min-h-screen">
         <div className="flex flex-col items-start justify-start w-full h-full">
-        <section className="container mx-auto px-4 md:px-8 h-auto relative flex mt-16 md:mt-24 flex-col items-center justify-center">
-        <div className="relative flex flex-col items-center text-center max-w-4xl w-full z-40">
-          {/* Logo */}
-          <div className="w-20 h-20 mb-6 bg-white/10 rounded-full flex items-center justify-center">
+        <section className="container mx-auto px-4 md:px-8 h-auto relative flex mt-16 md:mt-24 xl:gap-0 gap-10 flex-col xl:flex-row items-center justify-center">
+        <div className="relative flex flex-col items-start text-start max-w-4xl w-full z-40">
+          <div className="w-20 h-20 mb-6  rounded-full flex items-center justify-center">
             <img 
               src="/trackitlogo/light/logo.png" 
               alt="TrackIt" 
@@ -134,19 +133,16 @@ export default function Home() {
             />
           </div>
 
-          {/* Headline */}
-          <h1 className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 leading-tight mb-6 text-center">
-            Making SaaS Simpler <br />With TrackIt
+          <h1 className="text-4xl md:text-6xl font-bold textgradientmovetransition leading-tight mb-6 text-start">
+            The center for your SaaS.
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-8 text-center">
+          <p className="text-md md:text-lg text-gray-300  mx-auto mb-8 text-start">
             TrackIt is an all-in-one platform empowering start-ups to seamlessly manage teams, 
             support requests, shifts, and projects with unparalleled efficiency.
           </p>
 
-          {/* CTA Button */}
-          <div className="flex justify-center w-full">
+          <div className="flex justify-start w-full">
             <Button 
               variant="slide-fill" 
               className="px-8 py-3 text-base rounded-full group flex items-center gap-2" 
@@ -168,9 +164,7 @@ export default function Home() {
           animate={{height: "90rem", top: "-50rem"}}
           transition={{delay: 0.5, duration: 1, ease: "easeOut"}}
         />
-      </section>
-        <section className="container mx-auto h-auto relative mt-24 z-40 flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center justify-center w-full">
+          <div className="flex flex-col items-start justify-center w-full">
             <div className="bg-gradient-to-r w-full h-4 z-0 flex items-start justify-start backdrop-blur-md blur-[3rem]"/>
             <div className="spinnercard borderspincard w-auto rounded-2xl z-10  flex flex-col outerzoomer items-start justify-start">
                 <div className="inner  w-auto relative">
@@ -189,7 +183,7 @@ export default function Home() {
                 </div>
             </div>
           </div>
-        </section>
+      </section>
         <section className="w-full  h-auto relative flex flex-col mt-24 pb-24 items-center justify-start">
           <div className="flex container mx-auto flex-col items-start mt-24 justify-start">
             <div className="w-full flex flex-col items-center justify-center relative">
