@@ -1,22 +1,66 @@
 "use client"
 import AppFooter from '@/components/footer/appfooter';
 import AuthChecks from '../../../authchecks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, ChevronLeft, Clock, X, AlertTriangle } from "lucide-react"
 import Button from '@/components/button/button';
 import { Tooltip } from '@/components/sidebar/sidebar';
+import { getAuth } from "firebase/auth"
 
 
-export default function CreateStatusPage() {
-
+export default function CreateStatusPage({_orgid}: { _orgid: string }) {
+    const auth = getAuth();
     const [selectedMonitors, setSelectedMonitors] = useState<number[]>([]);
     const [logo, setLogo] = useState<File | null>(null);
     const [layout, setLayout] = useState<string>('layout1');
     const [webURL, setWebURL] = useState<string>(null);
     const [uptimevisible, setuptimevisible] = useState<boolean>(true);
+    const [loading, setLoading] = useState(true);
+    const [monitors, setMonitors] = useState([]);
     const [responsetimevisible, setresponsetimevisible] = useState<boolean>(true);
+    const user = getAuth().currentUser;
 
+        useEffect(() => {
+            const getmonitors = async () => {
+                if (!user) {
+                    setLoading(false);
+                    return;
+                }
+                try {
+                    const userToken = await user.getIdToken();
+                    const res = await fetch(`/api/application/v1/monitoring/restricted/monitors/getmonitors?orgid=${encodeURIComponent(_orgid)}`, {
+                        method: 'GET',
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${userToken}`,
+                        },
+                    });
+                    const data = await res.json();
+                    const formattedMonitors = data?.monitors?.map((monitor: any) => ({
+                        id: monitor._id,
+                        name: monitor.monitoring.webURL,
+                        type: monitor.monitoring.monitorType,
+                        isValid: monitor.monitoring.isValidURL,
+                        locations: monitor.monitoring.geographicLocations.join(", "),
+                        alertCondition: monitor.alertConditions.alertCondition,
+                        severity: monitor.alertConditions.severityLevel,
+                        notificationMethods: monitor.alerts.notificationMethods.join(", "),
+                        escalationDelay: monitor.alerts.escalationDelay,
+                        checkFrequency: monitor.advancedSettings.checkFrequency,
+                        timestamp: new Date(monitor.timestamp).toLocaleString()
+                    }));
+                    setMonitors(formattedMonitors);
+                    setLoading(false);
+                } catch (error) {
+                    console.error("Error fetching monitors:", error);
+                    setLoading(false);
+                }
+            };
+            getmonitors();
 
+        }, [_orgid, user]);
+
+        console.log("hello", monitors)
     
 
     function validateURL(url: string): boolean {
@@ -39,17 +83,20 @@ export default function CreateStatusPage() {
         }
     }
 
-    const handleMonitorClick = (index: number, event: React.MouseEvent) => {
-        if (event.shiftKey) {
-            const lastSelected = selectedMonitors[selectedMonitors.length - 1];
-            const range = [Math.min(lastSelected, index), Math.max(lastSelected, index)];
-            const newSelection = [...new Set([...selectedMonitors, ...Array.from({ length: range[1] - range[0] + 1 }, (_, i) => range[0] + i)])];
-            setSelectedMonitors(newSelection);
+    const handleMonitorClick = (monitor: any, event: React.MouseEvent) => {
+        const monitorIndex = monitors.findIndex((m) => m.name === monitor.name);
+        if (event.shiftKey && selectedMonitors.length > 0) {
+            const lastSelectedIndex = monitors.findIndex((m) => m.name === selectedMonitors[selectedMonitors.length - 1]);
+            const range = [Math.min(lastSelectedIndex, monitorIndex), Math.max(lastSelectedIndex, monitorIndex)];
+            const newSelection = monitors
+                .slice(range[0], range[1] + 1)
+                .map((m) => m.name);
+            setSelectedMonitors([...new Set([...selectedMonitors, ...newSelection])]);
         } else {
-            if (selectedMonitors.includes(index)) {
-                setSelectedMonitors(selectedMonitors.filter((i) => i !== index));
+            if (selectedMonitors.includes(monitor.name)) {
+                setSelectedMonitors(selectedMonitors.filter((name) => name !== monitor.name));
             } else {
-                setSelectedMonitors([...selectedMonitors, index]);
+                setSelectedMonitors([...selectedMonitors, monitor.name]);
             }
         }
     };
@@ -77,24 +124,24 @@ export default function CreateStatusPage() {
                                 <p className="text-muted-foreground mb-4">Add monitors to your status page. These are the components that will be monitored and displayed.</p>
                                 <div className='flex flex-col gap-2'>
                                     {
-                                        [...Array(5)].map((_, index) => (
+                                        monitors?.map((monitor, index) => (
                                             <div
-                                                key={index}
-                                                onClick={(event) => handleMonitorClick(index, event)}
+                                                key={monitor}
+                                                onClick={(event) => handleMonitorClick(monitor, event)}
                                                 className={`flex flex-row justify-between items-center w-full border-muted-foreground/10 rounded-md border-[1px] bg-background/10 hover:bg-background/20 transition-all duration-300 ease-in-out cursor-pointer ${
-                                                    selectedMonitors.includes(index) ? 'bg-blue-500/30' : ''
+                                                    selectedMonitors.includes(monitor.name) ? 'bg-blue-500/30' : ''
                                                 }`}
                                             >
                                                 <div className='flex flex-row justify-between items-center hover:bg-muted-foreground/5 transition-all w-full pr-4'>
                                                     <div className='w-20 flex items-center justify-center'>
                                                         <div className='relative flex items-center justify-center py-5'>
-                                                            <div className={`absolute rounded-full ${selectedMonitors.includes(index) ? 'bg-blue-300' : 'bg-green-500'} h-3 w-3 animate-ping`}></div>
-                                                            <div className={`rounded-full ${selectedMonitors.includes(index) ? 'bg-blue-300' : 'bg-green-500'} h-3 w-3`}></div>
+                                                            <div className={`absolute rounded-full ${selectedMonitors.includes(monitor.name) ? 'bg-blue-300' : 'bg-green-500'} h-3 w-3 animate-ping`}></div>
+                                                            <div className={`rounded-full ${selectedMonitors.includes(monitor.name) ? 'bg-blue-300' : 'bg-green-500'} h-3 w-3`}></div>
                                                         </div>
                                                     </div>
                                                     <div className='w-full flex flex-col justify-between items-start'>
-                                                        <h2 className='text-foreground font-semibold text-[14px]'>Monitor Name</h2>
-                                                        <p className='text-muted-foreground/60 font-normal text-[13px]'>Monitor Description</p>
+                                                        <h2 className='text-foreground font-semibold text-[14px]'>{monitor.name}</h2>
+                                                        <p className='text-muted-foreground/60 font-normal text-[13px]'></p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -345,8 +392,8 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
                             </div>
                             <div className='w-full flex flex-row justify-between items-start'>
                                 <div>
-                                    <h2 className='text-foreground font-semibold text-[14px]'>Monitor Name {index}</h2>
-                                    <p className='text-muted-foreground/60 font-normal text-[13px]'>Monitor Description</p>
+                                    <h2 className='text-foreground font-semibold text-[14px]'>{index}</h2>
+                                    <p className='text-muted-foreground/60 font-normal text-[13px]'></p>
                                 </div>
                                 {
                                     responsetimevisible && (
@@ -444,7 +491,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
                     className={`w-2 h-2 rounded-full mr-3 ${systemStatus === "operational" ? "bg-green-500" : systemStatus === "degraded" ? "bg-amber-500" : "bg-red-500"}`}
                   ></div>
                   <div>
-                    <div className="text-sm font-medium">Monitor {index}</div>
+                    <div className="text-sm font-medium">{index}</div>
                     { responsetimevisible && (
                     <div className="text-xs text-muted-foreground flex items-center mt-1">
                         <Clock className="w-3 h-3 mr-1" />

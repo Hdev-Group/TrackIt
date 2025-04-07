@@ -1,10 +1,9 @@
+// server.js
 const { Server } = require("socket.io");
 const http = require("http");
 require("dotenv").config({ path: ".env.local" });
-const { MongoClient, ServerApiVersion } = require("mongodb");
-const uri = process.env.MONGODB_URI;
 
-const server = http.createServer();
+const server = http.createServer(); // No Express app, just a basic HTTP server for Socket.IO
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3001",
@@ -14,6 +13,7 @@ const io = new Server(server, {
   pingTimeout: 60000,
 });
 
+// Socket.IO Logic (unchanged)
 const onlineUsers = new Map();
 const channelUsers = new Map();
 
@@ -88,7 +88,6 @@ io.on("connection", (socket) => {
     socket.to(channel).emit("userLeftChannel", { userId, channel });
   });
 
-  // Targeted signaling to specific users
   socket.on("offer", ({ offer, channel, fromUserId, toUserId }) => {
     console.log(`Offer from ${fromUserId} to ${toUserId} in channel ${channel}:`, offer);
     const toSocketId = Array.from(channelUsers.get(channel) || []).find(
@@ -157,24 +156,8 @@ io.on("connection", (socket) => {
   });
 });
 
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
+// Start the Server
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`Socket.IO server running on http://localhost:${PORT}`);
 });
-async function run() {
-  try {
-    await client.connect()
-    await client.db("admin").command({ ping: 1 })
-    console.log("Pinged deployment. You successfully connected to MongoDB!")
-  } finally {
-    await client.close()
-  }
-}
-
-server.listen(3001, () => {
-  console.log("Socket.IO server running on http://localhost:3001")
-  run().catch(console.dir)
-})

@@ -1,22 +1,17 @@
-import { MongoClient } from "mongodb";
-import admin from "firebase-admin";
 import { NextResponse } from "next/server";
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    }),
-  });
-}
-
-const client = new MongoClient(process.env.MONGODB_URI);
-const db = client.db("messages");
-const messagesCollection = db.collection("message");
+import admin from "@/lib/firebaseAdmin";
+import { getMessagesCollection } from "@/lib/mongodb";
+import { ratelimit } from "@/lib/redisLimiter";
 
 export async function POST(req) {
+
+  const ip = req.headers.get("x-forwarded-for") || "anonymous";
+
+  const { success } = await ratelimit.limit(ip);
+  if (!success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   try {
     const token = req.headers.get("Authorization")?.split("Bearer ")[1];
 
@@ -25,26 +20,31 @@ export async function POST(req) {
     }
 
     const decodedToken = await admin.auth().verifyIdToken(token);
+    const userId = decodedToken.uid;
 
-    req.user = decodedToken;
-
-    const body = await req.json();
-    const { message, channel, userid } = body;
+    const { message, channel, userid } = await req.json();
 
     if (!message || !channel || !userid) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
+    const messagesCollection = await getMessagesCollection();
+
     await messagesCollection.insertOne({
       message,
       channel,
       userid,
+      sentBy: userId,
       timestamp: new Date(),
     });
 
     return NextResponse.json({ message: "Message sent" }, { status: 200 });
+
   } catch (error) {
-    console.error("Error verifying token:", error);
-    return NextResponse.json({ error: "Unauthorized: Invalid Firebase ID token", details: error.message }, { status: 401 });
+    console.error("Error handling message send:", error);
+    return NextResponse.json({
+      error: "Unauthorized or internal server error",
+      details: error.message
+    }, { status: error.code === "auth/argument-error" ? 401 : 500 });
   }
 }

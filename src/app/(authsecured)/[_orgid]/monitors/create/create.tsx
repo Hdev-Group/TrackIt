@@ -7,8 +7,13 @@ import { Check, ChevronDown, ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/checkbox/checkbox";
 import { Tooltip } from "@/components/sidebar/sidebar";
+import axios from "axios";
+import { SpinnerLoader } from '@/components/loaders/mainloader';
 
-export default function CreateMonitor() {
+
+export default function CreateMonitor({spaceid}: {spaceid: string}) {
+
+    console.log("Org ID: ", spaceid);
     // State for Monitoring
     const [webURL, setWebURL] = useState<string>("");
     const [isValidURL, setIsValidURL] = useState<boolean>(false);
@@ -43,11 +48,85 @@ export default function CreateMonitor() {
     const [monitorTags, setMonitorTags] = useState<string>(""); 
     const [maintenanceWindowStart, setMaintenanceWindowStart] = useState<string>("");
     const [maintenanceWindowEnd, setMaintenanceWindowEnd] = useState<string>(""); 
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string>("");
 
     // Can save state
     const [canSave, setCanSave] = useState<boolean>(false);
     const [saveTooltip, setSaveTooltip] = useState<string>("Not ready to publish.");
 
+    async function handlePublish() {
+        if (!canSave) return; 
+        setSaveTooltip("Publishing...");
+        setLoading(true);
+    
+        console.log(spaceid)
+        const monitorData = {
+            spaceid: {
+                id: spaceid,
+            },
+            monitoring: {
+                webURL,
+                isValidURL,
+                multipleURLs,
+                monitorType,
+                geographicLocations,
+                customHeaders: monitorType === "api" ? JSON.parse(customHeaders) : undefined, 
+                port: monitorType === "port" ? parseInt(port) : undefined, 
+            },
+            alertConditions: {
+                alertCondition,
+                customConditions,
+                errorRateThreshold: alertCondition === "error-rate" ? errorRateThreshold : undefined,
+                timeoutDuration: alertCondition === "timeout" ? timeoutDuration : undefined,
+                keyword: alertCondition === "keyword" ? keyword : undefined,
+                httpStatusCode: alertCondition === "http-status" ? parseInt(httpStatusCode) : undefined,
+                severityLevel,
+            },
+            alerts: {
+                notificationMethods: checkedOptions,
+                escalationOption,
+                escalationDelay,
+                webhookURL: checkedOptions.includes("Webhook") ? webhookURL : undefined,
+                slackChannel: checkedOptions.includes("Slack") ? slackChannel : undefined,
+                trackitChannel: checkedOptions.includes("TrackIt Channel") ? trackitChannel : undefined,
+            },
+            advancedSettings: {
+                confirmationTime,
+                recoveryTime,
+                checkFrequency,
+                maintenanceWindow: maintenanceWindowStart && maintenanceWindowEnd ? {
+                    start: new Date(maintenanceWindowStart).toISOString(),
+                    end: new Date(maintenanceWindowEnd).toISOString(),
+                } : undefined,
+            },
+        };
+    
+        try {
+            const response = await axios.post(
+                "/api/application/v1/monitoring/restricted/monitors/create",
+                monitorData,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            console.log("Monitor created successfully:", response.data);
+            setLoading(false);
+            setSaveTooltip("Monitor created successfully!");
+            setCanSave(false);
+            window.location.href = `../monitors`;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                setError("This monitor already exists.");
+            } else {
+                setError("An unexpected error occurred.");
+            }
+            setCanSave(true);
+            setLoading(false);
+        }
+    }
 
     useEffect(() => {
         checkCanSave();
@@ -80,15 +159,14 @@ export default function CreateMonitor() {
         maintenanceWindowEnd,
     ]);
 
-    // Check if all required fields are filled
     function checkCanSave() {
         let isValid = true;
         let tooltipMessage = "Unable to save: ";
 
         // Monitoring Section
-        if (!webURL || !isValidURL) {
+        if (!webURL || !isValidURL || webURL.length > 500) {
             isValid = false;
-            tooltipMessage += "Please enter a valid URL. ";
+            tooltipMessage += "Please enter a valid URL under 500 chars. ";
         }
         if (!monitorType) {
             isValid = false;
@@ -129,9 +207,9 @@ export default function CreateMonitor() {
             isValid = false;
             tooltipMessage += "Error rate threshold must be between 1 and 100. ";
         }
-        if (alertCondition === "timeout" && timeoutDuration <= 0) {
+        if (alertCondition === "timeout" && (timeoutDuration <= 0 || timeoutDuration > 3600)) {
             isValid = false;
-            tooltipMessage += "Timeout duration must be greater than 0 seconds. ";
+            tooltipMessage += "Timeout duration must be between 1 and 3600 seconds. ";
         }
         if (alertCondition === "keyword" && !keyword) {
             isValid = false;
@@ -150,6 +228,9 @@ export default function CreateMonitor() {
         if (!severityLevel) {
             isValid = false;
             tooltipMessage += "Please select a severity level. ";
+        } else if (!["warning", "critical"].includes(severityLevel)) {
+            isValid = false;
+            tooltipMessage += "Invalid severity level selected. ";
         }
 
         // Alerts Section
@@ -192,7 +273,6 @@ export default function CreateMonitor() {
             }
         }
 
-        // Set the save state and tooltip message
         if (isValid) {
             setCanSave(true);
             setSaveTooltip("Ready to publish!");
@@ -202,7 +282,6 @@ export default function CreateMonitor() {
         }
     }
 
-    // Handlers to trigger checkCanSave on updates
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         checkCanSave();
     };
@@ -242,15 +321,54 @@ export default function CreateMonitor() {
         }
     }
 
-    // Handle geographic location selection
     const handleGeographicLocationChange = (location: string) => {
         setGeographicLocations((prev) =>
             prev.includes(location)
                 ? prev.filter((loc) => loc !== location)
                 : [...prev, location]
         );
-        checkCanSave(); // Call checkCanSave directly here
+        checkCanSave(); 
     };
+
+    function SaveFooter({ readyToSave, saveTooltip, errorMessage }: SaveFooterProps) {
+        return (
+            <div className="flex flex-row items-center justify-between border-gray-800 w-full py-2 border-t">
+                <div className="container mx-auto flex flex-row justify-between px-6 lg:px-14">
+                    <div />
+                    <div className="flex flex-row items-center justify-center gap-4">
+                        {
+                            errorMessage && (
+                                <div className="text-red-500 text-sm font-medium">
+                                    {errorMessage}
+                                </div>
+                            )
+                        }
+                        <Tooltip text={saveTooltip} position="top">
+                            <Button
+                                variant="primary"
+                                disabled={!readyToSave}
+                                className="flex flex-row gap-2 items-center"
+                                onClick={handlePublish} 
+                            >
+                                <div className="flex flex-row gap-2 items-center font-medium">
+                                    {
+                                        loading ? (
+                                            <SpinnerLoader size={20} />
+                                        ) : (
+                                            <div className="flex flex-row items-center justify-center gap-2">
+                                                <Check className="w-4 h-4" /> Publish
+                                            </div>
+                                        )
+                                    }
+                                </div>
+                            </Button>
+                        </Tooltip>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
 
     return (
         <AuthChecks>
@@ -310,6 +428,7 @@ export default function CreateMonitor() {
                                                         {multipleURLs ? (
                                                             <div className="flex flex-col gap-2 w-full">
                                                                 <textarea
+                                                                    maxLength={500}
                                                                     className={`bg-[#161922] text-white border rounded-lg px-4 py-2 w-full ${isValidURL ? "border-green-500" : "border-red-500"}`}
                                                                     placeholder="https://hdev.uk"
                                                                     onChange={(e) => {
@@ -325,6 +444,7 @@ export default function CreateMonitor() {
                                                         ) : (
                                                             <input
                                                                 type="text"
+                                                                maxLength={200}
                                                                 className={`bg-[#161922] text-white border rounded-lg px-4 py-2 w-full ${isValidURL ? "border-green-500" : "border-red-500"}`}
                                                                 placeholder="https://hdev.uk"
                                                                 onChange={(e) => {
@@ -380,6 +500,7 @@ export default function CreateMonitor() {
                                                             </label>
                                                             <textarea
                                                                 id="customHeaders"
+                                                                maxLength={1000}
                                                                 className="bg-[#161922] text-white border border-[#23283b] rounded-lg px-4 py-2 w-full h-24"
                                                                 placeholder='{"Authorization": "Bearer token"}'
                                                                 value={customHeaders}
@@ -398,6 +519,8 @@ export default function CreateMonitor() {
                                                             </label>
                                                             <input
                                                                 type="text"
+                                                                min={1}
+                                                                max={65535}
                                                                 id="port"
                                                                 className="bg-[#161922] text-white border border-[#23283b] rounded-lg px-4 py-2 w-full"
                                                                 placeholder="e.g., 3306 for MySQL"
@@ -443,7 +566,6 @@ export default function CreateMonitor() {
                                                                     <option value="ping">Host doesn’t respond to ping</option>
                                                                     <option value="ssl-expiry">SSL certificate is about to expire</option>
                                                                     <option value="dns-failure">DNS resolution fails</option>
-                                                                    <option value="custom">Based on custom conditions</option>
                                                                 </select>
                                                                 <p className="text-muted-foreground text-xs mt-0.5">
                                                                     We will alert you when this condition is met.
@@ -548,19 +670,6 @@ export default function CreateMonitor() {
                                                                 />
                                                             </div>
                                                         )}
-                                                        {alertCondition === "custom" && (
-                                                            <div className="flex flex-col gap-2 w-full">
-                                                                <label htmlFor="customConditions" className="text-sm font-normal text-white/70">
-                                                                    Custom Conditions
-                                                                </label>
-                                                                <textarea
-                                                                    id="customConditions"
-                                                                    className="bg-[#161922] text-white border border-[#23283b] rounded-lg px-4 py-2 w-full h-24"
-                                                                    placeholder="Enter custom conditions for alerts"
-                                                                    onChange={(e) => handleTextareaChange(e)}
-                                                                ></textarea>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -655,6 +764,7 @@ export default function CreateMonitor() {
                                                                 <input
                                                                     type="text"
                                                                     id="webhookURL"
+                                                                    maxLength={1000}
                                                                     className="bg-[#161922] text-white border border-[#23283b] rounded-lg px-4 py-2 w-full"
                                                                     placeholder="https://your-webhook-url.com"
                                                                     value={webhookURL}
@@ -746,26 +856,6 @@ export default function CreateMonitor() {
                                                         <p className="text-muted-foreground mb-4">Configure advanced settings for your monitor.</p>
                                                     </div>
                                                     <div className="w-full flex flex-col border border-[#23283b] rounded-lg h-auto transition-all duration-300 bg-[#151824] gap-2">
-                                                        <div className="px-6 py-5 flex w-full flex-col gap-4">
-                                                            <h2 className="text-md w-auto font-medium text-white">Monitor Information</h2>
-                                                            <div className="flex flex-col gap-2">
-                                                                <label htmlFor="monitorTags" className="text-sm font-normal text-white/70">
-                                                                    Monitor Tags (comma-separated)
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    id="monitorTags"
-                                                                    className="bg-[#161922] text-white border rounded-lg px-4 py-2 w-full"
-                                                                    placeholder="e.g., production, website"
-                                                                    value={monitorTags}
-                                                                    onChange={(e) => {
-                                                                        setMonitorTags(e.target.value);
-                                                                        handleInputChange(e);
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="border-b border-[#23283b] my-2" />
                                                         <div className="px-6 py-5 flex w-full flex-col gap-4">
                                                             <h2 className="text-md font-medium text-white">Incident Response</h2>
                                                             <div className="flex flex-row gap-4 items-start w-full">
@@ -902,7 +992,7 @@ export default function CreateMonitor() {
                     </div>
                 </div>
             </div>
-            <SaveFooter readyToSave={canSave} saveTooltip={saveTooltip} />
+            <SaveFooter readyToSave={canSave} saveTooltip={saveTooltip} errorMessage={error} />
             <AppFooter className={"px-6 lg:px-14"} />
         </AuthChecks>
     );
@@ -911,23 +1001,6 @@ export default function CreateMonitor() {
 interface SaveFooterProps {
     readyToSave: boolean;
     saveTooltip: string;
+    errorMessage?: string;
 }
 
-function SaveFooter({ readyToSave, saveTooltip }: SaveFooterProps) {
-    return (
-        <div className='flex flex-row items-center justify-between border-gray-800 w-full py-2 border-t'>
-            <div className='container mx-auto flex flex-row justify-between px-6 lg:px-14'>
-                <div />
-                <div className='flex flex-row gap-4'>
-                    <Tooltip text={saveTooltip} position='top'>
-                        <Button variant='primary' disabled={!readyToSave} className='flex flex-row gap-2 items-center'>
-                            <div className='flex flex-row gap-2 items-center font-medium'>
-                                <Check className='w-4 h-4' /> Publish
-                            </div>
-                        </Button>
-                    </Tooltip>
-                </div>
-            </div>
-        </div>
-    );
-}
