@@ -2,63 +2,193 @@
 import AppFooter from '@/components/footer/appfooter';
 import AuthChecks from '../../../authchecks';
 import { useEffect, useState } from 'react';
-import { Check, ChevronLeft, Clock, X, AlertTriangle } from "lucide-react"
+import { Check, ChevronLeft, Clock, X, AlertTriangle, XCircle, CheckCircle, Loader2 } from "lucide-react"
 import Button from '@/components/button/button';
 import { Tooltip } from '@/components/sidebar/sidebar';
 import { getAuth } from "firebase/auth"
+import { useDebounce } from 'use-debounce';
 
 
 export default function CreateStatusPage({_orgid}: { _orgid: string }) {
-    const auth = getAuth();
-    const [selectedMonitors, setSelectedMonitors] = useState<number[]>([]);
+    const [selectedMonitors, setSelectedMonitors] = useState<string[]>([]);
     const [logo, setLogo] = useState<File | null>(null);
     const [layout, setLayout] = useState<string>('layout1');
     const [webURL, setWebURL] = useState<string>(null);
     const [uptimevisible, setuptimevisible] = useState<boolean>(true);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Initialize as false since it's not used
     const [monitors, setMonitors] = useState([]);
     const [responsetimevisible, setresponsetimevisible] = useState<boolean>(true);
+    const [customURL, setCustomURL] = useState<string>('');
+    const [pageName, setPageName] = useState<string>('');
+    const [dnsRecords, setDnsRecords] = useState(null);
+    const [canSave, setCanSave] = useState<boolean>(false);
+    const [errors, setErrors] = useState<string[]>([]); 
+    const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'failed'>('pending');
+    const [domainStatus, setDomainStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+    const [debouncedCustomURL] = useDebounce(customURL, 500); 
     const user = getAuth().currentUser;
 
-        useEffect(() => {
-            const getmonitors = async () => {
-                if (!user) {
-                    setLoading(false);
+
+    useEffect(() => {
+        const getmonitors = async () => {
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const userToken = await user.getIdToken();
+                const res = await fetch(`/api/application/v1/monitoring/restricted/monitors/getmonitors?orgid=${encodeURIComponent(_orgid)}`, {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${userToken}`,
+                    },
+                });
+                const data = await res.json();
+                const formattedMonitors = data?.monitors?.map((monitor: any) => ({
+                    id: monitor._id,
+                    name: monitor.monitoring.webURL,
+                    type: monitor.monitoring.monitorType,
+                    isValid: monitor.monitoring.isValidURL,
+                    locations: monitor.monitoring.geographicLocations.join(", "),
+                    alertCondition: monitor.alertConditions.alertCondition,
+                    severity: monitor.alertConditions.severityLevel,
+                    notificationMethods: monitor.alerts.notificationMethods.join(", "),
+                    escalationDelay: monitor.alerts.escalationDelay,
+                    checkFrequency: monitor.advancedSettings.checkFrequency,
+                    timestamp: new Date(monitor.timestamp).toLocaleString()
+                }));
+                setMonitors(formattedMonitors);
+            } catch (error) {
+                console.error("Error fetching monitors:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        getmonitors();
+    }, [_orgid, user]);
+
+
+
+    useEffect(() => {
+        const checkDomainAvailabilityAndSetup = async () => {
+            if (!debouncedCustomURL || !user) return;
+            
+            setDomainStatus('checking');
+            
+            try {
+                const userToken = await user.getIdToken();
+                const response = await fetch('/api/application/v1/statuspage/restricted/check-domain', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${userToken}`,
+                    },
+                    body: JSON.stringify({
+                        domain: debouncedCustomURL,
+                        orgid: _orgid
+                    }),
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    setDomainStatus('invalid');
                     return;
                 }
+
+                if (result.available) {
+                    setDomainStatus('available');
+                    setDnsRecords(result.dnsRecords);
+                    checkDomainVerification();
+                } else {
+                    setDomainStatus('taken');
+                }
+            } catch (error) {
+                console.error('Error checking domain:', error);
+                setDomainStatus('invalid');
+            }
+        };
+
+        if (debouncedCustomURL) {
+            checkDomainAvailabilityAndSetup();
+        } else {
+            setDomainStatus('idle');
+            setDnsRecords(null);
+        }
+    }, [debouncedCustomURL, user, _orgid]);
+
+        function validateDomain(url: string): boolean {
+            const pattern = new RegExp('^(?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.[A-Za-z]{2,}$', 'i');
+            return pattern.test(url);
+        }
+
+        const checkDomainVerification = async () => {
+            if (!customURL || !user) return;
+    
+            try {
+                const userToken = await user.getIdToken();
+                const response = await fetch('/api/application/v1/statuspage/restricted/verify-domain', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${userToken}`,
+                    },
+                    body: JSON.stringify({
+                        domain: customURL,
+                        orgid: _orgid
+                    }),
+                });
+    
+                const result = await response.json();
+                setVerificationStatus(result.verified ? 'verified' : 'failed');
+            } catch (error) {
+                console.error('Domain verification error:', error);
+                setVerificationStatus('failed');
+            }
+        };
+        
+
+        useEffect(() => {
+            const checkDomainAvailability = async () => {
+                if (!debouncedCustomURL || !user) return;
+                
+                setDomainStatus('checking');
+                
                 try {
                     const userToken = await user.getIdToken();
-                    const res = await fetch(`/api/application/v1/monitoring/restricted/monitors/getmonitors?orgid=${encodeURIComponent(_orgid)}`, {
-                        method: 'GET',
+                    const response = await fetch('/api/application/v1/statuspage/restricted/check-domain', {
+                        method: 'POST',
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": `Bearer ${userToken}`,
                         },
+                        body: JSON.stringify({
+                            domain: debouncedCustomURL,
+                            orgid: _orgid
+                        }),
                     });
-                    const data = await res.json();
-                    const formattedMonitors = data?.monitors?.map((monitor: any) => ({
-                        id: monitor._id,
-                        name: monitor.monitoring.webURL,
-                        type: monitor.monitoring.monitorType,
-                        isValid: monitor.monitoring.isValidURL,
-                        locations: monitor.monitoring.geographicLocations.join(", "),
-                        alertCondition: monitor.alertConditions.alertCondition,
-                        severity: monitor.alertConditions.severityLevel,
-                        notificationMethods: monitor.alerts.notificationMethods.join(", "),
-                        escalationDelay: monitor.alerts.escalationDelay,
-                        checkFrequency: monitor.advancedSettings.checkFrequency,
-                        timestamp: new Date(monitor.timestamp).toLocaleString()
-                    }));
-                    setMonitors(formattedMonitors);
-                    setLoading(false);
+    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        setDomainStatus('invalid');
+                        return;
+                    }
+    
+                    setDomainStatus(result.available ? 'available' : 'taken');
                 } catch (error) {
-                    console.error("Error fetching monitors:", error);
-                    setLoading(false);
+                    console.error('Error checking domain:', error);
+                    setDomainStatus('invalid');
                 }
             };
-            getmonitors();
-
-        }, [_orgid, user]);
+    
+            if (debouncedCustomURL) {
+                checkDomainAvailability();
+            } else {
+                setDomainStatus('idle');
+            }
+        }, [debouncedCustomURL, user, _orgid]);
 
         console.log("hello", monitors)
     
@@ -82,6 +212,8 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
             return false;
         }
     }
+
+    
 
     const handleMonitorClick = (monitor: any, event: React.MouseEvent) => {
         const monitorIndex = monitors.findIndex((m) => m.name === monitor.name);
@@ -107,6 +239,119 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
         "Previous Incidents",
     ]
 
+    const convertFileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+        });
+    };
+
+
+
+    useEffect(() => {
+        const validateSaveConditions = () => {
+            const newErrors: string[] = [];
+
+            if (!pageName.trim()) {
+                newErrors.push("Status page name is required");
+            }
+
+            if (selectedMonitors.length === 0) {
+                newErrors.push("At least one monitor must be selected");
+            }
+
+            if (logo) {
+                if (!logo.type.startsWith('image/')) {
+                    newErrors.push("Logo must be an image file");
+                }
+                if (logo.size > 300 * 1024) {
+                    newErrors.push("Logo file size must not exceed 300KB");
+                }
+                if (!logo.name.match(/\.(jpg|jpeg|png|gif)$/)) {
+                    newErrors.push("Logo must be a JPG, JPEG, PNG, or GIF file");
+                }
+            }
+
+            if (webURL && !validateURL(webURL)) {
+                newErrors.push("Website URL is invalid");
+            }
+
+            if (customURL) {
+                if (!validateDomain(customURL)) {
+                    newErrors.push("Custom URL format is invalid (e.g., status.yourdomain.com)");
+                }
+                if (domainStatus === 'taken') {
+                    newErrors.push("Custom URL is already taken");
+                }
+                if (domainStatus === 'invalid') {
+                    newErrors.push("Custom URL is invalid");
+                }
+                if (domainStatus === 'available' && verificationStatus !== 'verified') {
+                    newErrors.push("Custom URL must be verified before saving");
+                }
+            }
+
+            setErrors(newErrors);
+            setCanSave(newErrors.length === 0);
+        };
+
+        validateSaveConditions();
+    }, [pageName, selectedMonitors, logo, webURL, customURL, domainStatus, verificationStatus]);
+
+    const handleSave = async () => {
+        if (!user) {
+            setErrors(["User authentication required"]);
+            return;
+        }
+
+        if (!canSave) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setErrors([]);
+            const userToken = await user.getIdToken();
+
+            const statusPageData = {
+                orgid: _orgid,
+                name: pageName,
+                monitors: selectedMonitors,
+                layout: layout,
+                webURL: webURL || undefined,
+                uptimeVisible: uptimevisible,
+                responseTimeVisible: responsetimevisible,
+                customURL: customURL || undefined,
+                logo: logo ? await convertFileToBase64(logo) : undefined,
+            };
+
+            const response = await fetch('/api/application/v1/statuspage/restricted/create', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`,
+                },
+                body: JSON.stringify(statusPageData),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to save status page');
+            }
+
+            console.log('Status page saved successfully:', result);
+            alert("Status page saved successfully!");
+        } catch (error) {
+            console.error('Error saving status page:', error);
+            setErrors([`Failed to save status page: ${error.message}`]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     return(
         <AuthChecks>
@@ -123,8 +368,8 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                 <h1 className="text-2xl font-medium text-white">Monitors</h1>
                                 <p className="text-muted-foreground mb-4">Add monitors to your status page. These are the components that will be monitored and displayed.</p>
                                 <div className='flex flex-col gap-2'>
-                                    {
-                                        monitors?.map((monitor, index) => (
+                                {
+                                        monitors?.map((monitor) => (
                                             <div
                                                 key={monitor}
                                                 onClick={(event) => handleMonitorClick(monitor, event)}
@@ -181,7 +426,7 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                             <h2 className="text-lg font-medium text-white">Name</h2>
                                             <p className="text-muted-foreground mb-4">Choose a name for your status page.</p>
                                         </div>
-                                        <input type="text" className='bg-background/10 border-[1px] border-muted-foreground/10 rounded-md p-4 w-full' placeholder='Status Page Name' />
+                                        <input type="text" onChange={(e) => setPageName(e.target.value)} className='bg-background/10 border-[1px] border-muted-foreground/10 rounded-md p-4 w-full' placeholder='Status Page Name' />
                                     </div>
                                     <div className='flex flex-col mt-4'>
                                         <div className='flex flex-col'>
@@ -302,17 +547,74 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                             <p className="text-muted-foreground mb-4"></p>
                                         </div>
                                     </div>
-                                    <div className='flex flex-col '>
+                                    <div className='flex flex-col'>
                                         <div className='flex flex-col'>
                                             <h2 className="text-lg font-medium text-white">Custom URL</h2>
                                             <p className="text-muted-foreground">Choose a custom URL for your status page.</p>
-                                            <p className=' mb-4 text-sm text-muted-foreground'>For example status.hdev.uk</p>
+                                            <p className='mb-4 text-sm text-muted-foreground'>For example: status.yourdomain.com</p>
                                         </div>
-                                        <div className='flex flex-col gap-2'>
-                                            <input type="text" className='bg-background/10 border-[1px] border-muted-foreground/10 rounded-md p-4 w-full' placeholder='Custom URL' />
-                                            <output>
-                                                {/* TODO custom domain URl stuff */}
-                                            </output>
+                                        <div className='flex flex-col gap-4'>
+                                            <div className='relative'>
+                                                <input 
+                                                    type="text" 
+                                                    value={customURL}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.toLowerCase().trim();
+                                                        setCustomURL(value);
+                                                        if (!value) {
+                                                            setDomainStatus('idle');
+                                                            setDnsRecords(null);
+                                                            setVerificationStatus('pending');
+                                                        }
+                                                    }}
+                                                    className={`bg-background/10 border-[1px] rounded-md p-4 w-full pr-10
+                                                        ${domainStatus === 'taken' ? 'border-red-500/50' : ''}
+                                                        ${domainStatus === 'available' ? 'border-green-500/50' : ''}
+                                                        ${domainStatus === 'invalid' ? 'border-red-500/50' : ''}`}
+                                                    placeholder='status.yourdomain.com'
+                                                />
+                                                <div className='absolute right-3 top-1/2 -translate-y-1/2'>
+                                                    {domainStatus === 'checking' && <Loader2 className='w-5 h-5 text-muted-foreground animate-spin' />}
+                                                    {domainStatus === 'available' && <CheckCircle className='w-5 h-5 text-green-500' />}
+                                                    {(domainStatus === 'taken' || domainStatus === 'invalid') && <XCircle className='w-5 h-5 text-red-500' />}
+                                                </div>
+                                            </div>
+                                            {dnsRecords && (
+                                                <div className='bg-background/20 p-4 rounded-md'>
+                                                    <h3 className="text-md font-medium text-white mb-2">DNS Configuration</h3>
+                                                    <p className="text-muted-foreground text-sm mb-2">Add these DNS records to verify and activate your domain:</p>
+                                                    <div className='space-y-2'>
+                                                        <div>
+                                                            <span className='text-muted-foreground text-sm'>Type: </span>
+                                                            <span className='text-white text-sm'>{dnsRecords.type}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className='text-muted-foreground text-sm'>Name: </span>
+                                                            <span className='text-white text-sm'>{dnsRecords.name}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className='text-muted-foreground text-sm'>Value: </span>
+                                                            <span className='text-white text-sm'>{dnsRecords.value}</span>
+                                                        </div>
+                                                    </div>
+                                                    <Button 
+                                                        variant="secondary" 
+                                                        className="mt-4" 
+                                                        onClick={checkDomainVerification}
+                                                        disabled={verificationStatus === 'verified'}
+                                                    >
+                                                        {verificationStatus === 'pending' && 'Verify Now'}
+                                                        {verificationStatus === 'failed' && 'Retry Verification'}
+                                                        {verificationStatus === 'verified' && 'Verified'}
+                                                    </Button>
+                                                    {verificationStatus === 'verified' && (
+                                                        <span className='text-green-500 text-sm ml-2'>Domain verified successfully!</span>
+                                                    )}
+                                                    {verificationStatus === 'failed' && (
+                                                        <span className='text-red-500 text-sm ml-2'>Verification failed. Please check your DNS records.</span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className='flex flex-col mt-4'>
@@ -325,36 +627,47 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                         </div>
                                     </div>
                         </div>                        
-
                     </div>
                 </div>
             </div>
         </div>
-        <SaveFooter readyToSave={false} />
+        <SaveFooter readyToSave={canSave} onSave={handleSave} loading={loading} />
         <AppFooter className={"px-6 lg:px-14"} />
         </AuthChecks>
         );
 }
 
-function SaveFooter({readyToSave}) {
+function SaveFooter({ readyToSave, onSave, loading }) {
     return (
         <div className='flex flex-row items-center justify-between border-gray-800 w-full py-2 border-t'>
             <div className='container mx-auto flex flex-row justify-between px-6 lg:px-14'>
                 <div />
                 <div className='flex flex-row gap-4'>
-                    <Tooltip text='Unable to save status page' position='top'>
-                        <Button variant='primary' disabled={!readyToSave} className='flex flex-row gap-2 items-center'>
+                    <Tooltip 
+                        text={!readyToSave ? 'Please resolve errors before saving' : 'Publish status page'} 
+                        position='top'
+                    >
+                        <Button 
+                            variant='primary' 
+                            disabled={!readyToSave || loading} 
+                            onClick={onSave}
+                            className='flex flex-row gap-2 items-center'
+                        >
                             <div className='flex flex-row gap-2 items-center font-medium'>
-                                <Check className='w-4 h-4' /> Publish
+                                {loading ? (
+                                    <Loader2 className='w-4 h-4 animate-spin' />
+                                ) : (
+                                    <Check className='w-4 h-4' />
+                                )}
+                                Publish
                             </div>
                         </Button>
                     </Tooltip>
                 </div>
             </div>
         </div>
-    )
+    );
 }
-
 
 export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, selectedMonitors, uptimevisible, responsetimevisible}) {
     return layout === 'layout1' ? (
@@ -365,7 +678,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
                 </div>
                 <div className='flex flex-row gap-2 items-center'>
                     {
-                        monitorTabs.map((tab, index) => (
+                        monitorTabs.map((tab: string, index: number) => (
                             <div key={index} className={`flex flex-row items-center text-sm justify-center gap-2 text-white cursor-pointer px-3 py-1 rounded-lg ${monitorTabs[0] === tab ? 'text-primary bg-zinc-700/20' : 'text-muted-foreground'}`}>
                                 {tab}
                             </div>
@@ -382,7 +695,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
             <div className='flex flex-row items-center justify-center w-full mt-4'>
                 <div className='w-[90%] bg-zinc-800/20 flex flex-col gap-2 border rounded-md px-4 py-2'>
                 {
-                    selectedMonitors.map((index) => (
+                    selectedMonitors.map((monitorName, index) => (
                         <div key={index} className='flex flex-row justify-between items-center hover:bg-muted-foreground/5 rounded-lg transition-all w-full pr-4'>
                             <div className='w-20 flex items-center justify-center'>
                                 <div className='relative flex items-center justify-center py-5'>
@@ -392,7 +705,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
                             </div>
                             <div className='w-full flex flex-row justify-between items-start'>
                                 <div>
-                                    <h2 className='text-foreground font-semibold text-[14px]'>{index}</h2>
+                                    <h2 className='text-foreground font-semibold text-[14px]'>{monitorName}</h2>
                                     <p className='text-muted-foreground/60 font-normal text-[13px]'></p>
                                 </div>
                                 {
@@ -429,7 +742,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
                 )}
               </div>
               <div className="flex flex-row gap-2 items-center">
-                {monitorTabs.map((tab, index) => (
+                {monitorTabs.map((tab: string, index: number) => (
                   <div
                     key={index}
                     className={`flex flex-row items-center text-sm justify-center gap-2 text-white cursor-pointer px-3 py-1 rounded-lg ${

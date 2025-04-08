@@ -1,21 +1,18 @@
 import { NextResponse } from "next/server";
 import { getMongoClient } from "@/lib/mongodb";
-import admin from "@/lib/firebaseAdmin";
+import checkCredentials from "../../../../../../../../lib/credscheck";
 
 // POST handler
 export async function POST(req) {
   try {
-    const token = req.headers.get("Authorization")?.split("Bearer ")[1];
 
-    if (!token) {
+    const authed = checkCredentials(req);
+    if (!authed) {
       return NextResponse.json(
-        { error: "Unauthorized: Missing Firebase ID token" },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
-
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const userId = decodedToken.uid;
 
     const monitorData = await req.json();
 

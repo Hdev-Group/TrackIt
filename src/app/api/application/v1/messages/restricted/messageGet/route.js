@@ -33,13 +33,7 @@ export async function GET(req) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    const token = req.headers.get("Authorization")?.split("Bearer ")[1];
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized: Missing Firebase ID token" }, { status: 401 });
-    }
-
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = decodedToken;
+    
 
     await connectToDB();
 
