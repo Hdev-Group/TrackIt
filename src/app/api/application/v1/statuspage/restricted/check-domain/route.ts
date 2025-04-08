@@ -33,7 +33,7 @@ export async function POST(req) {
 
     const client = await getMongoClient();
     const db = client.db("statuspages"); 
-    const statusPagesCollection = db.collection("statuspages");
+    const statusPagesCollection = db.collection("domainverify");
 
     const existingDomain = await statusPagesCollection.findOne({
         customURL: domain,
@@ -51,11 +51,30 @@ export async function POST(req) {
         value: `statuspage-verification=${verificationToken}`,
       };
   
-      await statusPagesCollection.updateOne(
-        { orgid, customURL: domain },
-        { $set: { verificationToken, verified: false, timestamp: new Date() } },
-        { upsert: true }
-      );
+    await statusPagesCollection.updateOne(
+      { orgid, customURL: domain },
+      { 
+        $set: { 
+        verificationToken, 
+        verified: false, 
+        timestamp: new Date() 
+        } 
+      },
+      { upsert: true }
+    );
+
+    setTimeout(async () => {
+      try {
+        await statusPagesCollection.deleteOne({
+          orgid,
+          customURL: domain,
+          verified: false,
+          verificationToken,
+        });
+      } catch (error) {
+        console.error("Error removing unverified domain:", error);
+      }
+    }, 10 * 60 * 1000); 
   
       return NextResponse.json({
         available: true,

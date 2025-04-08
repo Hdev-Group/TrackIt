@@ -344,6 +344,7 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
 
             console.log('Status page saved successfully:', result);
             alert("Status page saved successfully!");
+            window.location.href = `./${_orgid}/statuspage`;
         } catch (error) {
             console.error('Error saving status page:', error);
             setErrors([`Failed to save status page: ${error.message}`]);

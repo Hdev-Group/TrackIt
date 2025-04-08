@@ -19,7 +19,7 @@ export async function POST(req) {
 
     const client = await getMongoClient();
     const db = client.db("statuspages");
-    const statusPagesCollection = db.collection("statuspages");
+    const statusPagesCollection = db.collection("domainverify");
 
     const page = await statusPagesCollection.findOne({
       customURL: domain,

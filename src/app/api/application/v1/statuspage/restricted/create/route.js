@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMongoClient } from "@/lib/mongodb";
-import checkCredentials from "../../../../../../../../lib/credscheck";
+import checkCredentials from "../../../../../../../lib/credscheck";
 
 export async function POST(req) {
   try {
