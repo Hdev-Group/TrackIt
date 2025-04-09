@@ -1,7 +1,6 @@
 import { MongoClient } from "mongodb";
 import { NextResponse } from "next/server";
 import admin from "firebase-admin";
-import { rateLimit } from "@/lib/rateLimiter";
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -28,13 +27,6 @@ async function connectToDB() {
 
 export async function GET(req) {
   try {
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
-    if (rateLimit(ip)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
-
-    
-
     await connectToDB();
 
     const channelID = req.nextUrl.searchParams.get("channel");

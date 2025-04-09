@@ -10,7 +10,7 @@ import { useDebounce } from 'use-debounce';
 
 
 export default function CreateStatusPage({_orgid}: { _orgid: string }) {
-    const [selectedMonitors, setSelectedMonitors] = useState<string[]>([]);
+    const [selectedMonitors, setSelectedMonitors] = useState<Array<{ name: string; id: string }>>([]);
     const [logo, setLogo] = useState<File | null>(null);
     const [layout, setLayout] = useState<string>('layout1');
     const [webURL, setWebURL] = useState<string>(null);
@@ -30,12 +30,13 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
 
 
     useEffect(() => {
-        const getmonitors = async () => {
+        const getMonitors = async () => {
             if (!user) {
                 setLoading(false);
                 return;
             }
             try {
+                setLoading(true); 
                 const userToken = await user.getIdToken();
                 const res = await fetch(`/api/application/v1/monitoring/restricted/monitors/getmonitors?orgid=${encodeURIComponent(_orgid)}`, {
                     method: 'GET',
@@ -44,6 +45,9 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                         "Authorization": `Bearer ${userToken}`,
                     },
                 });
+                if (!res.ok) {
+                    throw new Error(`Failed to fetch monitors: ${res.statusText}`);
+                }
                 const data = await res.json();
                 const formattedMonitors = data?.monitors?.map((monitor: any) => ({
                     id: monitor._id,
@@ -62,12 +66,15 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
             } catch (error) {
                 console.error("Error fetching monitors:", error);
             } finally {
-                setLoading(false);
+                setLoading(false); 
             }
         };
-        getmonitors();
-    }, [_orgid, user]);
 
+        getMonitors();
+        const intervalId = setInterval(getMonitors, 60000); 
+
+        return () => clearInterval(intervalId);
+    }, [_orgid, user]);
 
 
     useEffect(() => {
@@ -225,10 +232,10 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                 .map((m) => m.name);
             setSelectedMonitors([...new Set([...selectedMonitors, ...newSelection])]);
         } else {
-            if (selectedMonitors.includes(monitor.name)) {
-                setSelectedMonitors(selectedMonitors.filter((name) => name !== monitor.name));
+            if (selectedMonitors.some((selected) => selected.id === monitor.id)) {
+                setSelectedMonitors(selectedMonitors.filter((selected) => selected.id !== monitor.id));
             } else {
-                setSelectedMonitors([...selectedMonitors, monitor.name]);
+                setSelectedMonitors([...selectedMonitors, { name: monitor.name, id: monitor.id }]);
             }
         }
     };
@@ -300,6 +307,8 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
         validateSaveConditions();
     }, [pageName, selectedMonitors, logo, webURL, customURL, domainStatus, verificationStatus]);
 
+    console.log(selectedMonitors)
+
     const handleSave = async () => {
         if (!user) {
             setErrors(["User authentication required"]);
@@ -318,7 +327,7 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
             const statusPageData = {
                 orgid: _orgid,
                 name: pageName,
-                monitors: selectedMonitors,
+                monitors: selectedMonitors.filter(monitor => monitor.id).map(monitor => monitor.id),
                 layout: layout,
                 webURL: webURL || undefined,
                 uptimeVisible: uptimevisible,
@@ -375,14 +384,14 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                                 key={monitor}
                                                 onClick={(event) => handleMonitorClick(monitor, event)}
                                                 className={`flex flex-row justify-between items-center w-full border-muted-foreground/10 rounded-md border-[1px] bg-background/10 hover:bg-background/20 transition-all duration-300 ease-in-out cursor-pointer ${
-                                                    selectedMonitors.includes(monitor.name) ? 'bg-blue-500/30' : ''
+                                                    selectedMonitors.find(selected => selected.id === monitor.id) ? 'bg-blue-500/30' : ''
                                                 }`}
                                             >
                                                 <div className='flex flex-row justify-between items-center hover:bg-muted-foreground/5 transition-all w-full pr-4'>
                                                     <div className='w-20 flex items-center justify-center'>
                                                         <div className='relative flex items-center justify-center py-5'>
-                                                            <div className={`absolute rounded-full ${selectedMonitors.includes(monitor.name) ? 'bg-blue-300' : 'bg-green-500'} h-3 w-3 animate-ping`}></div>
-                                                            <div className={`rounded-full ${selectedMonitors.includes(monitor.name) ? 'bg-blue-300' : 'bg-green-500'} h-3 w-3`}></div>
+                                                            <div className={`absolute rounded-full ${selectedMonitors.find(selected => selected.id === monitor.id) ? 'bg-blue-300' : 'bg-green-500'} h-3 w-3 animate-ping`}></div>
+                                                            <div className={`rounded-full ${selectedMonitors.find(selected => selected.id === monitor.id) ? 'bg-blue-300' : 'bg-green-500'} h-3 w-3`}></div>
                                                         </div>
                                                     </div>
                                                     <div className='w-full flex flex-col justify-between items-start'>
@@ -696,7 +705,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
             <div className='flex flex-row items-center justify-center w-full mt-4'>
                 <div className='w-[90%] bg-zinc-800/20 flex flex-col gap-2 border rounded-md px-4 py-2'>
                 {
-                    selectedMonitors.map((monitorName, index) => (
+                    selectedMonitors.map((monitor: { name: string; id: string }, index: number) => (
                         <div key={index} className='flex flex-row justify-between items-center hover:bg-muted-foreground/5 rounded-lg transition-all w-full pr-4'>
                             <div className='w-20 flex items-center justify-center'>
                                 <div className='relative flex items-center justify-center py-5'>
@@ -706,7 +715,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
                             </div>
                             <div className='w-full flex flex-row justify-between items-start'>
                                 <div>
-                                    <h2 className='text-foreground font-semibold text-[14px]'>{monitorName}</h2>
+                                    <h2 className='text-foreground font-semibold text-[14px]'>{monitor.name}</h2>
                                     <p className='text-muted-foreground/60 font-normal text-[13px]'></p>
                                 </div>
                                 {
@@ -794,9 +803,8 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
               </span>
             </div>
       
-            {/* Monitor Grid - 2 columns instead of a list */}
             <div className="grid grid-cols-2 gap-3">
-              {selectedMonitors.map((index) => (
+              {selectedMonitors.map((monitor: { name: string; id: string }, index: number) => (
                 <div
                   key={index}
                   className="border border-muted-foreground/10 rounded-md p-3 bg-zinc-800/20 flex items-center"
@@ -805,7 +813,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
                     className={`w-2 h-2 rounded-full mr-3 ${systemStatus === "operational" ? "bg-green-500" : systemStatus === "degraded" ? "bg-amber-500" : "bg-red-500"}`}
                   ></div>
                   <div>
-                    <div className="text-sm font-medium">{index}</div>
+                    <div className="text-sm font-medium">{monitor.name}</div>
                     { responsetimevisible && (
                     <div className="text-xs text-muted-foreground flex items-center mt-1">
                         <Clock className="w-3 h-3 mr-1" />

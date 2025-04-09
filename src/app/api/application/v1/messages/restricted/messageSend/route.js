@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import admin from "@/lib/firebaseAdmin";
 import { getMessagesCollection } from "@/lib/mongodb";
-import { ratelimit } from "@/lib/redisLimiter";
 
 export async function POST(req) {
 
-  const ip = req.headers.get("x-forwarded-for") || "anonymous";
 
   const { success } = await ratelimit.limit(ip);
   if (!success) {

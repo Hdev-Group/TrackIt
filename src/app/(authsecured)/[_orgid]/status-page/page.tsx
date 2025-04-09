@@ -7,8 +7,9 @@ export async function generateMetadata() {
   };
 }
 
-export default function Page() {
+export default async function Page({params}: {params: {_orgid: string}}) {
+  const { _orgid } = await params;
   return(
-    <StatusPageMain />
+    <StatusPageMain _orgid={_orgid} />
   )
 }

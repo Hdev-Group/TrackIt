@@ -1,9 +1,19 @@
-// server.js
 const { Server } = require("socket.io");
 const http = require("http");
+const admin = require("firebase-admin");
 require("dotenv").config({ path: ".env.local" });
 
-const server = http.createServer(); // No Express app, just a basic HTTP server for Socket.IO
+// Initialize Firebase Admin SDK
+const serviceAccount = require("../trackit-10c25-firebase-adminsdk-fbsvc-84b52f0849.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore();
+const auth = admin.auth();
+
+// Create HTTP server for Socket.IO
+const server = http.createServer();
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3001",
@@ -13,7 +23,7 @@ const io = new Server(server, {
   pingTimeout: 60000,
 });
 
-// Socket.IO Logic (unchanged)
+// Existing Socket.IO Logic (unchanged)
 const onlineUsers = new Map();
 const channelUsers = new Map();
 
@@ -155,6 +165,37 @@ io.on("connection", (socket) => {
     }
   });
 });
+
+async function cleanupUnverifiedUsers() {
+  try {
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000; 
+    const usersRef = db.collection("users");
+
+    const snapshot = await usersRef
+      .where("isVerified", "==", false)
+      .where("createdAt", "<=", new Date(twoHoursAgo))
+      .get();
+
+    if (snapshot.empty) {
+      console.log("No unverified users to delete");
+      return;
+    }
+
+    const deletePromises = snapshot.docs.map(async (doc) => {
+      const uid = doc.id;
+      await usersRef.doc(uid).delete(); 
+      await auth.deleteUser(uid); 
+      console.log(`Deleted unverified user: ${uid}`);
+    });
+
+    await Promise.all(deletePromises);
+    console.log("Cleanup of unverified users completed");
+  } catch (error) {
+    console.error("Error during cleanup of unverified users:", error);
+  }
+}
+
+setInterval(cleanupUnverifiedUsers, 5 * 60 * 1000);
 
 // Start the Server
 const PORT = process.env.PORT || 3001;

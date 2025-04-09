@@ -109,6 +109,8 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
     const [showProfile, setShowProfile] = useState(false);
     const pathname = usePathname();
 
+    console.log("User:", user);
+
     const getUserProfile = async (uid: string): Promise<{ displayName: string; pictureURL: string, hdevstaff: boolean }> => {
         try {
             const userDocRef = doc(db, "users", uid);
@@ -144,6 +146,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
             });
         }
     }, [user?.uid]);
+
 
     useEffect(() => {
         document?.addEventListener("click", function (event) {
@@ -211,12 +214,12 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                         <div id="showmoreprofile" className={`${showProfile ? "innerset" : "deployer"} transition-all duration-500 bottom-0 bg-black border rounded-md pt-6 z-50 flex flex-col h-auto w-auto max-w-[20rem]`}>
                             <div className="flex px-4 flex-col items-start mb-4 justify-between w-full">
                                 <div className="relative flex flex-row items-center justify-center mb-2 gap-2">
-                                    <img src={user?.photoURL} className="w-12 h-12 rounded-full" />
+                                    <img src={user?.photoURL || users?.[0]?.displayName} className="w-12 h-12 rounded-full" />
                                     <Status type="icon" size="md" position={{ left: "right-0", bottom: "bottom-0" }} profile={true} />
                                 </div>
                                 <div className="flex flex-col items-start justify-start">
                                     <div className="flex flex-row items-center justify-center gap-2">
-                                        <span className="text-lg font-semibold text-white/80">{user?.displayName}</span>
+                                        <span className="text-lg font-semibold text-white/80">{user?.displayName || users?.[0]?.displayName}</span>
                                         {users.some(user => user.hdevstaff === true) && (
                                             <Tooltip text="HDev Staff">
                                                 <div className="px-2 py-0.5 bg-muted-foreground/10 rounded-md">
@@ -250,7 +253,7 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                                 </div>
                             </div>
                         </div>
-                        <Tooltip text={`${user?.displayName}`} status={true}>
+                        <Tooltip text={`${user?.displayName || users?.[0]?.displayName}`} status={true}>
                             <div onClick={() => setShowProfile(!showProfile)} className="bg-yellow-100 cursor-pointer w-9 h-9 flex items-center relative justify-center rounded-lg">
                                 <PersonStanding className="h-5 w-5 mx-2 py-2" />
                                 <img src={user?.photoURL} className="absolute -bottom-1 -right-1 bg-red-500 w-4 border border-[#101218] h-4 rounded-full" />

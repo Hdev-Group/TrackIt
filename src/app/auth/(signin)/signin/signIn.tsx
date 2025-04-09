@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/button/button';
 import SignIn from '@/components/signin/signin';
-import { AlertOctagon, Clock, Columns3 } from 'lucide-react';
+import { AlertOctagon, Clock, Columns3, Lock } from 'lucide-react';
 
 export default function Page() {
   const router = useRouter();
@@ -76,6 +76,10 @@ export default function Page() {
           </div>
           <div className='w-full rounded-t-2xl bg-gradient-to-t flex items-center flex-col h-full from-background to-[#1f1f23] p-8'>
             <div className='flex flex-col items-center md:mt-[3%]'>
+              <div className='flex items-center justify-center px-8 mb-4 py-1 rounded-lg text-[#6fcf97] text-md border border-[#6fcf97]/40 border-t-[#6fcf97] bg-[#304a36] font-normal '>
+                <Lock className='mr-2 h-5 w-5' />
+                Sign In
+              </div>
               <div className='relative w-20 h-20 overflow-hidden bg-transparent flex items-center justify-center'>
                 <div
                   className='w-16 h-16 rounded-xl overflow-hidden z-20 m-4 absolute flex items-center justify-center'

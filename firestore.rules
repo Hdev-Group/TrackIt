@@ -2,8 +2,40 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+    match /users/{userId} {
+      // Allow authenticated users to read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow creating a user document during signup
+      allow create: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.isVerified == false
+        && request.resource.data.keys().hasAll(['uid', 'firstName', 'lastName', 'email', 'createdAt', 'isVerified', 'hashedCode']);
+      
+      // Allow updating only isVerified and hashedCode fields during verification
+      allow update: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isVerified', 'hashedCode'])
+        && request.resource.data.isVerified == true
+        && (!('hashedCode' in request.resource.data) || request.resource.data.hashedCode == null);
+      
+      // Allow deletion if the user isn't verified (for timeout cleanup)
+      allow delete: if request.auth != null 
+        && request.auth.uid == userId
+        && resource.data.isVerified == false;
+    }
+    
+    // Rules for Google/Microsoft sign-ins
+    match /users/{userId} {
+      allow create: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.isVerified == true
+        && request.resource.data.provider in ['google', 'microsoft']
+        && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'provider', 'createdAt', 'isVerified']);
+        
+      allow read: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
