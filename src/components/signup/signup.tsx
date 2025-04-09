@@ -308,6 +308,9 @@ export default function SignUp() {
             )
           )
         }
+        <p className="text-sm text-muted-foreground">
+            By signing up, you agree to our <a href="/terms" className="text-cyan-500 hover:underline">Terms of Service</a> and <a href="/privacy" className="text-cyan-500 hover:underline">Privacy Policy</a>.
+        </p>
       </div>
     </div>
   )

@@ -11,6 +11,7 @@ import { fetchSignInMethodsForEmail } from "firebase/auth"
 import { doc, setDoc, getDoc } from "firebase/firestore"
 import { auth, db } from "@/app/firebase/firebase"
 import { DotsLoader } from "../loaders/mainloader"
+import { Mail } from "lucide-react"
 
 var loadinggoogle = false;
 var loadingsignin = false;
@@ -56,10 +57,69 @@ async function callGoogleSignIn() {
     }
 }
 
+async function callEmailSignIn(email, password, setLoadingSignIn) {
+    const auth = getAuth();
+    const normalizedEMAIL = email.trim().toLowerCase();
+    console.log("Normalized email being checked:", normalizedEMAIL);
+
+    try {
+        setLoadingSignIn(true);
+
+        // Log the auth instance details
+        console.log("Auth instance project ID:", auth.app.options.projectId);
+
+        // Check sign-in methods for the email
+        let signInMethods;
+        try {
+            signInMethods = await fetchSignInMethodsForEmail(auth, normalizedEMAIL);
+            console.log("Sign-in methods:", signInMethods);
+        } catch (error) {
+            console.error("Error fetching sign-in methods:", error.message);
+            alert("Error checking sign-in methods. Please try again.");
+            return;
+        }
+
+        if (signInMethods.length === 0) {
+            console.log("No account exists for this email.");
+            alert("No account found for this email. Please sign up first or check the email.");
+
+            // Try direct sign-in as a fallback
+            console.log("Attempting direct sign-in as a fallback...");
+            try {
+                await signInWithEmailAndPassword(auth, normalizedEMAIL, password);
+                console.log("Direct sign-in successful");
+                localStorage.setItem("provider", "Email");
+            } catch (directError) {
+                console.error("Direct sign-in error:", directError.message);
+            }
+            return;
+        }
+
+        if (!signInMethods.includes("password")) {
+            console.log("This email is registered with another provider (e.g., Google).");
+            alert("This email is registered with another provider (e.g., Google). Please use that sign-in method.");
+            return;
+        }
+
+        await signInWithEmailAndPassword(auth, normalizedEMAIL, password);
+        localStorage.setItem("provider", "Email");
+        console.log("Signed in successfully with email/password");
+    } catch (error) {
+        console.error("Email sign-in error:", error.message);
+        alert(`Sign-in failed: ${error.message}`);
+    } finally {
+        setLoadingSignIn(false);
+    }
+}
+
 export default function SignIn() {
     const auth = useAuth()
     const router = useRouter()
-
+    const [openEmail, setOpenEmail] = useState(false)
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [loadinggoogle, setLoadingGoogle] = useState(false)
+    const [loadingSignIn, setLoadingSignIn] = useState(false)
     const provider = localStorage.getItem("provider");
 
     useEffect(() => {
@@ -78,7 +138,7 @@ export default function SignIn() {
                     ) : (
                         <div className="space-y-4 w-full">
                             <div
-                                className={`w-full min-w-full bg-white text-black hover:bg-white/90 transition-all font-semibold flex items-center relative justify-center p-2 rounded-md ${provider === "Google" ? "shadow-md shadow-cyan-50" : "border-gray-600 hover:bg-gray-800 border"} ${loadinggoogle ? 'bg-muted-foreground/40 text-white border-white' : ''}`}
+                                className={`w-full min-w-full cursor-pointer bg-white text-black hover:bg-white/90 transition-all font-semibold flex items-center relative justify-center p-2 rounded-md ${provider === "Google" ? "shadow-md shadow-cyan-50" : "border-gray-600 hover:bg-gray-800 border"} ${loadinggoogle ? 'bg-muted-foreground/40 text-white border-white' : ''}`}
                                 onClick={callGoogleSignIn}
                             >
                                 <div className="w-full flex gap-2 items-center justify-between inset-0 flex-col">
@@ -101,7 +161,7 @@ export default function SignIn() {
                                 </div>
                             </div>
                             <div
-                                className={`w-full min-w-full bg-white text-black hover:bg-white/90 transition-all font-semibold flex items-center relative justify-center p-2 rounded-md ${provider === "Microsoft" ? "shadow-md shadow-cyan-50" : "border-gray-600 hover:bg-gray-800 border"}`}
+                                className={`w-full min-w-full cursor-pointer bg-white text-black hover:bg-white/90 transition-all font-semibold flex items-center relative justify-center p-2 rounded-md ${provider === "Microsoft" ? "shadow-md shadow-cyan-50" : "border-gray-600 hover:bg-gray-800 border"}`}
                             >
                                 <div className="w-full flex gap-2 items-center justify-between inset-0 flex-col">
                                     {provider === "Microsoft" && (
@@ -123,6 +183,55 @@ export default function SignIn() {
                                     </div>
                                 </div>
                             </div>
+                            <div
+                                className={`w-full min-w-full cursor-pointer bg-white text-black hover:bg-white/90 transition-all font-semibold flex items-center relative justify-center p-2 rounded-md ${provider === "Microsoft" ? "shadow-md shadow-cyan-50" : "border-gray-600 hover:bg-gray-800 border"}`}
+                                onClick={() => setOpenEmail(!openEmail)}
+                            >
+                                <div className="w-full flex gap-2 items-center justify-between inset-0 flex-col">
+                                    {provider === "Email" && (
+                                        <div className="w-full absolute right-1">
+                                            <PreviouslySignedInWith providercookie={provider} />
+                                        </div>
+                                    )}
+                                    <div className="flex flex-row gap-2 items-center justify-between">
+                                        <Mail className="h-5 w-5" />
+                                        Sign in with Email
+                                    </div>
+                                </div>
+                            </div>
+                            {
+                                openEmail && (
+                                    <div className="flex flex-col gap-2 mt-4 w-full">
+                                        <Input
+                                        type="email"
+                                        placeholder="Email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        />
+                                        <Input
+                                        type="password"
+                                        placeholder="Password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        />
+                                        <Button
+                                            variant="primary"
+                                            className={`w-full ${loadingSignIn ? "bg-muted-foreground/40 text-white border-white" : ""}`}
+                                            onClick={() => callEmailSignIn(email, password, setLoadingSignIn)}
+                                        >
+                                            Sign in
+                                        </Button>
+                                        {/* show if password / email is wrong */}
+                                        {loadinggoogle && (
+                                            <div className="text-red-500 text-sm mt-2">
+                                                Invalid email or password
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            }
                         </div>
                     )
                 }
