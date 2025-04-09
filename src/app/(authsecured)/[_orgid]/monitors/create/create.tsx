@@ -71,7 +71,14 @@ export default function CreateMonitor({spaceid}: {spaceid: string}) {
                 multipleURLs,
                 monitorType,
                 geographicLocations,
-                customHeaders: monitorType === "api" ? JSON.parse(customHeaders) : undefined, 
+                customHeaders: monitorType === "api" ? (() => {
+                    try {
+                        return JSON.parse(customHeaders);
+                    } catch (error) {
+                        console.error("Failed to parse customHeaders:", error);
+                        return undefined;
+                    }
+                })() : undefined,                
                 port: monitorType === "port" ? parseInt(port) : undefined, 
             },
             alertConditions: {
