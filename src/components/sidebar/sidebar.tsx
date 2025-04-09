@@ -173,8 +173,11 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
     return (
         <div id="sidebarmain" className="w-16 border-r border-[#fff]/15  flex flex-col items-center">
             <a className="w-full flex-shrink-0" href={`/${orgID}/dashboard`}>
-                <div className="mx-4 w-8 h-8 mt-4 flex items-center justify-center">
+                <div className="mx-4 w-8 h-8 mt-4 hidden dark:flex items-center justify-center">
                     <img src="/trackitlogo/light/logo.png" alt="Trackit Logo" className="w-8 h-8" />
+                </div>
+                <div className="mx-4 w-8 h-8 mt-4 dark:hidden flex items-center justify-center">
+                    <img src="/trackitlogo/dark/logo.png" alt="Trackit Logo" className="w-8 h-8" />
                 </div>
             </a>
             <div className="w-1/2 border-t my-4 border-[#fff]/10 flex-shrink-0" />
@@ -355,7 +358,7 @@ export const Tooltip = ({
       {children}
       <div
         ref={tooltipRef}
-        className={`absolute flex flex-row items-center justify-center z-50 bg-black/90 text-white text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${status ? "pr-5" : ""} ${getPositionClasses()}`}
+        className={`absolute flex flex-row items-center justify-center z-50 bg-background/20 text-foreground shadow-lg text-sm w-auto rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${status ? "pr-5" : ""} ${getPositionClasses()}`}
       >
         {text}
         {status && (

@@ -636,7 +636,7 @@ export default function Messages() {
 
   return (
     <AuthChecks>
-      <main className="bg-[#16181c] text-white w-full h-full overflow-hidden">
+      <main className='dark:bg-[#101218] bg-[#fff] w-full h-full overflow-y-scroll changedscrollbar'>
         {openChannel && (
           <div className="bg-black bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center">
             <div className="bg-[#111216] mx-auto md:w-1/3 container px-6 py-4 h-full md:h-[30%] rounded-md flex flex-col gap-4">

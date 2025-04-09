@@ -365,17 +365,20 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
 
     return(
         <AuthChecks>
-        <div className='bg-[#101218] w-full h-full overflow-y-scroll changedscrollbar'>
+        <div className='dark:bg-[#101218] bg-[#fff] w-full h-full overflow-y-scroll changedscrollbar'>
             <div className="flex flex-col items-start mt-10 justify-start w-full h-full">
                 <div className="container mx-auto px-2 lg:px-10 flex flex-col justify-start items-start w-full h-screen">
                     <div className="flex flex-row items-center justify-start gap-5 w-full mt-10 mb-2">
-                        <ChevronLeft className='w-8 h-8 hover:text-white hover:bg-zinc-700/20 rounded-lg text-muted-foreground cursor-pointer' onClick={() => window.history.back()} />
-                        <h1 className="text-3xl font-medium text-white">Status Page Creator</h1>
+                        <ChevronLeft 
+                            className='w-8 h-8 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-zinc-700/20 rounded-lg transition-all text-gray-600 dark:text-muted-foreground cursor-pointer' 
+                            onClick={() => window.history.back()} 
+                        />
+                        <h1 className="text-3xl font-medium dark:text-foreground">Status Page Creator</h1>
                     </div>
                     <div className="flex flex-col items-start justify-between w-full mt-10 mb-2">
                         <div className='flex flex-col xl:flex-row gap-4 relative w-full'>
                             <div className='flex flex-col'>
-                                <h1 className="text-2xl font-medium text-white">Monitors</h1>
+                                <h1 className="text-2xl font-medium ">Monitors</h1>
                                 <p className="text-muted-foreground mb-4">Add monitors to your status page. These are the components that will be monitored and displayed.</p>
                                 <div className='flex flex-col gap-2'>
                                 {
@@ -406,13 +409,13 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                             </div>
                         </div>
                         <div className='flex flex-col relative mb-6 border-t w-full pt-6 mt-6'>
-                            <h1 className="text-2xl font-medium text-white">Customisation</h1>
+                            <h1 className="text-2xl font-medium ">Customisation</h1>
                             <p className="text-muted-foreground mb-4">Customise your status page with a logo, colour scheme and more.</p>
                             <div className='flex flex-col xl:flex-row gap-4 w-full'>
                                 <div className='w-full xl:w-1/2 gap-4 flex flex-col'>
                                     {/* Customisation zone */}
                                     <div className='flex flex-col'>
-                                        <h2 className="text-lg font-medium text-white">Layout</h2>
+                                        <h2 className="text-lg font-medium ">Layout</h2>
                                         <p className="text-muted-foreground mb-4">Choose a layout for your status page.</p>
                                     </div>
                                     <div className='flex flex-row items-start justify-start gap-2 w-full'>
@@ -433,14 +436,14 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                     </div>
                                     <div className='flex flex-col mt-4'>
                                         <div className='flex flex-col'>
-                                            <h2 className="text-lg font-medium text-white">Name</h2>
+                                            <h2 className="text-lg font-medium ">Name</h2>
                                             <p className="text-muted-foreground mb-4">Choose a name for your status page.</p>
                                         </div>
                                         <input type="text" onChange={(e) => setPageName(e.target.value)} className='bg-background/10 border-[1px] border-muted-foreground/10 rounded-md p-4 w-full' placeholder='Status Page Name' />
                                     </div>
                                     <div className='flex flex-col mt-4'>
                                         <div className='flex flex-col'>
-                                            <h2 className="text-lg font-medium text-white">Logo</h2>
+                                            <h2 className="text-lg font-medium ">Logo</h2>
                                             <p className="text-muted-foreground">Upload a logo for your status page.</p>
                                             <p className="text-muted-foreground mb-4 text-xs">250px by 250px max file size 300KB</p>
                                         </div>
@@ -497,7 +500,7 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                     </div>
                                     <div className='flex flex-col mt-4'>
                                         <div className='flex flex-col'>
-                                            <h2 className="text-lg font-medium text-white">URL</h2>
+                                            <h2 className="text-lg font-medium ">URL</h2>
                                             <p className="text-muted-foreground mb-4">Where do you want your logo to point to?</p>
                                         </div>
                                         <input 
@@ -520,7 +523,7 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                     </div>
                                     <div className='flex flex-col mt-4'>
                                         <div className='flex flex-col'>
-                                            <h2 className="text-lg font-medium text-white">Display Options</h2>
+                                            <h2 className="text-lg font-medium ">Display Options</h2>
                                             <p className="text-muted-foreground mb-4">Choose what information to display on your status page.</p>
                                         </div>
                                         <div className='flex flex-col gap-2'>
@@ -545,7 +548,7 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                 </div>
                                 <div className='w-full xl:w-1/2'>
                                     <div className='flex flex-col gap-2 sticky top-48'>
-                                        <h2 className="text-lg font-medium text-white">Preview</h2>
+                                        <h2 className="text-lg font-medium ">Preview</h2>
                                         <p className="text-muted-foreground mb-4">Preview your status page with the selected layout and theme.</p>
                                         <PreviewPage layout={layout} logo={logo} webURL={webURL} monitorTabs={monitorTabs} systemStatus={systemStatus} selectedMonitors={selectedMonitors} uptimevisible={uptimevisible} responsetimevisible={responsetimevisible} />
                                     </div>
@@ -553,13 +556,13 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                             </div>
                             <div className='flex flex-col mt-4 border-t pt-4'>
                                         <div className='flex flex-col'>
-                                            <h2 className="text-lg font-medium text-white">Advanced Options</h2>
+                                            <h2 className="text-lg font-medium ">Advanced Options</h2>
                                             <p className="text-muted-foreground mb-4"></p>
                                         </div>
                                     </div>
                                     <div className='flex flex-col'>
                                         <div className='flex flex-col'>
-                                            <h2 className="text-lg font-medium text-white">Custom URL</h2>
+                                            <h2 className="text-lg font-medium">Custom URL</h2>
                                             <p className="text-muted-foreground">Choose a custom URL for your status page.</p>
                                             <p className='mb-4 text-sm text-muted-foreground'>For example: status.yourdomain.com</p>
                                         </div>
@@ -591,20 +594,20 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                             </div>
                                             {dnsRecords && (
                                                 <div className='bg-background/20 p-4 rounded-md'>
-                                                    <h3 className="text-md font-medium text-white mb-2">DNS Configuration</h3>
+                                                    <h3 className="text-md font-medium mb-2">DNS Configuration</h3>
                                                     <p className="text-muted-foreground text-sm mb-2">Add these DNS records to verify and activate your domain:</p>
                                                     <div className='space-y-2'>
                                                         <div>
                                                             <span className='text-muted-foreground text-sm'>Type: </span>
-                                                            <span className='text-white text-sm'>{dnsRecords.type}</span>
+                                                            <span className='text-sm'>{dnsRecords.type}</span>
                                                         </div>
                                                         <div>
                                                             <span className='text-muted-foreground text-sm'>Name: </span>
-                                                            <span className='text-white text-sm'>{dnsRecords.name}</span>
+                                                            <span className='text-sm'>{dnsRecords.name}</span>
                                                         </div>
                                                         <div>
                                                             <span className='text-muted-foreground text-sm'>Value: </span>
-                                                            <span className='text-white text-sm'>{dnsRecords.value}</span>
+                                                            <span className='text-sm'>{dnsRecords.value}</span>
                                                         </div>
                                                     </div>
                                                     <Button 
@@ -629,7 +632,7 @@ export default function CreateStatusPage({_orgid}: { _orgid: string }) {
                                     </div>
                                     <div className='flex flex-col mt-4'>
                                         <div className='flex flex-col'>
-                                            <h2 className="text-lg font-medium text-white">Font Options</h2>
+                                            <h2 className="text-lg font-medium">Font Options</h2>
                                             <p className="text-muted-foreground mb-4">Choose what information to display on your status page.</p>
                                         </div>
                                         <div className='flex flex-col gap-2'>
@@ -689,7 +692,7 @@ export function PreviewPage({layout, logo, webURL, monitorTabs, systemStatus, se
                 <div className='flex flex-row gap-2 items-center'>
                     {
                         monitorTabs.map((tab: string, index: number) => (
-                            <div key={index} className={`flex flex-row items-center text-sm justify-center gap-2 text-white cursor-pointer px-3 py-1 rounded-lg ${monitorTabs[0] === tab ? 'text-primary bg-zinc-700/20' : 'text-muted-foreground'}`}>
+                            <div key={index} className={`flex flex-row items-center text-sm justify-center gap-2  cursor-pointer px-3 py-1 rounded-lg ${monitorTabs[0] === tab ? 'text-primary bg-zinc-700/20' : 'text-muted-foreground'}`}>
                                 {tab}
                             </div>
                         ))

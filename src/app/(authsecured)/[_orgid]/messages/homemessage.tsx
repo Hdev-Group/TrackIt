@@ -43,7 +43,7 @@ export default function Messages() {
 
   return (
     <AuthChecks>
-      <main className="bg-[#16181c] text-white w-full min-h-screen overflow-hidden">
+      <main className='dark:bg-[#101218] bg-[#fff] w-full h-full overflow-y-scroll changedscrollbar'>
         <div className="flex h-screen w-full">
           <Channels
             channels={channels}

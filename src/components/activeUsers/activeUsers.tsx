@@ -111,11 +111,11 @@ export default function ActiveUsers() {
                                     isSidebarOpen ? (
                                         <SidebarOpen 
                                         onClick={() => toggleSidebar()}
-                                        className="w-8 hover:bg-muted rounded-md transition-all cursor-pointer h-8 p-1 text-white/80" />
+                                        className="w-8 hover:bg-muted rounded-md transition-all cursor-pointer h-8 p-1 text-foreground" />
                                     ) : (
                                         <SidebarClose
                                         onClick={() => toggleSidebar()}
-                                        className="w-8 hover:bg-muted rounded-md transition-all cursor-pointer h-8 p-1 text-white/80" />
+                                        className="w-8 hover:bg-muted rounded-md transition-all cursor-pointer h-8 p-1 text-foreground" />
                                     )
                                 }
                             </div>

@@ -7,7 +7,7 @@ export default function AppFooter({ className }: { className?: string }) {
   const currentYear = new Date().getFullYear()
   
   return (
-    <footer className="w-full bg-[#101218] border-t border-gray-800 py-4">
+    <footer className="w-full dark:bg-[#101218] bg-[#fff] border-t dark:border-gray-800 border-gray-300 py-4">
       <div className={`container ${className || ''} mx-auto px-4`}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-500">

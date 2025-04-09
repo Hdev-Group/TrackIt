@@ -379,7 +379,7 @@ export default function CreateMonitor({spaceid}: {spaceid: string}) {
 
     return (
         <AuthChecks>
-            <div className="bg-[#101218] w-full h-full overflow-y-scroll changedscrollbar">
+            <div className='dark:bg-[#101218] bg-[#fff] w-full h-full overflow-y-scroll changedscrollbar'>
                 <div className="flex flex-col items-start mt-10 justify-start w-full h-full">
                     <div className="container mx-auto px-2 lg:px-10 flex flex-col justify-start items-start w-full h-screen">
                         <div className="flex flex-row items-center justify-start gap-5 w-full mt-10 mb-2">
