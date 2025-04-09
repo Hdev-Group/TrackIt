@@ -1,9 +1,18 @@
 const { Server } = require("socket.io");
 const http = require("http");
+const admin = require("firebase-admin");
 require("dotenv").config({ path: ".env.local" });
-const { MongoClient, ServerApiVersion } = require("mongodb");
-const uri = process.env.MONGODB_URI;
 
+// Initialize Firebase Admin SDK
+const serviceAccount = require("../trackit-10c25-firebase-adminsdk-fbsvc-84b52f0849.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore();
+const auth = admin.auth();
+
+// Create HTTP server for Socket.IO
 const server = http.createServer();
 const io = new Server(server, {
   cors: {
@@ -14,6 +23,7 @@ const io = new Server(server, {
   pingTimeout: 60000,
 });
 
+// Existing Socket.IO Logic (unchanged)
 const onlineUsers = new Map();
 const channelUsers = new Map();
 
@@ -88,7 +98,6 @@ io.on("connection", (socket) => {
     socket.to(channel).emit("userLeftChannel", { userId, channel });
   });
 
-  // Targeted signaling to specific users
   socket.on("offer", ({ offer, channel, fromUserId, toUserId }) => {
     console.log(`Offer from ${fromUserId} to ${toUserId} in channel ${channel}:`, offer);
     const toSocketId = Array.from(channelUsers.get(channel) || []).find(
@@ -157,24 +166,39 @@ io.on("connection", (socket) => {
   });
 });
 
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
-async function run() {
+async function cleanupUnverifiedUsers() {
   try {
-    await client.connect()
-    await client.db("admin").command({ ping: 1 })
-    console.log("Pinged deployment. You successfully connected to MongoDB!")
-  } finally {
-    await client.close()
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000; 
+    const usersRef = db.collection("users");
+
+    const snapshot = await usersRef
+      .where("isVerified", "==", false)
+      .where("createdAt", "<=", new Date(twoHoursAgo))
+      .get();
+
+    if (snapshot.empty) {
+      console.log("No unverified users to delete");
+      return;
+    }
+
+    const deletePromises = snapshot.docs.map(async (doc) => {
+      const uid = doc.id;
+      await usersRef.doc(uid).delete(); 
+      await auth.deleteUser(uid); 
+      console.log(`Deleted unverified user: ${uid}`);
+    });
+
+    await Promise.all(deletePromises);
+    console.log("Cleanup of unverified users completed");
+  } catch (error) {
+    console.error("Error during cleanup of unverified users:", error);
   }
 }
 
-server.listen(3001, () => {
-  console.log("Socket.IO server running on http://localhost:3001")
-  run().catch(console.dir)
-})
+setInterval(cleanupUnverifiedUsers, 5 * 60 * 1000);
+
+// Start the Server
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`Socket.IO server running on http://localhost:${PORT}`);
+});

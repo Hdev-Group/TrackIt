@@ -2,14 +2,40 @@
 import Button from '@/components/button/button';
 import AuthChecks from '../../authchecks';
 import { ChevronDown, Plus, Server, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppFooter from '@/components/footer/appfooter';
 import { SpinnerLoader } from '@/components/loaders/mainloader';
 import { Tooltip } from '@/components/sidebar/sidebar';
+import { getAuth, type User } from "firebase/auth"
 
 
-export default function StatusPageMain() {
+export default function StatusPageMain({_orgid}: {_orgid: string}) {
     const [showMore, setShowMore] = useState(true);
+    const [statusPages, setStatusPages] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const user = getAuth().currentUser as User;
+
+    useEffect(() => {
+        async function fetchStatusPages(){
+            const userToken = await user?.getIdToken();
+            const res = await fetch(`/api/application/v1/statuspage/restricted/get?orgid=${encodeURIComponent(_orgid)}`, {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`,
+                },
+            });
+            const data = await res.json();
+            if (res.status === 200) {
+                setStatusPages(data.monitors);
+                console.log(data);
+                setLoading(false);
+            } else {
+                console.error("Error fetching status pages:", data.message);
+            }
+        }
+        fetchStatusPages();
+    }, []);
 
     return(
         <AuthChecks>
@@ -34,8 +60,21 @@ export default function StatusPageMain() {
                                 </div>
                             </div>
                                 <div className='flex flex-col gap-2'>
-                                    <StatusPageBoxes status='Offline' site='hdev.uk' name='Hdev Site' id='2' />
-                                    <StatusPageBoxes status='Online' site='hdev.uk' name='Hdev Site' id='2' />
+                                    {loading ? (
+                                        <div className='flex flex-row justify-center items-center w-full h-full'>
+                                            <SpinnerLoader size={20} color={"#ffffff"} />
+                                        </div>
+                                    ) : (
+                                        statusPages.length > 0 ? (
+                                            statusPages.map((statusPage) => (
+                                                <StatusPageBoxes key={statusPage._id?.toString()} status={statusPage.status} site={statusPage.site} name={statusPage.name} id={statusPage._id?.toString()} />
+                                            ))
+                                        ) : (
+                                            <div className='flex flex-row justify-center items-center w-full h-full'>
+                                                <p className="text-muted-foreground/60 font-normal text-[14px]">No status pages available.</p>
+                                            </div>
+                                        )
+                                    )}
                                 </div>
                             </div>
                             </div>

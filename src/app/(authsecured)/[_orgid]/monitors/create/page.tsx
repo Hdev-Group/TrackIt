@@ -7,8 +7,10 @@ export async function generateMetadata() {
   };
 }
 
-export default function Page() {
+export default async function Page({ params }: { params: { _orgid: string } }) {
+  const { _orgid } = await params;
+  console.log("Org ID: ", _orgid);
   return(
-    <CreateMonitor />
+    <CreateMonitor spaceid={_orgid} />
   )
 }

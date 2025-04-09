@@ -2,7 +2,7 @@
 
 import { AlertCircle, Building2Icon, ChartSpline, CheckCircle, ChevronDown, Clock, Glasses, GripHorizontal, LucideTickets, MoreHorizontal, Ticket } from 'lucide-react';
 import AuthChecks from '../../authchecks';
-import { getAuth, User } from 'firebase/auth';
+import { getAuth, type User } from "firebase/auth"
 import { useEffect, useState, JSX } from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -11,16 +11,17 @@ import React from 'react';
 import AppFooter from '@/components/footer/appfooter';
 
 
-export default function Dashboard() {
+export default function Dashboard({orgid}: { orgid: string }) {
     const [user, setUser] = useState<User | null>(null);
     const auth = getAuth();
     const [widgets, setWidgets] = useState([
         { id: "assigned-tickets", component: <AssignedTickets /> },
         { id: "ticket-stats", component: <TicketStats /> },
-        { id: "site-monitoring", component: <SiteMonitoring /> },
+        { id: "site-monitoring", component: <SiteMonitoring orgid={orgid} /> },
         { id: "departments-assigned-to", component: <DepartmentsAssignedTo /> },
         { id: "recent-activities", component: <RecentActivities /> },
     ]);
+
 
 
     useEffect(() => {
@@ -110,19 +111,42 @@ function Draggable({ id, children }: { id: string, children: React.ReactNode }) 
     );
 }
 
-function SiteMonitoring() {
-    const sites = [
-        {
-            name: 'Site 1',
-            status: 'Up',
-            color: 'green-500',
-        },
-        {
-            name: 'Site 2',
-            status: 'Offline',
-            color: 'red-500',
-        },
-    ];
+function SiteMonitoring({orgid}: { orgid: string }) {
+    const [monitors, setMonitors] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const _orgid = orgid
+    const user = getAuth().currentUser;
+
+    useEffect(() => {
+        const getmonitors = async () => {
+            const userToken = await user?.getIdToken();
+            const res = await fetch(`/api/application/v1/monitoring/restricted/monitors/getmonitors?orgid=${encodeURIComponent(_orgid)}`, {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`,
+                },
+            });
+            const data = await res.json();
+            const formattedMonitors = data?.monitors?.map((monitor: any) => ({
+                id: monitor._id,
+                name: monitor.monitoring.webURL,
+                type: monitor.monitoring.monitorType,
+                isValid: monitor.monitoring.isValidURL,
+                locations: monitor.monitoring.geographicLocations.join(", "),
+                alertCondition: monitor.alertConditions.alertCondition,
+                severity: monitor.alertConditions.severityLevel,
+                notificationMethods: monitor.alerts.notificationMethods.join(", "),
+                escalationDelay: monitor.alerts.escalationDelay,
+                checkFrequency: monitor.advancedSettings.checkFrequency,
+                timestamp: new Date(monitor.timestamp).toLocaleString()
+            }));
+            setMonitors(formattedMonitors);
+            setLoading(false);
+        };
+
+        getmonitors();
+    }, [user, _orgid]);
 
     const [showMore, setShowMore] = useState(true);
 
@@ -149,25 +173,27 @@ function SiteMonitoring() {
                 </div>
                 <div className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${showMore ? "max-h-[500px]" : "max-h-0"}`}>
                     <div className='flex flex-col w-full border-muted-foreground/20 border-t'>
-                        {sites.map((site, index) => (
-                            <div 
-                                key={index} 
-                                className='w-full flex flex-row justify-between items-center px-4 py-4 border-b last:border-none hover:bg-white/5 transition-all border-muted-foreground/20'
-                            >
-                                <div className='flex items-center flex-row gap-4 justify-center'>
-                                    <div className={`w-3 h-3 rounded-full bg-${site.color}`}></div>
-                                    <div className='flex flex-col'>
-                                        <h2 className='text-foreground font-semibold text-[12px]'>{site.name}</h2>
-                                        <div className='flex flex-row gap-1.5 text-[11px] text-muted-foreground/90'>
-                                            <span className={`text-${site.color} text-[11px]`}>{site.status}</span>
-                                            <p> · </p>
-                                            <span className=''>2h 5m</span>
-                                            <p> · </p>
-                                            <span className='underline'>Used on STATUS PAGE</span>
+                        {monitors?.map((site, index) => (
+                            <a href={`./monitors/${site.id}`} key={index} className=''>
+                                <div 
+                                    key={index} 
+                                    className='w-full flex flex-row justify-between items-center px-4 py-4 border-b last:border-none hover:bg-white/5 transition-all border-muted-foreground/20'
+                                >
+                                    <div className='flex items-center flex-row gap-4 justify-center'>
+                                        <div className={`w-3 h-3 rounded-full bg-${site.isValid ? "green-500" : "red-500"}`}></div>
+                                        <div className='flex flex-col'>
+                                            <h2 className='text-foreground font-semibold text-[12px]'>{site.name}</h2>
+                                            <div className='flex flex-row gap-1.5 text-[11px] text-muted-foreground/90'>
+                                                <span className={`text-${site.color} text-[11px]`}>{site.isValid ? "Online" : "Offline"}</span>
+                                                <p> · </p>
+                                                <span className=''>2h 5m</span>
+                                                <p> · </p>
+                                                <span className='underline'>Used on STATUS PAGE</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         ))}
                     </div>
                 </div>
