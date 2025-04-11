@@ -2,11 +2,13 @@ const { Server } = require("socket.io");
 const http = require("http");
 const admin = require("firebase-admin");
 require("dotenv").config({ path: ".env.local" });
-const { MongoClient, ObjectId } = require("mongodb");
+const { MongoClient } = require("mongodb");
 const axios = require("axios");
+const { TextEncoder, TextDecoder } = require("util");
 const { exec } = require("child_process");
 const util = require("util");
 const execPromise = util.promisify(exec);
+const ping = require("ping");
 
 // Configuration constants
 const FREQ_REGEX = /^(\d+)([smh])$/;
@@ -15,7 +17,7 @@ const DEFAULT_TIMEOUT = 10000;
 const MAX_CONCURRENT_REQUESTS = 10;
 const BATCH_SIZE = 1;
 const MONITOR_REFRESH_INTERVAL = 300000; // 5 minutes
-const CLEANUP_INTERVAL = 3600000; // 1 hour
+const CLEANUP_INTERVAL = 3600000; 
 
 // Semaphore for concurrent requests
 class Semaphore {
@@ -70,7 +72,6 @@ async function connectToMongo() {
   }
 }
 
-// Initialize HTTP server and Socket.IO
 const server = http.createServer();
 const io = new Server(server, {
   cors: {
@@ -253,7 +254,6 @@ async function cleanupUnverifiedUsers() {
 
 setInterval(cleanupUnverifiedUsers, CLEANUP_INTERVAL);
 
-// Monitoring logic
 async function checkWebsiteStatus(monitor) {
   const { _id, monitoring, alertConditions } = monitor;
   const { webURL } = monitoring;
@@ -262,7 +262,6 @@ async function checkWebsiteStatus(monitor) {
   console.log(`Checking website status for ${webURL} (ID: ${monitorId})`);
 
   await semaphore.acquire();
-
   const result = {
     monitorId,
     url: webURL,
@@ -277,39 +276,39 @@ async function checkWebsiteStatus(monitor) {
   };
 
   try {
-    const start = Date.now();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Request timeout")), DEFAULT_TIMEOUT)
+    );
+    await Promise.race([
+      (async () => {
+        const start = Date.now();
+        const [httpResponse, pingResult] = await Promise.allSettled([
+          axios.get(webURL, {
+            timeout: DEFAULT_TIMEOUT,
+            headers: { "User-Agent": "Website-Monitor/1.0" },
+            validateStatus: () => true,
+          }),
+          getPingTime(webURL),
+        ]);
 
-    const [httpResponse, pingResult] = await Promise.allSettled([
-      axios.get(webURL, {
-        timeout: DEFAULT_TIMEOUT,
-        headers: { "User-Agent": "Website-Monitor/1.0" },
-        validateStatus: () => true,
-      }),
-      getPingTime(webURL),
+        result.responseTime = Date.now() - start;
+
+        if (httpResponse.status === "fulfilled") {
+          const { status, headers, data } = httpResponse.value;
+          result.statusCode = status;
+          result.latency = Date.now() - start;
+          result.contentLength = headers["content-length"] || Buffer.byteLength(data);
+          if (status >= 200 && status < 400 && pingResult.status === "fulfilled") {
+            result.status = "up";
+          }
+        }
+
+        if (pingResult.status === "fulfilled" && pingResult.value !== null) {
+          result.ping = pingResult.value;
+        }
+      })(),
+      timeoutPromise,
     ]);
-
-    result.responseTime = Date.now() - start;
-
-    if (httpResponse.status === "fulfilled") {
-      const { status, headers, data } = httpResponse.value;
-      result.statusCode = status;
-      result.latency = Date.now() - start;
-      result.contentLength = headers["content-length"] || Buffer.byteLength(data);
-
-      if (status >= 200 && status < 400) {
-        result.status = "up";
-      }
-      console.log(`HTTP check for ${webURL}: status=${status}, latency=${result.latency}ms`);
-    } else {
-      console.log(`HTTP check failed for ${webURL}: ${httpResponse.reason}`);
-    }
-
-    if (pingResult.status === "fulfilled" && pingResult.value !== null) {
-      result.ping = pingResult.value;
-      console.log(`Ping for ${webURL}: ${result.ping}ms`);
-    } else {
-      console.log(`Ping failed for ${webURL}`);
-    }
   } catch (err) {
     result.error = err.message;
     console.error(`Error checking ${webURL}: ${err.message}`);
@@ -317,11 +316,8 @@ async function checkWebsiteStatus(monitor) {
     semaphore.release();
   }
 
-  await batchInsertResult(result);
-
+  await insertResult(result);
   io.emit("websiteStatus", result);
-  console.log(`Emitted websiteStatus for ${webURL}: ${result.status}`);
-
   handleAlerts(monitor, result);
 
   return result;
@@ -330,13 +326,10 @@ async function checkWebsiteStatus(monitor) {
 async function getPingTime(url) {
   try {
     const hostname = new URL(url).hostname;
-    const { stdout } = await execPromise(`ping -c 1 ${hostname}`);
-    const timeMatch = stdout.match(/time=(\d+\.?\d*)/);
-    if (timeMatch) {
-      return parseFloat(timeMatch[1]);
-    }
-    return null;
-  } catch {
+    const res = await ping.promise.probe(hostname, { timeout: 2 });
+    return res.alive ? parseFloat(res.time) : null;
+  } catch (err) {
+    console.error(`Ping error for ${url}: ${err.message}`);
     return null;
   }
 }
@@ -477,11 +470,8 @@ async function syncMonitors() {
 
   try {
     const monitors = await monitorsCollection.find({}).toArray();
-    console.log("Syncing monitors:", monitors?.length || 0);
-
     const currentMonitorIds = new Set(monitors.map((m) => m._id.toString()));
 
-    // Stop monitors that no longer exist
     for (const monitorId of activeMonitors.keys()) {
       if (!currentMonitorIds.has(monitorId)) {
         const cleanup = activeMonitors.get(monitorId);
@@ -491,14 +481,29 @@ async function syncMonitors() {
       }
     }
 
-    // Start valid monitors
     for (const monitor of monitors) {
       if (monitor.monitoring?.isValidURL && monitor.monitoring?.monitorType === "http") {
         await startMonitoring(monitor);
-      } else {
-        console.log(`Skipping invalid monitor: ${monitor._id}`);
       }
     }
+
+    const changeStream = monitorsCollection.watch();
+    changeStream.on("change", async (change) => {
+      if (change.operationType === "insert" || change.operationType === "update") {
+        const monitor = await monitorsCollection.findOne({ _id: change.documentKey._id });
+        if (monitor?.monitoring?.isValidURL && monitor.monitoring?.monitorType === "http") {
+          await startMonitoring(monitor);
+        }
+      } else if (change.operationType === "delete") {
+        const monitorId = change.documentKey._id.toString();
+        const cleanup = activeMonitors.get(monitorId);
+        if (cleanup) {
+          cleanup();
+          activeMonitors.delete(monitorId);
+          console.log(`Stopped monitoring: ${monitorId}`);
+        }
+      }
+    });
   } catch (err) {
     console.error("Error syncing monitors:", err.message);
   }
