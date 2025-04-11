@@ -8,6 +8,7 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
+import useWebsiteStatus from '@/components/websockets/monitors/websiteStatus'
 import AppFooter from '@/components/footer/appfooter';
 
 
@@ -111,90 +112,136 @@ function Draggable({ id, children }: { id: string, children: React.ReactNode }) 
     );
 }
 
-function SiteMonitoring({orgid}: { orgid: string }) {
+function SiteMonitoring({ orgid }: { orgid: string }) {
     const [monitors, setMonitors] = useState([]);
+    const [lastData, setLastData] = useState([]);
     const [loading, setLoading] = useState(true);
-    const _orgid = orgid
+    const _orgid = orgid;
     const user = getAuth().currentUser;
 
-    useEffect(() => {
-        const getmonitors = async () => {
-            const userToken = await user?.getIdToken();
-            const res = await fetch(`/api/application/v1/monitoring/restricted/monitors/getmonitors?orgid=${encodeURIComponent(_orgid)}`, {
-                method: 'GET',
+    const updateData = async () => {
+        const userToken = await user?.getIdToken();
+        const res = await fetch(
+            `/api/application/v1/monitoring/restricted/monitors/getmonitors?orgid=${encodeURIComponent(_orgid)}`,
+            {
+                method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${userToken}`,
+                    Authorization: `Bearer ${userToken}`,
                 },
-            });
-            const data = await res.json();
-            const formattedMonitors = data?.monitors?.map((monitor: any) => ({
-                id: monitor._id,
-                name: monitor.monitoring.webURL,
-                type: monitor.monitoring.monitorType,
-                isValid: monitor.monitoring.isValidURL,
-                locations: monitor.monitoring.geographicLocations.join(", "),
-                alertCondition: monitor.alertConditions.alertCondition,
-                severity: monitor.alertConditions.severityLevel,
-                notificationMethods: monitor.alerts.notificationMethods.join(", "),
-                escalationDelay: monitor.alerts.escalationDelay,
-                checkFrequency: monitor.advancedSettings.checkFrequency,
-                timestamp: new Date(monitor.timestamp).toLocaleString()
-            }));
-            setMonitors(formattedMonitors);
-            setLoading(false);
-        };
+            }
+        );
+        const data = await res.json();
+        const formattedMonitors = data?.monitors?.map((monitor: any) => ({
+            id: monitor._id,
+            name: monitor.monitoring.webURL,
+            type: monitor.monitoring.monitorType,
+            isValid: monitor.monitoring.isValidURL,
+            locations: monitor.monitoring.geographicLocations.join(", "),
+            alertCondition: monitor.alertConditions.alertCondition,
+            severity: monitor.alertConditions.severityLevel,
+            notificationMethods: monitor.alerts.notificationMethods.join(", "),
+            escalationDelay: monitor.alerts.escalationDelay,
+            checkFrequency: monitor.advancedSettings.checkFrequency,
+            timestamp: new Date(monitor.timestamp).toLocaleString(),
+        }));
+        setMonitors(formattedMonitors);
+        setLastData([]); // Reset lastData to force re-sync with WebSocket
+        setLoading(false);
+    };
 
-        getmonitors();
+    const websiteStatusMap = useWebsiteStatus({
+        monitorIds: monitors.map((monitor: any) => monitor.id.toString()),
+    });
+
+    useEffect(() => {
+        if (Object.keys(websiteStatusMap).length > 0) {
+            setLastData((prevMonitors) => {
+                return monitors.map((monitor: any) => {
+                    const liveData = websiteStatusMap[monitor.id];
+                    const existingData = prevMonitors.find((data: any) => data.monitorId === monitor.id);
+                    return {
+                        id: monitor.id,
+                        monitorId: monitor.id,
+                        status: liveData?.status ?? existingData?.status ?? "unknown",
+                        responseTime: liveData?.responseTime ?? existingData?.responseTime ?? null,
+                        timestamp: liveData?.timestamp
+                            ? new Date(liveData.timestamp).toLocaleString()
+                            : existingData?.timestamp ?? new Date().toLocaleString(),
+                    };
+                });
+            });
+        }
+    }, [websiteStatusMap, monitors]);
+
+    useEffect(() => {
+        updateData();
     }, [user, _orgid]);
 
     const [showMore, setShowMore] = useState(true);
 
-
     return (
-        <div className='flex flex-col group gap-4 w-full h-full'>
-            <div className='flex flex-row justify-start items-center w-full'>
-                <div className='flex flex-row justify-between w-full'>
-                    <div className='flex flex-row'>
-                        <div className="relative">
-                        </div>
+        <div className="flex flex-col group gap-4 w-full h-full">
+            <div className="flex flex-row justify-start items-center w-full">
+                <div className="flex flex-row justify-between w-full">
+                    <div className="flex flex-row">
+                        <div className="relative"></div>
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col bg-muted-foreground/5 justify-between border-muted-foreground/20 border items-center overflow-hidden w-full rounded-lg'>
-                <div onClick={() => setShowMore(!showMore)} className='flex items-center border-b justify-start px-4 w-full h-10 gap-2 cursor-pointer'>
-                    <ChartSpline className='text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all' />
-                    <div className='flex flex-row items-center gap-1'>
-                        <ChevronDown className={`${showMore ? "rotate-0" : "-rotate-90"} text-foreground h-4 w-4 -translate-x-7 group-hover:translate-x-0 transition-all`} />
-                        <h2 className='text-foreground font-normal text-[13px] -translate-x-7 group-hover:translate-x-0 transition-all'>
+            <div className="flex flex-col bg-muted-foreground/5 justify-between border-muted-foreground/20 border items-center overflow-hidden w-full rounded-lg">
+                <div
+                    onClick={() => setShowMore(!showMore)}
+                    className="flex items-center border-b justify-start px-4 w-full h-10 gap-2 cursor-pointer"
+                >
+                    <ChartSpline className="text-foreground h-4 w-4 -translate-x-8 group-hover:translate-x-0 transition-all" />
+                    <div className="flex flex-row items-center gap-1">
+                        <ChevronDown
+                            className={`${
+                                showMore ? "rotate-0" : "-rotate-90"
+                            } text-foreground h-4 w-4 -translate-x-7 group-hover:translate-x-0 transition-all`}
+                        />
+                        <h2 className="text-foreground font-normal text-[13px] -translate-x-7 group-hover:translate-x-0 transition-all">
                             Site Monitoring
                         </h2>
                     </div>
                 </div>
-                <div className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${showMore ? "max-h-[500px]" : "max-h-0"}`}>
-                    <div className='flex flex-col w-full border-muted-foreground/20 border-t'>
-                        {monitors?.map((site, index) => (
-                            <a href={`./monitors/${site.id}`} key={index} className=''>
-                                <div 
-                                    key={index} 
-                                    className='w-full flex flex-row justify-between items-center px-4 py-4 border-b last:border-none hover:bg-white/5 transition-all border-muted-foreground/20'
-                                >
-                                    <div className='flex items-center flex-row gap-4 justify-center'>
-                                        <div className={`w-3 h-3 rounded-full bg-${site.isValid ? "green-500" : "red-500"}`}></div>
-                                        <div className='flex flex-col'>
-                                            <h2 className='text-foreground font-semibold text-[12px]'>{site.name}</h2>
-                                            <div className='flex flex-row gap-1.5 text-[11px] text-muted-foreground/90'>
-                                                <span className={`text-${site.color} text-[11px]`}>{site.isValid ? "Online" : "Offline"}</span>
-                                                <p> · </p>
-                                                <span className=''>2h 5m</span>
-                                                <p> · </p>
-                                                <span className='underline'>Used on STATUS PAGE</span>
+                <div
+                    className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
+                        showMore ? "max-h-[500px]" : "max-h-0"
+                    }`}
+                >
+                    <div className="flex flex-col w-full border-muted-foreground/20 border-t">
+                        {monitors?.map((site, index) => {
+                            const lastDataItem = lastData?.find((data: any) => data.monitorId === site.id);
+                            return (
+                                <a href={`./monitors/${site.id}`} key={index}>
+                                    <div className="w-full flex flex-row justify-between items-center px-4 py-4 border-b last:border-none hover:bg-white/5 transition-all border-muted-foreground/20">
+                                        <div className="flex flex-row justify-between items-center w-full">
+                                            <div className="flex items-center flex-row gap-4 justify-center">
+                                                <div
+                                                    className={`w-3 h-3 rounded-full ${
+                                                        lastDataItem?.status === "up" ? "bg-green-500" : "bg-red-500"
+                                                    }`}
+                                                ></div>
+                                                <div className="flex flex-col">
+                                                    <h2 className="text-foreground font-semibold text-[12px]">
+                                                        {site.name}
+                                                    </h2>
+                                                    <div className="flex flex-row gap-1.5 text-[11px] text-muted-foreground/90">
+                                                        <span>{lastDataItem?.status === "up" ? "Online" : "Offline"}</span>
+                                                        <p> · </p>
+                                                        <span className="">Live</span>
+                                                        <p> · </p>
+                                                        <span className="underline">Used on STATUSPAGE</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </a>
-                        ))}
+                                </a>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

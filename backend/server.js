@@ -199,6 +199,25 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("checkWebsiteStatus", async ({ monitorId }) => {
+    console.log(`Received checkWebsiteStatus for monitorId: ${monitorId}`);
+    
+    if (!monitorId) return;
+  
+    try {
+      const monitor = await monitorsCollection.findOne({ _id: new mongoClient.bson.ObjectId(monitorId) });
+      if (!monitor) {
+        console.warn(`Monitor with ID ${monitorId} not found`);
+        return;
+      }
+  
+      const result = await checkWebsiteStatus(monitor);
+      socket.emit("websiteStatus", result);
+    } catch (err) {
+      console.error("Error handling checkWebsiteStatus:", err.message);
+    }
+  });
+
   socket.on("disconnect", () => {
     const user = onlineUsers.get(socket.id);
     if (user) {
@@ -255,7 +274,7 @@ async function cleanupUnverifiedUsers() {
 setInterval(cleanupUnverifiedUsers, CLEANUP_INTERVAL);
 
 async function checkWebsiteStatus(monitor) {
-  const { _id, monitoring, alertConditions } = monitor;
+  const { _id, monitoring } = monitor;
   const { webURL } = monitoring;
   const monitorId = _id.toString();
 
@@ -316,7 +335,7 @@ async function checkWebsiteStatus(monitor) {
     semaphore.release();
   }
 
-  await insertResult(result);
+  await batchInsertResult(result);
   io.emit("websiteStatus", result);
   handleAlerts(monitor, result);
 
@@ -337,24 +356,26 @@ async function getPingTime(url) {
 let resultBatch = [];
 async function batchInsertResult(result) {
   if (result && Object.keys(result).length > 0) {
-    resultBatch.push(result);
+      resultBatch.push(result);
   }
 
   if (resultBatch.length === 0) {
-    return; 
+      return;
   }
 
   if (resultBatch.length >= BATCH_SIZE || (!result || Object.keys(result).length === 0)) {
-    const batchToInsert = [...resultBatch];
-    resultBatch = []; 
+      const batchToInsert = [...resultBatch];
+      resultBatch = [];
 
-    try {
-      await infoCollection.insertMany(batchToInsert, { ordered: false });
-      console.log(`Batch insert successful: ${batchToInsert.length} items`);
-    } catch (err) {
-      console.error(`Batch insert failed: ${err.message}`);
-      resultBatch.push(...batchToInsert);
-    }
+      try {
+          await infoCollection.insertMany(batchToInsert, { ordered: false });
+          console.log(`Emitting websiteStatus for batch:`, batchToInsert); // Debug log
+          io.emit("websiteStatus", batchToInsert);
+          console.log(`Batch insert successful: ${batchToInsert.length} items`);
+      } catch (err) {
+          console.error(`Batch insert failed: ${err.message}`);
+          resultBatch.push(...batchToInsert);
+      }
   }
 }
 
@@ -416,6 +437,8 @@ async function handleAlerts(monitor, result) {
   });
 }
 
+let debounceTimeout = null;
+
 async function startMonitoring(monitor) {
   const monitorId = monitor._id.toString();
 
@@ -453,13 +476,32 @@ async function startMonitoring(monitor) {
     }
   };
 
-  activeMonitors.set(monitorId, () => {
+  const cleanupMonitor = () => {
     stopped = true;
     console.log(`Cleanup called for monitor ${monitorId}`);
-  });
+  };
 
-  runCheck();
-  console.log(`Started monitoring: ${monitor.monitoring.webURL} every ${freq / 1000}s`);
+  if (activeMonitors.has(monitorId)) {
+    console.log(`URL changed for monitor ${monitorId}. Restarting monitor.`);
+
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+
+    debounceTimeout = setTimeout(async () => {
+      activeMonitors.get(monitorId)();
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Give 1 second grace period
+
+      activeMonitors.set(monitorId, cleanupMonitor);
+
+      runCheck();
+      console.log(`Started monitoring: ${monitor.monitoring.webURL} every ${freq / 1000}s`);
+    }, 1000); // Wait 1 second before triggering restart after the last change
+  } else {
+    activeMonitors.set(monitorId, cleanupMonitor);
+    runCheck();
+    console.log(`Started monitoring: ${monitor.monitoring.webURL} every ${freq / 1000}s`);
+  }
 }
 
 async function syncMonitors() {
@@ -490,18 +532,27 @@ async function syncMonitors() {
     const changeStream = monitorsCollection.watch();
     changeStream.on("change", async (change) => {
       if (change.operationType === "insert" || change.operationType === "update") {
-        const monitor = await monitorsCollection.findOne({ _id: change.documentKey._id });
-        if (monitor?.monitoring?.isValidURL && monitor.monitoring?.monitorType === "http") {
-          await startMonitoring(monitor);
-        }
-      } else if (change.operationType === "delete") {
-        const monitorId = change.documentKey._id.toString();
-        const cleanup = activeMonitors.get(monitorId);
+      const monitor = await monitorsCollection.findOne({ _id: change.documentKey._id });
+      if (monitor?.monitoring?.isValidURL && monitor.monitoring?.monitorType === "http") {
+        const existingMonitor = activeMonitors.get(change.documentKey._id.toString());
+        if (existingMonitor && existingMonitor.url !== monitor.monitoring.webURL) {
+        console.log(`URL changed for monitor ${change.documentKey._id.toString()}. Restarting monitor.`);
+        const cleanup = activeMonitors.get(change.documentKey._id.toString());
         if (cleanup) {
           cleanup();
-          activeMonitors.delete(monitorId);
-          console.log(`Stopped monitoring: ${monitorId}`);
+          activeMonitors.delete(change.documentKey._id.toString());
         }
+        }
+        await startMonitoring(monitor);
+      }
+      } else if (change.operationType === "delete") {
+      const monitorId = change.documentKey._id.toString();
+      const cleanup = activeMonitors.get(monitorId);
+      if (cleanup) {
+        cleanup();
+        activeMonitors.delete(monitorId);
+        console.log(`Stopped monitoring: ${monitorId}`);
+      }
       }
     });
   } catch (err) {

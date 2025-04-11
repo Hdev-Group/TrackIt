@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import admin from "firebase-admin";
 
@@ -15,6 +15,7 @@ if (!admin.apps.length) {
 let client;
 let db;
 let monitorsCollection;
+let infoCollection;
 
 async function connectToDB() {
     if (!client) {
@@ -22,6 +23,7 @@ async function connectToDB() {
         await client.connect();
         db = client.db("monitoring");
         monitorsCollection = db.collection("monitors");
+        infoCollection = db.collection("info");
     }
 }
 
@@ -52,7 +54,25 @@ export async function GET(req) {
             .toArray();
         console.log("Monitors:", monitors);
 
-        return NextResponse.json({ monitors }, { status: 200 });
+        const monitorIds = monitors.map(m => m._id);
+        console.log("monitorids:", monitorIds);
+
+        const latestInfo = [];
+
+        for (const id of monitorIds) {
+            const infoDoc = await infoCollection
+                .find({ monitorId: id.toString() }) 
+                .sort({ timestamp: -1 })
+                .limit(1)
+                .toArray();
+        
+            if (infoDoc.length > 0) latestInfo.push(infoDoc[0]);
+        }
+
+        console.log("Latest Info:", latestInfo);
+        
+
+        return NextResponse.json({ monitors, latestInfo }, { status: 200 });
     } catch (error) {
         console.error("Error fetching messages:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
