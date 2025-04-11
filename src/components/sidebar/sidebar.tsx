@@ -248,10 +248,10 @@ export default function LockedSidebar({ user, hide, orgID }: { user: User, hide?
                                         </div>
                                     </div>
                                     <div className="rounded-sm flex-col gap-2 bg-white/5 text-white/70 py-2 px-3 transition-all flex items-center justify-start w-full relative">
-                                        <div className="px-2 py-1.5 w-full flex flex-row items-center transition-all cursor-pointer justify-start gap-2 hover:bg-white/5 rounded-md">
+                                        <a href="/settings" className="px-2 py-1.5 w-full flex flex-row items-center transition-all cursor-pointer justify-start gap-2 hover:bg-white/5 rounded-md">
                                             <Settings className="h-full w-3.5" />
                                             <span className="text-sm font-medium">Settings</span>
-                                        </div>
+                                        </a>
                                     </div>
                                 </div>
                             </div>

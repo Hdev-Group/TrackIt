@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en" className="">
+    <html lang="en" className="dark">
       <AuthProvider>
         <StatusProvider>
           <head>

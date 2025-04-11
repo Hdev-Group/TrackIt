@@ -45,7 +45,7 @@ export async function POST(req) {
         if (!status) {
             return NextResponse.json({ error: "Invalid request" }, { status: 400 });
         }
-        const existingStatus = await statusCollection.findOne({ user_id: req.user.user_id });
+        const existingStatus = await statusCollection?.findOne({ user_id: req.user.user_id });
 
         if (existingStatus) {
             await statusCollection.updateOne(
